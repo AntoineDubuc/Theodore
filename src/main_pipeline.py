@@ -5,18 +5,21 @@ Main processing pipeline for Theodore company intelligence system
 import os
 import csv
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import json
 
 from src.models import (
     CompanyData, SurveyResponse, ProcessingJob, 
-    CompanyIntelligenceConfig, SectorCluster
+    CompanyIntelligenceConfig, SectorCluster, CompanySimilarity
 )
 from src.crawl4ai_scraper import CompanyWebScraper
 from src.bedrock_client import BedrockClient
 from src.pinecone_client import PineconeClient
 from src.clustering import SectorClusteringEngine
+from src.similarity_pipeline import SimilarityDiscoveryPipeline
+from src.company_discovery import CompanyDiscoveryService
+from src.similarity_validator import SimilarityValidator
 
 # Set up logging
 logging.basicConfig(
@@ -40,6 +43,13 @@ class TheodoreIntelligencePipeline:
             config, pinecone_api_key, pinecone_environment, pinecone_index
         )
         self.clustering_engine = SectorClusteringEngine(config, self.pinecone_client)
+        self.similarity_pipeline = SimilarityDiscoveryPipeline(config)
+        
+        # Initialize similarity pipeline clients
+        self.similarity_pipeline.bedrock_client = self.bedrock_client
+        self.similarity_pipeline.pinecone_client = self.pinecone_client
+        self.similarity_pipeline.discovery_service = CompanyDiscoveryService(self.bedrock_client)
+        self.similarity_pipeline.similarity_validator = SimilarityValidator(self.bedrock_client)
         
         logger.info("Theodore Intelligence Pipeline initialized")
     
@@ -351,20 +361,47 @@ class TheodoreIntelligencePipeline:
         logger.info(f"Results saved to {output_path} and {sector_output_path}")
 
 
-# CLI interface for testing
+# CLI interface
 def main():
     """Main function for CLI usage"""
     import argparse
+    import asyncio
     from dotenv import load_dotenv
     
     load_dotenv()
     
     parser = argparse.ArgumentParser(description='Theodore Company Intelligence Pipeline')
-    parser.add_argument('--input-csv', required=True, help='Input CSV file with survey data')
-    parser.add_argument('--output-csv', required=True, help='Output CSV file for results')
-    parser.add_argument('--single-company', help='Process single company (name:website)')
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    
+    # Original survey processing commands
+    survey_parser = subparsers.add_parser('process-survey', help='Process survey CSV')
+    survey_parser.add_argument('--input-csv', required=True, help='Input CSV file with survey data')
+    survey_parser.add_argument('--output-csv', required=True, help='Output CSV file for results')
+    
+    single_parser = subparsers.add_parser('process-single', help='Process single company')
+    single_parser.add_argument('--company', required=True, help='Company (name:website)')
+    
+    # NEW: Similarity discovery commands
+    discover_parser = subparsers.add_parser('discover-similar', help='Discover similar companies')
+    discover_parser.add_argument('company_name', help='Company name to find similarities for')
+    discover_parser.add_argument('--limit', type=int, default=5, help='Maximum similar companies to find')
+    discover_parser.add_argument('--output', help='Save results to JSON file')
+    
+    batch_discover_parser = subparsers.add_parser('batch-discover', help='Batch discover similarities')
+    batch_discover_parser.add_argument('--input-csv', required=True, help='CSV with company_name,company_id columns')
+    batch_discover_parser.add_argument('--output-csv', required=True, help='Output CSV with similarities')
+    batch_discover_parser.add_argument('--limit', type=int, default=3, help='Similar companies per company')
+    
+    query_parser = subparsers.add_parser('query-similar', help='Query existing similarities')
+    query_parser.add_argument('company_name', help='Company name to query')
+    query_parser.add_argument('--limit', type=int, default=10, help='Maximum results to show')
+    query_parser.add_argument('--format', choices=['table', 'json'], default='table', help='Output format')
     
     args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return
     
     # Load configuration
     config = CompanyIntelligenceConfig()
@@ -377,19 +414,238 @@ def main():
         pinecone_index=os.getenv('PINECONE_INDEX_NAME')
     )
     
-    if args.single_company:
-        # Process single company
-        name, website = args.single_company.split(':')
-        result = pipeline.process_single_company(name.strip(), website.strip())
-        print(f"Processed {result.name}: {result.scrape_status}")
-        if result.ai_summary:
-            print(f"Summary: {result.ai_summary}")
-    else:
-        # Process CSV
+    # Execute commands
+    if args.command == 'process-survey':
         job = pipeline.process_survey_csv(args.input_csv, args.output_csv)
         print(f"Job completed: {job.status}")
         print(f"Processed: {job.processed_companies}/{job.total_companies}")
         print(f"Sectors discovered: {job.sectors_discovered}")
+        
+    elif args.command == 'process-single':
+        # Split on first colon only to handle URLs with colons
+        parts = args.company.split(':', 1)
+        if len(parts) != 2:
+            print("Error: --company format should be 'name:website'")
+            return
+        name, website = parts
+        result = pipeline.process_single_company(name.strip(), website.strip())
+        print(f"Processed {result.name}: {result.scrape_status}")
+        if result.ai_summary:
+            print(f"Summary: {result.ai_summary}")
+            
+    elif args.command == 'discover-similar':
+        asyncio.run(discover_similar_command(pipeline, args))
+        
+    elif args.command == 'batch-discover':
+        asyncio.run(batch_discover_command(pipeline, args))
+        
+    elif args.command == 'query-similar':
+        asyncio.run(query_similar_command(pipeline, args))
+
+
+async def discover_similar_command(pipeline: TheodoreIntelligencePipeline, args):
+    """CLI command to discover similar companies"""
+    print(f"🔍 Discovering companies similar to: {args.company_name}")
+    print("=" * 50)
+    
+    try:
+        # Find company in database
+        company_data = await find_company_by_name(pipeline, args.company_name)
+        if not company_data:
+            print(f"❌ Company '{args.company_name}' not found in database")
+            print("💡 Try processing the company first with: process-single --company 'name:website'")
+            return
+        
+        # Discover similar companies
+        similarities = await pipeline.similarity_pipeline.discover_and_validate_similar_companies(
+            company_data.id, 
+            limit=args.limit
+        )
+        
+        if not similarities:
+            print(f"🤷 No similar companies found for {args.company_name}")
+            return
+        
+        # Display results
+        print(f"✅ Found {len(similarities)} similar companies:")
+        print()
+        
+        for i, sim in enumerate(similarities, 1):
+            print(f"{i}. {sim.similar_company_name}")
+            print(f"   Similarity Score: {sim.similarity_score:.2f}")
+            print(f"   Confidence: {sim.confidence:.2f}")
+            print(f"   Relationship: {sim.relationship_type}")
+            if sim.reasoning:
+                print(f"   Reasoning: {'; '.join(sim.reasoning)}")
+            print()
+        
+        # Save to file if requested
+        if args.output:
+            save_similarities_to_json(similarities, args.output)
+            print(f"💾 Results saved to {args.output}")
+            
+    except Exception as e:
+        print(f"❌ Error discovering similarities: {e}")
+        logger.error(f"Discovery error: {e}")
+
+
+async def batch_discover_command(pipeline: TheodoreIntelligencePipeline, args):
+    """CLI command to batch discover similarities"""
+    print(f"🔄 Batch discovering similarities from: {args.input_csv}")
+    print("=" * 50)
+    
+    try:
+        # Read input CSV
+        company_data = []
+        with open(args.input_csv, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if 'company_name' in row and 'company_id' in row:
+                    company_data.append({
+                        'name': row['company_name'].strip(),
+                        'id': row['company_id'].strip()
+                    })
+        
+        if not company_data:
+            print(f"❌ No valid company data found in {args.input_csv}")
+            print("💡 CSV should have columns: company_name, company_id")
+            return
+        
+        print(f"📋 Processing {len(company_data)} companies...")
+        
+        # Process companies
+        company_ids = [comp['id'] for comp in company_data]
+        results = await pipeline.similarity_pipeline.batch_discover_similarities(
+            company_ids,
+            limit_per_company=args.limit
+        )
+        
+        # Write results to CSV
+        with open(args.output_csv, 'w', newline='') as f:
+            fieldnames = [
+                'original_company_name', 'similar_company_name', 
+                'similarity_score', 'confidence', 'relationship_type',
+                'discovery_method', 'reasoning'
+            ]
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            
+            total_similarities = 0
+            for company_id, similarities in results.items():
+                # Find company name
+                company_name = next((c['name'] for c in company_data if c['id'] == company_id), company_id)
+                
+                for sim in similarities:
+                    writer.writerow({
+                        'original_company_name': sim.original_company_name,
+                        'similar_company_name': sim.similar_company_name,
+                        'similarity_score': sim.similarity_score,
+                        'confidence': sim.confidence,
+                        'relationship_type': sim.relationship_type,
+                        'discovery_method': sim.discovery_method,
+                        'reasoning': '; '.join(sim.reasoning) if sim.reasoning else ''
+                    })
+                    total_similarities += 1
+        
+        print(f"✅ Batch processing complete!")
+        print(f"📊 Found {total_similarities} total similarities")
+        print(f"💾 Results saved to {args.output_csv}")
+        
+    except Exception as e:
+        print(f"❌ Error in batch discovery: {e}")
+        logger.error(f"Batch discovery error: {e}")
+
+
+async def query_similar_command(pipeline: TheodoreIntelligencePipeline, args):
+    """CLI command to query existing similarities"""
+    print(f"🔎 Querying similarities for: {args.company_name}")
+    print("=" * 40)
+    
+    try:
+        # Find company in database
+        company_data = await find_company_by_name(pipeline, args.company_name)
+        if not company_data:
+            print(f"❌ Company '{args.company_name}' not found in database")
+            return
+        
+        # Query existing similarities
+        similarities = await pipeline.similarity_pipeline.query_similar_companies(
+            company_data.id,
+            limit=args.limit
+        )
+        
+        if not similarities:
+            print(f"🤷 No existing similarities found for {args.company_name}")
+            print("💡 Try running: discover-similar '{args.company_name}' to find new similarities")
+            return
+        
+        # Display results
+        if args.format == 'json':
+            # JSON output
+            results = []
+            for sim in similarities:
+                results.append({
+                    'similar_company_name': sim.similar_company_name,
+                    'similarity_score': sim.similarity_score,
+                    'confidence': sim.confidence,
+                    'relationship_type': sim.relationship_type,
+                    'discovered_at': sim.discovered_at.isoformat()
+                })
+            print(json.dumps(results, indent=2))
+        else:
+            # Table output
+            print(f"📊 Found {len(similarities)} existing similarities:")
+            print()
+            print(f"{'#':<3} {'Company Name':<30} {'Score':<8} {'Type':<12} {'Discovered':<12}")
+            print("-" * 70)
+            
+            for i, sim in enumerate(similarities, 1):
+                discovered_date = sim.discovered_at.strftime("%Y-%m-%d") if sim.discovered_at else "Unknown"
+                print(f"{i:<3} {sim.similar_company_name[:29]:<30} {sim.similarity_score:<8.2f} {sim.relationship_type[:11]:<12} {discovered_date:<12}")
+        
+    except Exception as e:
+        print(f"❌ Error querying similarities: {e}")
+        logger.error(f"Query error: {e}")
+
+
+async def find_company_by_name(pipeline: TheodoreIntelligencePipeline, company_name: str) -> Optional[CompanyData]:
+    """Helper function to find company by name in Pinecone"""
+    try:
+        logger.info(f"Searching for company: {company_name}")
+        
+        # Use the pinecone client to search by name
+        company_data = pipeline.pinecone_client.find_company_by_name(company_name)
+        
+        if company_data:
+            logger.info(f"Found company: {company_data.name}")
+            return company_data
+        else:
+            logger.warning(f"Company not found: {company_name}")
+            return None
+        
+    except Exception as e:
+        logger.error(f"Error finding company by name: {e}")
+        return None
+
+
+def save_similarities_to_json(similarities: List[CompanySimilarity], output_path: str):
+    """Save similarities to JSON file"""
+    results = []
+    for sim in similarities:
+        results.append({
+            'original_company_name': sim.original_company_name,
+            'similar_company_name': sim.similar_company_name,
+            'similarity_score': sim.similarity_score,
+            'confidence': sim.confidence,
+            'relationship_type': sim.relationship_type,
+            'discovery_method': sim.discovery_method,
+            'validation_methods': sim.validation_methods,
+            'reasoning': sim.reasoning,
+            'discovered_at': sim.discovered_at.isoformat()
+        })
+    
+    with open(output_path, 'w') as f:
+        json.dump(results, f, indent=2)
 
 
 if __name__ == "__main__":

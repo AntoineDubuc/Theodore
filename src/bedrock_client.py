@@ -224,3 +224,34 @@ class BedrockClient:
             embedding = self.generate_embedding(text)
             embeddings.append(embedding)
         return embeddings
+    
+    def generate_text(self, prompt: str, max_tokens: int = 4000) -> str:
+        """Generate text using the LLM for general purpose prompts"""
+        try:
+            request_body = {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": max_tokens,
+                "temperature": 0.7,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            }
+            
+            response = self.bedrock_runtime.invoke_model(
+                modelId=self.config.bedrock_analysis_model,
+                body=json.dumps(request_body)
+            )
+            
+            response_body = json.loads(response['body'].read())
+            
+            if response_body.get('content') and len(response_body['content']) > 0:
+                return response_body['content'][0].get('text', '')
+            
+            return ""
+            
+        except Exception as e:
+            logger.error(f"Error generating text: {e}")
+            return ""

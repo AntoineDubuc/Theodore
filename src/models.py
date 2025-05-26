@@ -215,7 +215,7 @@ class CompanyIntelligenceConfig(BaseModel):
     
     # AI analysis configuration
     bedrock_embedding_model: str = Field(default="amazon.titan-embed-text-v1")
-    bedrock_analysis_model: str = Field(default="amazon.nova-premier-v1:0")
+    bedrock_analysis_model: str = Field(default="anthropic.claude-3-sonnet-20240229-v1:0")
     bedrock_region: str = Field(default="us-east-1")
     
     # Clustering configuration

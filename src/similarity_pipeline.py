@@ -26,12 +26,12 @@ class SimilarityDiscoveryPipeline:
     def __init__(self, config: Optional[CompanyIntelligenceConfig] = None):
         self.config = config or CompanyIntelligenceConfig()
         
-        # Initialize services
-        self.bedrock_client = BedrockClient()
-        self.discovery_service = CompanyDiscoveryService(self.bedrock_client)
-        self.similarity_validator = SimilarityValidator(self.bedrock_client)
+        # Initialize services (clients initialized by main pipeline)
+        self.bedrock_client = None
+        self.discovery_service = None
+        self.similarity_validator = None
         self.scraper = Crawl4AICompanyScraper(self.config)
-        self.pinecone_client = PineconeClient()
+        self.pinecone_client = None
         
         # Pipeline settings
         self.max_candidates = 10

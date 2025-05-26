@@ -193,6 +193,83 @@ class PineconeClient:
             logger.error(f"Failed to find companies in industry {industry}: {e}")
             return []
     
+    def find_company_by_name(self, company_name: str) -> Optional[CompanyData]:
+        """Find a company by name in the Pinecone index"""
+        try:
+            # Search with dummy vector and name filter
+            query_response = self.index.query(
+                vector=[0.0] * self.config.pinecone_dimension,  # Dummy vector
+                top_k=50,  # Search more results to find exact name match
+                include_metadata=True,
+                include_values=True,
+                filter={"company_name": {"$eq": company_name}}
+            )
+            
+            if not query_response.matches:
+                # Try partial name matching if exact match fails
+                query_response = self.index.query(
+                    vector=[0.0] * self.config.pinecone_dimension,
+                    top_k=10,
+                    include_metadata=True,
+                    include_values=True
+                )
+                
+                # Look for partial matches in company names
+                for match in query_response.matches:
+                    stored_name = match.metadata.get('company_name', '').lower()
+                    search_name = company_name.lower()
+                    if search_name in stored_name or stored_name in search_name:
+                        return self._vector_match_to_company_data(match)
+                
+                return None
+            
+            # Return the first exact match
+            match = query_response.matches[0]
+            return self._vector_match_to_company_data(match)
+            
+        except Exception as e:
+            logger.error(f"Failed to find company by name {company_name}: {e}")
+            return None
+    
+    def _vector_match_to_company_data(self, match) -> CompanyData:
+        """Convert a Pinecone vector match to CompanyData object"""
+        metadata = match.metadata
+        
+        # Helper function to safely get metadata values
+        def safe_get_meta(meta_dict: dict, key: str, default=None):
+            value = meta_dict.get(key, default)
+            # Handle list fields that might be stored as strings
+            if key in ['tech_stack', 'key_services', 'pain_points'] and isinstance(value, str):
+                try:
+                    import json
+                    return json.loads(value)
+                except:
+                    return value.split(', ') if value else []
+            return value
+        
+        company = CompanyData(
+            id=match.id,
+            name=safe_get_meta(metadata, 'company_name', ''),
+            website=safe_get_meta(metadata, 'website', ''),
+            industry=safe_get_meta(metadata, 'industry'),
+            business_model=safe_get_meta(metadata, 'business_model'),
+            company_size=safe_get_meta(metadata, 'company_size'),
+            target_market=safe_get_meta(metadata, 'target_market'),
+            ai_summary=safe_get_meta(metadata, 'ai_summary', ''),
+            has_chat_widget=safe_get_meta(metadata, 'has_chat_widget', False),
+            has_forms=safe_get_meta(metadata, 'has_forms', False),
+            scrape_status=safe_get_meta(metadata, 'scrape_status', 'unknown'),
+            tech_stack=safe_get_meta(metadata, 'tech_stack', []),
+            key_services=safe_get_meta(metadata, 'key_services', []),
+            pain_points=safe_get_meta(metadata, 'pain_points', [])
+        )
+        
+        # Set embedding if available
+        if hasattr(match, 'values') and match.values:
+            company.embedding = list(match.values)
+            
+        return company
+    
     def calculate_sector_similarity(self, sector_a_companies: List[str], 
                                    sector_b_companies: List[str]) -> float:
         """Calculate similarity between two sectors using their company centroids"""
