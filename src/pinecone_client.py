@@ -479,3 +479,171 @@ class PineconeClient:
         except Exception as e:
             logger.error(f"Failed to search companies by text: {e}")
             return []
+    
+    def store_similarity_relationships(self, similarities: List['CompanySimilarity']) -> bool:
+        """
+        Store similarity relationships in Pinecone metadata
+        
+        Note: For POC, we store similarity data in the company metadata.
+        In production, consider a dedicated similarity index.
+        """
+        try:
+            from src.models import CompanySimilarity
+            
+            for similarity in similarities:
+                # Update both companies' metadata with similarity info
+                self._add_similarity_to_company_metadata(
+                    similarity.original_company_id,
+                    similarity.similar_company_id,
+                    similarity
+                )
+                
+                # Store bidirectional relationship if specified
+                if similarity.is_bidirectional:
+                    self._add_similarity_to_company_metadata(
+                        similarity.similar_company_id,
+                        similarity.original_company_id,
+                        similarity
+                    )
+            
+            logger.info(f"Stored {len(similarities)} similarity relationships")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to store similarity relationships: {e}")
+            return False
+    
+    def _add_similarity_to_company_metadata(self, 
+                                          company_id: str, 
+                                          similar_company_id: str,
+                                          similarity: 'CompanySimilarity') -> bool:
+        """
+        Add similarity relationship to a company's metadata
+        """
+        try:
+            # Get current metadata
+            fetch_response = self.index.fetch(ids=[company_id])
+            
+            if company_id not in fetch_response.vectors:
+                logger.warning(f"Company {company_id} not found for similarity update")
+                return False
+            
+            metadata = fetch_response.vectors[company_id].metadata.copy()
+            
+            # Initialize similarity list if not exists
+            similar_companies_key = "similar_companies"
+            if similar_companies_key not in metadata:
+                metadata[similar_companies_key] = json.dumps([])
+            
+            # Parse existing similarities
+            try:
+                existing_similarities = json.loads(metadata[similar_companies_key])
+            except json.JSONDecodeError:
+                existing_similarities = []
+            
+            # Check if relationship already exists
+            existing_ids = [sim.get('company_id') for sim in existing_similarities]
+            if similar_company_id not in existing_ids:
+                # Add new similarity
+                similarity_data = {
+                    "company_id": similar_company_id,
+                    "company_name": similarity.similar_company_name,
+                    "similarity_score": similarity.similarity_score,
+                    "confidence": similarity.confidence,
+                    "discovery_method": similarity.discovery_method,
+                    "validation_methods": similarity.validation_methods,
+                    "relationship_type": similarity.relationship_type,
+                    "discovered_at": similarity.discovered_at.isoformat()
+                }
+                
+                existing_similarities.append(similarity_data)
+                
+                # Update metadata
+                metadata[similar_companies_key] = json.dumps(existing_similarities)
+                
+                # Update in Pinecone
+                self.index.update(
+                    id=company_id,
+                    set_metadata=metadata
+                )
+                
+                logger.debug(f"Added similarity {similar_company_id} to {company_id}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to add similarity to company metadata: {e}")
+            return False
+    
+    def find_similar_companies(self, company_id: str, limit: int = 10) -> List['CompanySimilarity']:
+        """
+        Find companies similar to the given company ID
+        """
+        try:
+            from src.models import CompanySimilarity
+            from datetime import datetime
+            
+            # Get company metadata
+            fetch_response = self.index.fetch(ids=[company_id])
+            
+            if company_id not in fetch_response.vectors:
+                logger.warning(f"Company {company_id} not found")
+                return []
+            
+            metadata = fetch_response.vectors[company_id].metadata
+            similar_companies_data = metadata.get("similar_companies", "[]")
+            
+            try:
+                similarities_list = json.loads(similar_companies_data)
+            except json.JSONDecodeError:
+                return []
+            
+            # Convert to CompanySimilarity objects
+            similarities = []
+            for sim_data in similarities_list[:limit]:
+                try:
+                    similarity = CompanySimilarity(
+                        original_company_id=company_id,
+                        similar_company_id=sim_data.get("company_id", ""),
+                        original_company_name=metadata.get("company_name", ""),
+                        similar_company_name=sim_data.get("company_name", ""),
+                        similarity_score=sim_data.get("similarity_score", 0.0),
+                        confidence=sim_data.get("confidence", 0.0),
+                        discovery_method=sim_data.get("discovery_method", "unknown"),
+                        validation_methods=sim_data.get("validation_methods", []),
+                        relationship_type=sim_data.get("relationship_type", "competitor"),
+                        discovered_at=datetime.fromisoformat(sim_data.get("discovered_at", datetime.now().isoformat()))
+                    )
+                    similarities.append(similarity)
+                except Exception as e:
+                    logger.error(f"Error creating CompanySimilarity object: {e}")
+                    continue
+            
+            return similarities
+            
+        except Exception as e:
+            logger.error(f"Failed to find similar companies for {company_id}: {e}")
+            return []
+    
+    def get_similarity_score(self, company_a_id: str, company_b_id: str) -> Optional[float]:
+        """
+        Get similarity score between two specific companies
+        """
+        try:
+            similarities = self.find_similar_companies(company_a_id)
+            
+            for similarity in similarities:
+                if similarity.similar_company_id == company_b_id:
+                    return similarity.similarity_score
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to get similarity score: {e}")
+            return None
+    
+    def get_company_by_id(self, company_id: str) -> Optional['CompanyData']:
+        """
+        Get company data by ID (alias for get_full_company_data)
+        """
+        return self.get_full_company_data(company_id)
