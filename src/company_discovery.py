@@ -5,6 +5,7 @@ LLM-powered company discovery service for finding similar companies
 import logging
 import re
 import json
+import requests
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, HttpUrl
 from datetime import datetime
@@ -59,16 +60,24 @@ class CompanyDiscoveryService:
             llm_response = self.bedrock_client.analyze_content(prompt)
             
             # Parse suggestions
-            suggestions = self._parse_llm_suggestions(llm_response)
+            raw_suggestions = self._parse_llm_suggestions(llm_response)
+            
+            # Validate suggestions
+            validated_suggestions = []
+            for suggestion in raw_suggestions:
+                if self._validate_suggestion(suggestion):
+                    validated_suggestions.append(suggestion)
+                else:
+                    logger.warning(f"Filtered out invalid suggestion: {suggestion.company_name}")
             
             # Create result
             result = DiscoveryResult(
                 target_company=target_company.name,
-                suggestions=suggestions[:limit],  # Ensure we don't exceed limit
-                total_suggestions=len(suggestions)
+                suggestions=validated_suggestions[:limit],  # Ensure we don't exceed limit
+                total_suggestions=len(validated_suggestions)
             )
             
-            logger.info(f"Discovered {len(suggestions)} similar companies for {target_company.name}")
+            logger.info(f"Discovered {len(validated_suggestions)} similar companies for {target_company.name}")
             return result
             
         except Exception as e:
@@ -224,6 +233,45 @@ Provide exactly {limit} suggestions in valid JSON format:"""
                 current_reason = None
                 
         return suggestions[:10]  # Limit to 10 suggestions
+    
+    def _validate_suggestion(self, suggestion: CompanySuggestion) -> bool:
+        """
+        Validate that a company suggestion is legitimate and accessible
+        """
+        # Check company name isn't empty or generic
+        if not suggestion.company_name or len(suggestion.company_name.strip()) < 3:
+            return False
+            
+        # Filter out generic/invalid company names
+        invalid_names = ['company', 'corp', 'llc', 'inc', 'ltd', 'example', 'test', 'sample']
+        name_lower = suggestion.company_name.lower().strip()
+        if name_lower in invalid_names or any(invalid in name_lower for invalid in invalid_names):
+            return False
+        
+        # Check URL if provided
+        if suggestion.website_url:
+            if not self._check_url_accessible(suggestion.website_url):
+                # Don't reject completely, just clear the URL
+                suggestion.website_url = None
+                suggestion.confidence_score *= 0.8  # Reduce confidence
+        
+        return True
+    
+    def _check_url_accessible(self, url: str) -> bool:
+        """
+        Quick check if URL is accessible (basic validation)
+        """
+        try:
+            # Basic URL format validation
+            if not url.startswith(('http://', 'https://')):
+                return False
+                
+            # Quick HEAD request with short timeout
+            response = requests.head(url, timeout=5, allow_redirects=True)
+            return response.status_code < 400
+            
+        except Exception:
+            return False
     
     def _clean_url(self, url: Optional[str]) -> Optional[str]:
         """

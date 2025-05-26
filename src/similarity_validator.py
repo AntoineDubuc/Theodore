@@ -5,9 +5,11 @@ Similarity validation engine for comparing companies across multiple dimensions
 import logging
 import re
 import math
+import hashlib
 from typing import List, Dict, Any, Optional, Tuple
 from pydantic import BaseModel, Field
 from datetime import datetime
+from functools import lru_cache
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -159,29 +161,28 @@ class SimilarityValidator:
         details = {}
         
         # Industry match (40% weight)
-        if company_a.industry and company_b.industry:
-            if company_a.industry.lower().strip() == company_b.industry.lower().strip():
-                score += 0.4
-                details['industry_exact_match'] = True
-            else:
-                # Check for partial industry overlap
-                words_a = set(company_a.industry.lower().split())
-                words_b = set(company_b.industry.lower().split())
-                overlap = len(words_a & words_b)
-                if overlap > 0:
-                    score += 0.2
-                    details['industry_partial_match'] = overlap
+        industry_score = self._safe_field_comparison(
+            company_a.industry, 
+            company_b.industry,
+            weight=0.4,
+            partial_weight=0.2
+        )
+        score += industry_score['score']
+        details.update(industry_score['details'])
         
         # Business model match (30% weight)
-        if company_a.business_model and company_b.business_model:
-            if company_a.business_model.lower().strip() == company_b.business_model.lower().strip():
-                score += 0.3
-                details['business_model_match'] = True
+        business_score = self._safe_field_comparison(
+            company_a.business_model,
+            company_b.business_model, 
+            weight=0.3
+        )
+        score += business_score['score']
+        details.update(business_score['details'])
         
         # Tech stack overlap (20% weight)
         if company_a.tech_stack and company_b.tech_stack:
-            tech_a = set([tech.lower().strip() for tech in company_a.tech_stack])
-            tech_b = set([tech.lower().strip() for tech in company_b.tech_stack])
+            tech_a = self._normalize_tech_stack(company_a.tech_stack)
+            tech_b = self._normalize_tech_stack(company_b.tech_stack)
             
             if tech_a and tech_b:
                 overlap = len(tech_a & tech_b)
@@ -190,6 +191,7 @@ class SimilarityValidator:
                 score += jaccard * 0.2
                 details['tech_overlap_count'] = overlap
                 details['tech_jaccard_similarity'] = jaccard
+                details['tech_normalized'] = True
         
         # Company size compatibility (10% weight)
         if company_a.company_size and company_b.company_size:
@@ -224,9 +226,9 @@ class SimilarityValidator:
         text_a = self._create_company_text_representation(company_a)
         text_b = self._create_company_text_representation(company_b)
         
-        # Get embeddings
-        embedding_a = self.bedrock_client.get_embeddings(text_a)
-        embedding_b = self.bedrock_client.get_embeddings(text_b)
+        # Get cached embeddings
+        embedding_a = self._get_cached_embedding(text_a)
+        embedding_b = self._get_cached_embedding(text_b)
         
         # Calculate cosine similarity
         similarity = cosine_similarity([embedding_a], [embedding_b])[0][0]
@@ -386,6 +388,102 @@ SIMILAR: [YES/NO for score 7+]"""
             total_weight += weight
         
         return weighted_sum / total_weight if total_weight > 0 else 0.0
+    
+    def _safe_field_comparison(self, field_a: Optional[str], field_b: Optional[str], 
+                             weight: float, partial_weight: float = 0.0) -> Dict[str, Any]:
+        """
+        Safely compare two fields with null handling and partial matching
+        """
+        result = {'score': 0.0, 'details': {}}
+        
+        # Handle missing fields
+        if not field_a or not field_b:
+            return result
+            
+        field_a_clean = field_a.lower().strip()
+        field_b_clean = field_b.lower().strip()
+        
+        # Exact match
+        if field_a_clean == field_b_clean:
+            result['score'] = weight
+            result['details'][f'{field_a}_exact_match'] = True
+            return result
+        
+        # Partial match if partial_weight specified
+        if partial_weight > 0:
+            words_a = set(field_a_clean.split())
+            words_b = set(field_b_clean.split())
+            overlap = len(words_a & words_b)
+            
+            if overlap > 0:
+                result['score'] = partial_weight
+                result['details'][f'{field_a}_partial_match'] = overlap
+        
+        return result
+    
+    def _normalize_tech_stack(self, tech_list: List[str]) -> set:
+        """
+        Normalize technology names to handle variations
+        """
+        normalized = set()
+        
+        for tech in tech_list:
+            if not tech:
+                continue
+                
+            # Clean and normalize
+            clean_tech = tech.lower().strip()
+            
+            # Handle common variations
+            # Remove .js, JS suffixes
+            clean_tech = re.sub(r'\.js$|js$', '', clean_tech)
+            
+            # Normalize common frameworks
+            tech_mappings = {
+                'react': 'react',
+                'reactjs': 'react', 
+                'vue': 'vue',
+                'vuejs': 'vue',
+                'angular': 'angular',
+                'angularjs': 'angular',
+                'node': 'nodejs',
+                'nodejs': 'nodejs',
+                'python': 'python',
+                'py': 'python',
+                'aws': 'aws',
+                'amazon web services': 'aws',
+                'google cloud': 'gcp',
+                'gcp': 'gcp',
+                'azure': 'azure',
+                'microsoft azure': 'azure'
+            }
+            
+            # Apply mappings
+            normalized_tech = tech_mappings.get(clean_tech, clean_tech)
+            
+            # Only add if meaningful length
+            if len(normalized_tech) >= 2:
+                normalized.add(normalized_tech)
+        
+        return normalized
+    
+    @lru_cache(maxsize=1000)
+    def _get_cached_embedding(self, company_text: str) -> np.ndarray:
+        """
+        Get embedding for company text with caching to avoid re-computation
+        """
+        try:
+            # Create a hash of the text for logging
+            text_hash = hashlib.md5(company_text.encode()).hexdigest()[:8]
+            logger.debug(f"Getting embedding for text hash: {text_hash}")
+            
+            embedding = self.bedrock_client.get_embeddings(company_text)
+            return np.array(embedding)
+            
+        except Exception as e:
+            logger.error(f"Failed to get embedding: {e}")
+            # Return zero vector as fallback
+            return np.zeros(1536)  # Assume standard embedding dimension
 
 
 def main():
