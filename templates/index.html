@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theodore - AI Company Intelligence</title>
+    <meta name="description" content="Discover similar companies with AI-powered intelligence and advanced similarity analysis">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Theodore - AI Company Intelligence">
+    <meta property="og:description" content="Discover similar companies with AI-powered intelligence">
+    <meta property="og:image" content="{{ url_for('static', filename='img/og-image.png') }}">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">Theodore</h1>
+                <p class="tagline">AI-Powered Company Intelligence</p>
+                <p class="subtitle">Discover similar companies with advanced similarity analysis</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Messages Container -->
+            <div id="messages"></div>
+
+            <!-- Tab Navigation -->
+            <div class="card">
+                <div class="tab-nav">
+                    <button class="btn btn-secondary tab-button active" data-tab="discoveryTab">
+                        🔍 Discover Similar Companies
+                    </button>
+                    <button class="btn btn-secondary tab-button" data-tab="processTab">
+                        ➕ Add New Company
+                    </button>
+                </div>
+            </div>
+
+            <!-- Discovery Tab -->
+            <div id="discoveryTab" class="tab-content active">
+                <div class="search-card">
+                    <form id="searchForm">
+                        <div class="form-group">
+                            <label for="companyName" class="form-label">
+                                Company Name
+                            </label>
+                            <div class="input-wrapper">
+                                <input 
+                                    type="text" 
+                                    id="companyName" 
+                                    name="company_name" 
+                                    class="form-input" 
+                                    placeholder="Enter company name (e.g., Visterra, Google, Microsoft)"
+                                    required
+                                    autocomplete="off"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="similarLimit" class="form-label">
+                                Number of Similar Companies
+                            </label>
+                            <div class="input-wrapper">
+                                <select id="similarLimit" name="limit" class="form-input">
+                                    <option value="3">3 companies</option>
+                                    <option value="5" selected>5 companies</option>
+                                    <option value="7">7 companies</option>
+                                    <option value="10">10 companies</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <span>🚀</span>
+                                Discover Similar Companies
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('searchForm').reset();">
+                                <span>🔄</span>
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Process Tab -->
+            <div id="processTab" class="tab-content">
+                <div class="search-card">
+                    <h3 style="margin-bottom: 24px; color: var(--text-primary);">Add New Company to Database</h3>
+                    <form id="processForm">
+                        <div class="form-group">
+                            <label for="newCompanyName" class="form-label">
+                                Company Name
+                            </label>
+                            <div class="input-wrapper">
+                                <input 
+                                    type="text" 
+                                    id="newCompanyName" 
+                                    name="company_name" 
+                                    class="form-input" 
+                                    placeholder="Enter company name"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="companyWebsite" class="form-label">
+                                Company Website
+                            </label>
+                            <div class="input-wrapper">
+                                <input 
+                                    type="url" 
+                                    id="companyWebsite" 
+                                    name="website" 
+                                    class="form-input" 
+                                    placeholder="https://example.com"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-accent">
+                                <span>📊</span>
+                                Process Company
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('processForm').reset();">
+                                <span>🔄</span>
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="hidden">
+                <div class="card">
+                    <div class="results-header">
+                        <h2 class="results-title">Similar Companies</h2>
+                        <div class="results-count" id="resultsCount">0 found</div>
+                    </div>
+                    <div id="results" class="results">
+                        <!-- Results will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="card">
+                <h3 style="margin-bottom: 24px; color: var(--text-primary); text-align: center;">
+                    ✨ Theodore Features
+                </h3>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">🤖</div>
+                        <h4>AI-Powered Discovery</h4>
+                        <p>Advanced machine learning algorithms analyze company data to find meaningful similarities</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🌐</div>
+                        <h4>Web Intelligence</h4>
+                        <p>Real-time web scraping and analysis to gather the latest company information</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📊</div>
+                        <h4>Similarity Scoring</h4>
+                        <p>Multi-method validation ensures accurate similarity scores and confidence levels</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <h4>Fast & Scalable</h4>
+                        <p>Vector database technology enables lightning-fast searches across thousands of companies</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="card">
+                <h3 style="margin-bottom: 24px; color: var(--text-primary); text-align: center;">
+                    📈 System Statistics
+                </h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">Companies Analyzed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">5</div>
+                        <div class="stat-label">AI Models</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">∞</div>
+                        <div class="stat-label">Possibilities</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Availability</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="padding: 40px 0; text-align: center; color: var(--text-muted); border-top: 1px solid var(--border-subtle); margin-top: 60px;">
+        <div class="container">
+            <p>&copy; 2024 Theodore AI. Built with ❤️ for intelligent company discovery.</p>
+            <p style="font-size: 0.875rem; margin-top: 8px;">
+                Powered by AWS Bedrock, Pinecone, and Crawl4AI
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    
+    <!-- Additional CSS for components -->
+    <style>
+        .tab-nav {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            justify-content: center;
+        }
+
+        .tab-button.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-medium);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+
+        .feature-item h4 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .feature-item p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Custom select styling */
+        select.form-input {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+            appearance: none;
+        }
+
+        /* Animation enhancements */
+        @media (prefers-reduced-motion: no-preference) {
+            .feature-item, .stat-item, .result-card {
+                animation: fadeInUp 0.6s ease-out backwards;
+            }
+            
+            .feature-item:nth-child(1) { animation-delay: 0.1s; }
+            .feature-item:nth-child(2) { animation-delay: 0.2s; }
+            .feature-item:nth-child(3) { animation-delay: 0.3s; }
+            .feature-item:nth-child(4) { animation-delay: 0.4s; }
+            
+            .stat-item:nth-child(1) { animation-delay: 0.1s; }
+            .stat-item:nth-child(2) { animation-delay: 0.2s; }
+            .stat-item:nth-child(3) { animation-delay: 0.3s; }
+            .stat-item:nth-child(4) { animation-delay: 0.4s; }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .tab-nav {
+                flex-direction: column;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</body>
+</html>

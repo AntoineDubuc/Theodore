@@ -576,7 +576,7 @@ async def query_similar_command(pipeline: TheodoreIntelligencePipeline, args):
         
         if not similarities:
             print(f"🤷 No existing similarities found for {args.company_name}")
-            print("💡 Try running: discover-similar '{args.company_name}' to find new similarities")
+            print(f"💡 Try running: discover-similar '{args.company_name}' to find new similarities")
             return
         
         # Display results

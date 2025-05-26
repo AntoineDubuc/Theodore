@@ -15,5 +15,8 @@ lxml==5.4.0
 # Optional: Neo4j (for local graph storage)
 # neo4j==5.28.1
 
+# Web UI
+flask==3.0.0
+
 # Optional: Streamlit (for local UI)
 # streamlit==1.45.1
