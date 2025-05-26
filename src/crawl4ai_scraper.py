@@ -1,0 +1,551 @@
+"""
+Advanced company intelligence scraper using Crawl4AI with LLMExtractionStrategy
+Proper AI-powered extraction using Pydantic schemas and custom prompts
+"""
+
+import logging
+import time
+import asyncio
+import json
+import os
+import hashlib
+from typing import Dict, Optional, List, Any
+from urllib.parse import urljoin, urlparse
+from pydantic import BaseModel, Field
+from enum import Enum
+
+from crawl4ai import AsyncWebCrawler, LLMConfig, CrawlerRunConfig
+from crawl4ai.extraction_strategy import LLMExtractionStrategy
+from crawl4ai.async_configs import CacheMode
+from src.models import CompanyData, CompanyIntelligenceConfig
+
+logger = logging.getLogger(__name__)
+
+
+# Define Pydantic schema for structured extraction
+class CompanyIntelligence(BaseModel):
+    company_name: str = Field(description="Company name")
+    industry: str = Field(description="Primary industry or sector")
+    business_model: str = Field(description="Business model (B2B, B2C, SaaS, etc.)")
+    company_description: str = Field(description="Brief company description")
+    target_market: str = Field(description="Target market or customer segment")
+    key_services: List[str] = Field(description="List of key services or products")
+    location: str = Field(description="Company location")
+    founding_year: str = Field(description="Year founded (if mentioned)")
+    tech_stack: List[str] = Field(description="Technologies used")
+    leadership_team: List[str] = Field(description="Leadership team members with titles")
+    value_proposition: str = Field(description="Main value proposition")
+
+# Rebuild model to resolve any ForwardRef issues
+CompanyIntelligence.model_rebuild()
+
+
+class PageType(Enum):
+    """Enum for different page types and their importance"""
+    HOMEPAGE = ("homepage", 1.0, "")
+    ABOUT = ("about", 0.9, "/about")
+    ABOUT_US = ("about_us", 0.9, "/about-us")
+    COMPANY = ("company", 0.8, "/company")
+    SERVICES = ("services", 0.7, "/services")
+    PRODUCTS = ("products", 0.7, "/products")
+    SOLUTIONS = ("solutions", 0.6, "/solutions")
+    TEAM = ("team", 0.5, "/team")
+    LEADERSHIP = ("leadership", 0.5, "/leadership")
+    CAREERS = ("careers", 0.3, "/careers")
+    CONTACT = ("contact", 0.2, "/contact")
+    
+    def __init__(self, name: str, priority: float, path: str):
+        self.page_name = name
+        self.priority = priority
+        self.path = path
+
+
+class Crawl4AICompanyScraper:
+    """Advanced company scraper using Crawl4AI with proper LLM extraction"""
+    
+    def __init__(self, config: CompanyIntelligenceConfig):
+        self.config = config
+        
+        # Define target pages with priorities
+        self.target_pages = [page_type for page_type in PageType]
+        
+        # Enhanced extraction instruction for better results
+        self.extraction_instruction = """
+Extract comprehensive company information with focus on:
+1. Business model and revenue streams
+2. Target market and customer segments  
+3. Key products/services and differentiators
+4. Leadership team and company culture
+5. Technology stack and innovation indicators
+6. Market position and competitive advantages
+
+Be specific about industry classification and company size indicators.
+Use 'unknown' only when information is genuinely not available.
+Prioritize factual information over marketing language.
+"""
+    
+    def _create_extraction_strategy(self, page_type: PageType = None) -> LLMExtractionStrategy:
+        """Create optimized LLM extraction strategy based on page type"""
+        
+        # Check for OpenAI API key
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        
+        if openai_api_key and openai_api_key != "your-openai-api-key-here":
+            logger.info(f"Creating LLM extraction strategy for {page_type.page_name if page_type else 'general'} page")
+            
+            # Use the working LLMConfig format (fixed ForwardRef issue)
+            try:
+                # Optimize model selection based on page importance
+                if page_type and page_type.priority >= 0.7:
+                    # High-value pages: Use more capable model
+                    provider = "openai/gpt-4o-mini"
+                    max_tokens = 2500
+                    temperature = 0.05  # More deterministic for important pages
+                else:
+                    # Standard pages: Use cost-effective model
+                    provider = "openai/gpt-4o-mini" 
+                    max_tokens = 2000
+                    temperature = 0.1
+                
+                llm_config = LLMConfig(
+                    provider=provider,
+                    api_token=openai_api_key
+                )
+                
+                # Optimize chunking based on typical page content
+                chunk_threshold = self._get_optimal_chunk_size(page_type)
+                
+                return LLMExtractionStrategy(
+                    llm_config=llm_config,
+                    schema=CompanyIntelligence.model_json_schema(),
+                    extraction_type="schema",
+                    instruction=self.extraction_instruction,
+                    chunk_token_threshold=chunk_threshold,
+                    overlap_rate=0.05,  # Minimal overlap for company pages
+                    apply_chunking=chunk_threshold < 3000,  # Disable for small content
+                    extra_args={
+                        "temperature": temperature,
+                        "max_tokens": max_tokens,
+                        "top_p": 0.9
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Failed to create LLMConfig: {e}")
+                raise ValueError(
+                    f"Failed to initialize LLM extraction strategy: {e}. "
+                    "Please ensure OPENAI_API_KEY is properly set."
+                )
+        else:
+            # Try to use Bedrock (requires custom implementation)
+            logger.info("OpenAI API key not found, attempting Bedrock integration")
+            
+            # For now, raise an error since Bedrock integration for Crawl4AI needs more setup
+            raise ValueError(
+                "OpenAI API key required for LLM extraction. "
+                "Please set OPENAI_API_KEY in your .env file. "
+                "Bedrock integration for Crawl4AI is not yet implemented."
+            )
+    
+    def _get_optimal_chunk_size(self, page_type: PageType = None) -> int:
+        """Get optimal chunk size based on page type and expected content"""
+        
+        if not page_type:
+            return 2000
+        
+        # Optimize chunking based on page type
+        chunk_sizes = {
+            PageType.HOMEPAGE: 2500,    # May have more content
+            PageType.ABOUT: 2000,       # Moderate content
+            PageType.ABOUT_US: 2000,    # Moderate content
+            PageType.COMPANY: 2000,     # Moderate content
+            PageType.SERVICES: 1800,    # Often list-based
+            PageType.PRODUCTS: 1800,    # Often list-based
+            PageType.SOLUTIONS: 1500,   # Usually brief
+            PageType.TEAM: 1500,        # Usually brief
+            PageType.LEADERSHIP: 1500,  # Usually brief
+            PageType.CAREERS: 1000,     # Minimal extraction needed
+            PageType.CONTACT: 800       # Minimal extraction needed
+        }
+        
+        return chunk_sizes.get(page_type, 2000)
+    
+    def _create_crawler_config(self, page_type: PageType, company_id: str, extraction_strategy: LLMExtractionStrategy) -> CrawlerRunConfig:
+        """Create optimized crawler configuration with caching and filtering"""
+        
+        # Create company-specific session for caching
+        session_id = f"theodore_{hashlib.md5(company_id.encode()).hexdigest()[:8]}"
+        
+        # Build CSS selector string
+        css_selector = ", ".join([
+            "main", "article", ".content", ".main-content", ".about-section", 
+            ".company-info", "[role='main']", ".page-content"
+        ])
+        
+        # Tags to exclude for cleaner extraction
+        excluded_tags = [
+            "nav", "footer", "aside", "script", "style", 
+            "noscript", "iframe", "form", "input", "button"
+        ]
+        
+        config = CrawlerRunConfig(
+            # Extraction strategy
+            extraction_strategy=extraction_strategy,
+            
+            # Content filtering (Low-risk improvements)
+            word_count_threshold=50,  # Higher threshold to filter noise
+            css_selector=css_selector,  # Target main content areas
+            excluded_tags=excluded_tags,  # Remove navigation/ads
+            only_text=True,  # Strip HTML formatting
+            remove_forms=True,  # Remove form elements
+            exclude_external_links=True,  # Remove external links
+            exclude_social_media_links=True,  # Remove social media links
+            
+            # Caching (Performance improvement)
+            cache_mode=CacheMode.ENABLED,  # Enable intelligent caching
+            session_id=session_id,  # Company-specific caching
+            
+            # Page interaction
+            wait_until="domcontentloaded",  # Faster than networkidle
+            page_timeout=25000,  # Slightly longer timeout
+            delay_before_return_html=1.0,  # Reduced delay
+            
+            # Logging
+            verbose=False  # Keep minimal logging
+        )
+        
+        return config
+    
+    async def scrape_company_comprehensive(self, company_data: CompanyData) -> CompanyData:
+        """Comprehensive multi-page scraping with AI-powered extraction"""
+        
+        start_time = time.time()
+        base_url = self._normalize_url(company_data.website)
+        
+        logger.info(f"Starting AI-powered crawl of {company_data.name}")
+        
+        try:
+            # Note: Extraction strategies now created per-page for optimization
+            logger.info("Starting optimized multi-page AI extraction with caching and filtering...")
+            
+            async with AsyncWebCrawler(
+                headless=True,
+                browser_type="chromium",
+                verbose=False
+            ) as crawler:
+                
+                # Crawl multiple pages and extract intelligence
+                crawled_pages = []
+                all_intelligence = []
+                
+                for page_type in self.target_pages:
+                    try:
+                        page_url = urljoin(base_url, page_type.path)
+                        
+                        # Skip if same as base URL
+                        if page_url == base_url and page_type.path != "":
+                            continue
+                        
+                        logger.info(f"AI-extracting from {page_url} ({page_type.page_name})")
+                        
+                        # Create optimized extraction strategy for this page type
+                        page_extraction_strategy = self._create_extraction_strategy(page_type)
+                        
+                        # Create optimized crawler configuration
+                        config = self._create_crawler_config(
+                            page_type=page_type,
+                            company_id=f"{company_data.name}_{company_data.website}",
+                            extraction_strategy=page_extraction_strategy
+                        )
+                        
+                        # Crawl with optimized configuration
+                        result = await crawler.arun(
+                            url=page_url,
+                            config=config,
+                            timeout=30  # Increased timeout for better reliability
+                        )
+                        
+                        if result.success:
+                            crawled_pages.append(page_url)
+                            
+                            # Store homepage content for reference
+                            if not company_data.raw_content and page_type.path == "":
+                                company_data.raw_content = result.cleaned_html[:self.config.max_content_length]
+                            
+                            # Process extracted intelligence
+                            if result.extracted_content:
+                                try:
+                                    # Schema extraction returns structured JSON
+                                    logger.info(f"Extracted content from {page_url}: {result.extracted_content[:200]}...")
+                                    
+                                    # Parse the structured extraction result
+                                    try:
+                                        extracted_list = json.loads(result.extracted_content)
+                                        
+                                        # Extract the first valid result from the list
+                                        if isinstance(extracted_list, list) and len(extracted_list) > 0:
+                                            intelligence_data = extracted_list[0]  # Take the first extraction result
+                                        else:
+                                            intelligence_data = extracted_list
+                                    except json.JSONDecodeError:
+                                        # Store as raw text if not valid JSON
+                                        intelligence_data = {"raw_extracted": result.extracted_content}
+                                    
+                                    all_intelligence.append({
+                                        'page_url': page_url,
+                                        'page_path': page_type.path,
+                                        'page_type': page_type.page_name,
+                                        'priority': page_type.priority,
+                                        'intelligence': intelligence_data
+                                    })
+                                    
+                                    logger.info(f"Successfully extracted intelligence from {page_url}")
+                                    
+                                except Exception as e:
+                                    logger.warning(f"Error processing extracted content from {page_url}: {e}")
+                        
+                        # Rate limiting between pages
+                        await asyncio.sleep(1)
+                        
+                    except Exception as e:
+                        logger.warning(f"Failed to crawl {page_url}: {e}")
+                        continue
+                
+                # Merge and apply all extracted intelligence
+                merged_intelligence = self._merge_intelligence(all_intelligence)
+                self._apply_intelligence_to_company(company_data, merged_intelligence)
+                
+                # Update crawling metadata
+                company_data.pages_crawled = crawled_pages
+                company_data.crawl_depth = len(crawled_pages)
+                company_data.crawl_duration = time.time() - start_time
+                company_data.scrape_status = "success"
+                
+                logger.info(f"Successfully AI-extracted from {len(crawled_pages)} pages for {company_data.name}")
+                
+        except Exception as e:
+            logger.error(f"AI-powered crawl failed for {company_data.name}: {e}")
+            company_data.scrape_status = "failed"
+            company_data.scrape_error = str(e)
+        
+        return company_data
+    
+    def _merge_intelligence(self, all_intelligence: List[Dict]) -> Dict:
+        """Intelligently merge extracted data from multiple pages with priority weighting"""
+        
+        if not all_intelligence:
+            return {}
+        
+        # Initialize merged structure with best values from all pages
+        merged = {
+            'company_name': '',
+            'industry': '',
+            'business_model': '',
+            'company_description': '',
+            'target_market': '',
+            'key_services': [],
+            'location': '',
+            'founding_year': '',
+            'tech_stack': [],
+            'leadership_team': [],
+            'value_proposition': ''
+        }
+        
+        # Collect all values for each field with priority weighting
+        field_values = {key: [] for key in merged.keys()}
+        
+        # Sort pages by priority (higher priority first)
+        sorted_pages = sorted(
+            all_intelligence, 
+            key=lambda x: x.get('priority', 0.0), 
+            reverse=True
+        )
+        
+        # Process each page's intelligence with priority consideration
+        for page_data in sorted_pages:
+            intelligence = page_data.get('intelligence', {})
+            page_path = page_data.get('page_path', '')
+            page_priority = page_data.get('priority', 0.0)
+            
+            # Skip if raw extracted content
+            if 'raw_extracted' in intelligence:
+                continue
+                
+            # Collect values for each field with priority weighting
+            for field in merged.keys():
+                value = intelligence.get(field)
+                if value and value != 'unknown':
+                    if isinstance(value, list):
+                        # Extend lists with priority weighting
+                        weighted_values = [(v, page_priority) for v in value if v and v != 'unknown']
+                        field_values[field].extend(weighted_values)
+                    else:
+                        # Add individual values with priority weighting
+                        field_values[field].append((value, page_priority))
+        
+        # Select best values for each field using priority weighting
+        for field, weighted_values in field_values.items():
+            if not weighted_values:
+                continue
+                
+            if isinstance(merged[field], list):
+                # For lists, deduplicate and sort by priority, then by frequency
+                all_values = [v[0] for v in weighted_values]
+                value_scores = {}
+                
+                for value, priority in weighted_values:
+                    if value not in value_scores:
+                        value_scores[value] = []
+                    value_scores[value].append(priority)
+                
+                # Score by average priority and frequency
+                scored_values = [
+                    (value, sum(priorities) / len(priorities) * len(priorities))
+                    for value, priorities in value_scores.items()
+                ]
+                
+                # Sort by score and take top values
+                sorted_values = sorted(scored_values, key=lambda x: x[1], reverse=True)
+                unique_values = [v[0] for v in sorted_values]
+                merged[field] = unique_values[:10 if field == 'tech_stack' else 5]
+            else:
+                # For strings, prefer high priority and longer descriptions
+                best_value = max(
+                    weighted_values, 
+                    key=lambda x: (x[1], len(str(x[0])) if x[0] else 0)
+                )
+                merged[field] = best_value[0]
+        
+        return merged
+    
+    def _apply_intelligence_to_company(self, company_data: CompanyData, intelligence: Dict):
+        """Apply merged intelligence to company data object"""
+        
+        try:
+            # Apply structured extraction data directly
+            if intelligence.get('company_name') and intelligence['company_name'] != 'unknown':
+                # Don't override the original name unless it's significantly different
+                pass
+            
+            if intelligence.get('company_description') and intelligence['company_description'] != 'unknown':
+                company_data.company_description = intelligence['company_description']
+                
+            if intelligence.get('industry') and intelligence['industry'] != 'unknown':
+                company_data.industry = intelligence['industry']
+                
+            if intelligence.get('business_model') and intelligence['business_model'] != 'unknown':
+                company_data.business_model = intelligence['business_model']
+                
+            if intelligence.get('target_market') and intelligence['target_market'] != 'unknown':
+                company_data.target_market = intelligence['target_market']
+                
+            if intelligence.get('key_services') and intelligence['key_services']:
+                # Filter out 'unknown' values
+                services = [s for s in intelligence['key_services'] if s and s != 'unknown']
+                if services:
+                    company_data.key_services = services[:5]
+                    
+            if intelligence.get('location') and intelligence['location'] != 'unknown':
+                company_data.location = intelligence['location']
+                
+            if intelligence.get('founding_year') and intelligence['founding_year'] != 'unknown':
+                company_data.founding_year = intelligence['founding_year']
+                
+            if intelligence.get('tech_stack') and intelligence['tech_stack']:
+                # Filter out 'unknown' values
+                tech = [t for t in intelligence['tech_stack'] if t and t != 'unknown']
+                if tech:
+                    company_data.tech_stack = tech[:10]
+                    
+            if intelligence.get('leadership_team') and intelligence['leadership_team']:
+                # Filter out 'unknown' values
+                leaders = [l for l in intelligence['leadership_team'] if l and l != 'unknown']
+                if leaders:
+                    company_data.leadership_team = leaders[:5]
+                    
+            if intelligence.get('value_proposition') and intelligence['value_proposition'] != 'unknown':
+                company_data.value_proposition = intelligence['value_proposition']
+            
+        except Exception as e:
+            logger.warning(f"Error applying intelligence to company data: {e}")
+    
+    def _normalize_url(self, url: str) -> str:
+        """Normalize website URL"""
+        if not url:
+            raise ValueError("No website URL provided")
+        
+        if not url.startswith(('http://', 'https://')):
+            url = f"https://{url}"
+        
+        return url.rstrip('/')
+    
+    async def batch_scrape_companies(self, companies: List[CompanyData]) -> List[CompanyData]:
+        """Batch scrape multiple companies with rate limiting"""
+        
+        processed_companies = []
+        
+        for i, company in enumerate(companies):
+            logger.info(f"AI-processing company {i+1}/{len(companies)}: {company.name}")
+            
+            try:
+                processed_company = await self.scrape_company_comprehensive(company)
+                processed_companies.append(processed_company)
+                
+                # Rate limiting between companies
+                if i < len(companies) - 1:
+                    await asyncio.sleep(3)  # Longer delay for AI processing
+                    
+            except Exception as e:
+                logger.error(f"Failed to AI-process {company.name}: {e}")
+                company.scrape_status = "failed"
+                company.scrape_error = str(e)
+                processed_companies.append(company)
+        
+        return processed_companies
+
+
+# Synchronous wrapper for the main pipeline
+class CompanyWebScraper:
+    """Wrapper to maintain compatibility with existing pipeline"""
+    
+    def __init__(self, config: CompanyIntelligenceConfig):
+        self.config = config
+        self.crawl4ai_scraper = Crawl4AICompanyScraper(config)
+    
+    def scrape_company(self, company_data: CompanyData) -> CompanyData:
+        """Synchronous wrapper for AI-powered company scraping"""
+        
+        try:
+            # Run the async AI scraper
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(
+                self.crawl4ai_scraper.scrape_company_comprehensive(company_data)
+            )
+            
+            loop.close()
+            return result
+            
+        except Exception as e:
+            logger.error(f"Sync wrapper error for {company_data.name}: {e}")
+            company_data.scrape_status = "failed"
+            company_data.scrape_error = str(e)
+            return company_data
+    
+    def batch_scrape_companies(self, companies: List[CompanyData]) -> List[CompanyData]:
+        """Synchronous wrapper for batch AI scraping"""
+        
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(
+                self.crawl4ai_scraper.batch_scrape_companies(companies)
+            )
+            
+            loop.close()
+            return result
+            
+        except Exception as e:
+            logger.error(f"Batch AI scraping error: {e}")
+            return companies
