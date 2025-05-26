@@ -137,6 +137,71 @@ class ProcessingJob(BaseModel):
         return (self.processed_companies / self.total_companies) * 100
 
 
+class CompanySimilarity(BaseModel):
+    """Company similarity relationship data"""
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    original_company_id: str = Field(..., description="ID of the original company")
+    similar_company_id: str = Field(..., description="ID of the similar company")
+    original_company_name: str = Field(..., description="Name of original company")
+    similar_company_name: str = Field(..., description="Name of similar company")
+    
+    # Similarity metrics
+    similarity_score: float = Field(..., description="Overall similarity score (0-1)")
+    confidence: float = Field(..., description="Confidence in similarity assessment (0-1)")
+    
+    # Discovery metadata
+    discovery_method: str = Field(default="llm", description="How similarity was discovered")
+    validation_methods: List[str] = Field(default_factory=list, description="Methods used to validate similarity")
+    votes: List[str] = Field(default_factory=list, description="Validation methods that agreed")
+    
+    # Method-specific scores
+    structured_score: Optional[float] = Field(None, description="Structured comparison score")
+    embedding_score: Optional[float] = Field(None, description="Embedding similarity score")
+    llm_judge_score: Optional[float] = Field(None, description="LLM judge score")
+    
+    # Reasoning and details
+    reasoning: List[str] = Field(default_factory=list, description="Human-readable similarity reasons")
+    similarity_aspects: List[str] = Field(default_factory=list, description="Specific aspects that are similar")
+    
+    # Relationship direction
+    is_bidirectional: bool = Field(default=True, description="Whether similarity works both ways")
+    relationship_type: str = Field(default="competitor", description="Type of relationship: competitor, adjacent, aspirational")
+    
+    # Status and validation
+    validation_status: str = Field(default="pending", description="pending, validated, rejected")
+    validated_by: Optional[str] = Field(None, description="Who/what validated this similarity")
+    validated_at: Optional[datetime] = Field(None, description="When validation occurred")
+    
+    # Timestamps
+    discovered_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SimilarityCluster(BaseModel):
+    """Group of similar companies forming a cluster"""
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    cluster_name: str = Field(..., description="Human-readable cluster name")
+    company_ids: List[str] = Field(default_factory=list, description="Company IDs in this cluster")
+    company_names: List[str] = Field(default_factory=list, description="Company names for quick reference")
+    
+    # Cluster characteristics
+    primary_industry: Optional[str] = Field(None, description="Main industry of cluster")
+    business_model: Optional[str] = Field(None, description="Common business model")
+    average_company_size: Optional[str] = Field(None, description="Typical company size in cluster")
+    common_technologies: List[str] = Field(default_factory=list, description="Technologies used by multiple companies")
+    
+    # Cluster metrics
+    cohesion_score: float = Field(default=0.0, description="How similar companies in cluster are (0-1)")
+    cluster_size: int = Field(default=0, description="Number of companies in cluster")
+    
+    # Discovery metadata
+    clustering_method: str = Field(default="similarity_graph", description="How cluster was formed")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class CompanyIntelligenceConfig(BaseModel):
     """Configuration for the intelligence extraction system"""
     
