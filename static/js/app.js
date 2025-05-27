@@ -494,11 +494,53 @@ class TheodoreUI {
         };
         return text.replace(/[&<>"']/g, m => map[m]);
     }
+
+    async runDemo(companyName = null) {
+        const company = companyName || document.getElementById('companyName').value || 'Visterra';
+        const limit = document.getElementById('similarLimit').value || 3;
+
+        this.clearMessages();
+        
+        try {
+            const response = await fetch('/api/demo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    company_name: company,
+                    limit: parseInt(limit)
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.displayResults(data);
+                this.showSuccess(`Demo: Found ${data.total_found} similar companies for ${data.target_company}`);
+                if (data.demo_mode) {
+                    this.showInfo('This is demo data. Use "Discover Similar Companies" for real AI analysis.');
+                }
+            } else {
+                this.showError(data.error || 'Demo failed');
+            }
+
+        } catch (error) {
+            this.showError('Network error occurred. Please try again.');
+            console.error('Demo error:', error);
+        }
+    }
+}
+
+// Global function for demo button
+function runDemo() {
+    const ui = window.theodoreUI || new TheodoreUI();
+    ui.runDemo();
 }
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new TheodoreUI();
+    window.theodoreUI = new TheodoreUI();
 });
 
 // Add additional CSS animations

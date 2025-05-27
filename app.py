@@ -49,6 +49,61 @@ def index():
     """Main dashboard page"""
     return render_template('index.html')
 
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'pipeline_ready': pipeline is not None,
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
+@app.route('/api/demo', methods=['POST'])
+def demo_discovery():
+    """Demo endpoint with mock data for testing UI"""
+    data = request.get_json()
+    company_name = data.get('company_name', '').strip()
+    
+    if not company_name:
+        return jsonify({'error': 'Company name is required'}), 400
+    
+    # Mock results for UI testing
+    mock_results = [
+        {
+            'company_name': 'GoDaddy',
+            'similarity_score': 0.87,
+            'confidence': 0.92,
+            'relationship_type': 'Domain Services',
+            'reasoning': ['Domain registration services', 'Web hosting platform'],
+            'discovery_method': 'AI Analysis'
+        },
+        {
+            'company_name': 'Namecheap',
+            'similarity_score': 0.82,
+            'confidence': 0.88,
+            'relationship_type': 'Domain Registrar',
+            'reasoning': ['Domain marketplace', 'Competitive pricing model'],
+            'discovery_method': 'AI Analysis'
+        },
+        {
+            'company_name': 'Afternic',
+            'similarity_score': 0.75,
+            'confidence': 0.83,
+            'relationship_type': 'Domain Marketplace',
+            'reasoning': ['Domain sales platform', 'Secondary market focus'],
+            'discovery_method': 'AI Analysis'
+        }
+    ]
+    
+    return jsonify({
+        'success': True,
+        'target_company': company_name,
+        'results': mock_results[:int(data.get('limit', 3))],
+        'total_found': len(mock_results),
+        'timestamp': datetime.utcnow().isoformat(),
+        'demo_mode': True
+    })
+
 @app.route('/api/discover', methods=['POST'])
 def discover_similar():
     """API endpoint for similarity discovery"""
@@ -79,12 +134,21 @@ def discover_similar():
                     'suggestion': 'Try processing the company first or check the spelling'
                 }), 404
             
-            # Discover similarities
-            similarities = loop.run_until_complete(
-                pipeline.similarity_pipeline.discover_and_validate_similar_companies(
-                    company_data.id, limit=limit
+            # Discover similarities with timeout
+            try:
+                import asyncio
+                similarities = asyncio.wait_for(
+                    pipeline.similarity_pipeline.discover_and_validate_similar_companies(
+                        company_data.id, limit=limit
+                    ),
+                    timeout=30.0  # 30 second timeout
                 )
-            )
+                similarities = loop.run_until_complete(similarities)
+            except asyncio.TimeoutError:
+                return jsonify({
+                    'error': 'Discovery process timed out',
+                    'suggestion': 'The process is taking longer than expected. This may be due to web scraping delays.'
+                }), 408
             
             # Format results
             results = []
