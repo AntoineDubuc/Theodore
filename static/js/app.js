@@ -326,6 +326,10 @@ class TheodoreUI {
         const input = document.getElementById('companyName');
         const wrapper = input.closest('.input-wrapper');
         
+        // Ensure wrapper has proper positioning
+        wrapper.style.position = 'relative';
+        wrapper.style.zIndex = '10000';
+        
         let suggestions = document.getElementById('searchSuggestions');
         if (!suggestions) {
             suggestions = document.createElement('div');
@@ -570,17 +574,23 @@ style.textContent = `
         margin-top: 8px;
         max-height: 200px;
         overflow-y: auto;
-        z-index: 1000;
+        z-index: 9999;
         opacity: 0;
         transform: translateY(-10px);
         transition: all 0.3s ease;
         pointer-events: none;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     .search-suggestions.show {
         opacity: 1;
         transform: translateY(0);
         pointer-events: all;
+    }
+
+    .input-wrapper:has(.search-suggestions.show) {
+        z-index: 10000;
+        position: relative;
     }
 
     .suggestion-item {
