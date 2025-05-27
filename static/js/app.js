@@ -24,10 +24,19 @@ class TheodoreUI {
         const companyInput = document.getElementById('companyName');
         if (companyInput) {
             let searchTimeout;
+            let searchController = null; // To cancel previous requests
+            
             companyInput.addEventListener('input', (e) => {
                 clearTimeout(searchTimeout);
+                
+                // Cancel previous request if still pending
+                if (searchController) {
+                    searchController.abort();
+                }
+                
                 searchTimeout = setTimeout(() => {
-                    this.handleRealTimeSearch(e.target.value);
+                    searchController = new AbortController();
+                    this.handleRealTimeSearch(e.target.value, searchController);
                 }, 300);
             });
         }
@@ -177,23 +186,53 @@ class TheodoreUI {
         }
     }
 
-    async handleRealTimeSearch(query) {
+    async handleRealTimeSearch(query, controller = null) {
+        // Store current query to prevent showing stale results
+        this.currentSearchQuery = query.trim().toLowerCase();
+        
         if (!query.trim() || query.length < 2) {
             this.hideSearchSuggestions();
             return;
         }
 
         try {
-            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            const fetchOptions = {
+                method: 'GET'
+            };
+            
+            if (controller) {
+                fetchOptions.signal = controller.signal;
+            }
+            
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, fetchOptions);
             const data = await response.json();
 
+            // Only show results if the query hasn't changed while we were waiting
+            const currentInput = document.getElementById('companyName').value.trim().toLowerCase();
+            if (currentInput !== this.currentSearchQuery) {
+                return; // Query changed, ignore these results
+            }
+
             if (response.ok && data.results.length > 0) {
-                this.showSearchSuggestions(data.results);
+                // Filter results to only show matches that contain the search query
+                const filteredResults = data.results.filter(result => 
+                    result.name.toLowerCase().includes(this.currentSearchQuery)
+                );
+                
+                if (filteredResults.length > 0) {
+                    this.showSearchSuggestions(filteredResults);
+                } else {
+                    this.hideSearchSuggestions();
+                }
             } else {
                 this.hideSearchSuggestions();
             }
 
         } catch (error) {
+            if (error.name === 'AbortError') {
+                // Request was cancelled, this is expected
+                return;
+            }
             console.error('Search error:', error);
             this.hideSearchSuggestions();
         }
