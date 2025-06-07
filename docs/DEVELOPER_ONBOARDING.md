@@ -22,49 +22,50 @@ Theodore is an AI-powered company intelligence system designed to extract and an
 ## 🚀 Quick Project Overview
 
 ### What Theodore Does
-Theodore automates company intelligence extraction using AI-powered web scraping and semantic search. It can:
+Theodore transforms company research through intelligent AI-powered processing. It features:
 
-- **Extract** comprehensive business data from company websites using Crawl4AI
-- **Analyze** companies using multiple AI models (OpenAI GPT, AWS Bedrock)
-- **Store** data efficiently in vector databases (Pinecone) for similarity search
-- **Discover** similar companies through AI-powered recommendations
-- **Present** results through a beautiful modern web interface
+- **Intelligent Company Scraping**: 4-phase processing with dynamic link discovery, LLM page selection, parallel extraction, and AI aggregation
+- **Sales Intelligence Generation**: AI-generated 2-3 paragraph summaries optimized for sales teams
+- **Real-time Progress Tracking**: Live phase-by-phase status updates with detailed logging
+- **Multi-Source Discovery**: Combines Pinecone similarity search with AI-powered recommendations
+- **Modern Web Interface**: Beautiful gradient UI with progress visualization and live updates
 
 ### Business Value
-- Reduces manual company research from 5-6 hours per 10-12 companies to automated processing
-- Provides semantic search and clustering capabilities for large company datasets
-- Demonstrates technical feasibility for processing hundreds of companies efficiently
+- Transforms manual company research into automated AI-powered sales intelligence
+- Generates comprehensive business insights from dynamic content discovery (not hardcoded schemas)
+- Scales to process hundreds of companies with parallel processing and large context AI models
+- Provides real-time progress tracking for transparent processing workflows
 
 ### Current Implementation Status
-✅ **Working**: Beautiful web UI, real-time search, AI-powered data extraction  
-⚠️ **Partially Working**: Similarity discovery (currently using demo data)  
-🔧 **Needs Fix**: Real Pinecone integration, Pydantic configuration
+✅ **Production Ready**: Complete intelligent scraper with 4-phase processing  
+✅ **Fully Functional**: Real-time progress tracking and sales intelligence generation  
+✅ **End-to-End**: Web UI → Processing → Storage → Discovery working seamlessly
 
 ---
 
 ## 📊 Project Status & Current State
 
-### ✅ Successfully Accomplished
-- **AI-Powered Extraction**: Fixed Crawl4AI LLMExtractionStrategy ForwardRef issues
-- **Modern Web UI**: Beautiful gradient-styled interface with dark theme
-- **Real-time Search**: Company search suggestions with smart matching
-- **Vector Storage**: Optimized Pinecone storage with 5-field metadata approach
-- **Multi-Model AI**: Integration with OpenAI and AWS Bedrock
-- **Production Architecture**: Scalable, modular design ready for deployment
+### ✅ Major Technical Achievements
+- **Intelligent Company Scraper**: Complete 4-phase processing system with dynamic content discovery
+- **Real-time Progress Tracking**: Live phase-by-phase status updates with thread-safe JSON logging
+- **Enhanced Sales Intelligence**: AI-generated 2-3 paragraph summaries replacing hardcoded schemas
+- **Multi-Model Integration**: Gemini 2.5 Pro + AWS Bedrock + OpenAI working together seamlessly
+- **Production Web Interface**: Beautiful UI with progress visualization and database browser
+- **Vector Storage Enhancement**: Sales intelligence metadata optimized for discovery
 
-### ✅ Recently Resolved Issues (December 2025)
-1. **✅ Real AI Discovery**: Now uses Claude Sonnet 4 for actual similarity analysis (demo data removed)
-2. **✅ Pydantic Configuration**: Settings system working perfectly with environment variable loading
-3. **✅ Pinecone Connection**: Stable connection verified and working reliably  
-4. **✅ Environment Variables**: All API keys and credentials loading correctly
-5. **✅ BedrockClient Integration**: Missing methods added, AWS inference profiles configured
-6. **✅ Pipeline Initialization**: All components initialize successfully without errors
+### ✅ Latest Major Update (June 2025)
+1. **✅ Intelligent Scraper**: Complete overhaul from hardcoded schema extraction to dynamic LLM-driven processing
+2. **✅ Link Discovery**: Automated discovery of 670+ links per company (robots.txt, sitemaps, recursive)
+3. **✅ LLM Page Selection**: AI analyzes and selects most promising 5-10 pages for sales intelligence
+4. **✅ Parallel Processing**: 10 concurrent Crawl4AI extractions for maximum speed
+5. **✅ Large Context AI**: Gemini 2.5 Pro aggregates 1M+ tokens into focused sales summaries
+6. **✅ Real-time UI**: Live progress tracking, enhanced database browser, fixed all UI conflicts
 
-### 🎯 Current Status: Production Ready
-- **End-to-End Functionality**: ✅ Complete AI-powered company analysis pipeline working
-- **Web Interface**: ✅ Beautiful modern UI with real-time search and results
-- **AI Integration**: ✅ Claude Sonnet 4 providing real similarity analysis
-- **Vector Storage**: ✅ Optimized Pinecone integration with cost-effective metadata strategy
+### 🎯 Current Status: Advanced Production System
+- **Intelligent Processing**: ✅ Dynamic content discovery replacing manual schema approaches
+- **Sales Intelligence**: ✅ AI-generated business summaries optimized for sales teams
+- **Real-time Experience**: ✅ Live progress tracking with detailed phase-by-phase updates
+- **Multi-Source Discovery**: ✅ Enhanced similarity search combining Pinecone + AI recommendations
 
 ---
 
@@ -72,7 +73,11 @@ Theodore automates company intelligence extraction using AI-powered web scraping
 
 ### High-Level Flow
 ```
-User Input → Web UI → Flask API → Theodore Pipeline → AI Analysis → Vector Storage → Results Display
+User Input → Web UI → Intelligent Scraper → Real-time Progress → Sales Intelligence → Vector Storage → Discovery
+     ↓           ↓           ↓                    ↓                    ↓              ↓           ↓
+Company Name   Modern UI   4-Phase Process    Live Tracking      AI Summary      Pinecone    Enhanced
+ + Website     Progress    Link→Select→       JSON Logging      2-3 Paragraphs  Metadata    Similarity
+               Display     Extract→Aggregate                     Sales Focus                 Discovery
 ```
 
 ### Core Components

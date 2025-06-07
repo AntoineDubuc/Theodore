@@ -1,50 +1,52 @@
 # Theodore - AI-Powered Company Intelligence System
 
-🚀 **Transform company research into AI-powered intelligence with a beautiful modern web interface.**
+🚀 **Transform company research into AI-powered sales intelligence with an intelligent scraping pipeline.**
 
-Theodore provides an intelligent company analysis platform with real-time search, AI-powered discovery, and semantic similarity matching.
+Theodore provides an advanced company analysis platform with dynamic link discovery, LLM-driven page selection, parallel content extraction, and AI-generated sales intelligence.
 
 ## 🎯 Current Features
 
-- **Modern Web Interface**: Beautiful gradient-styled UI with real-time search at http://localhost:5001
-- **AI-Powered Web Scraping**: Uses Crawl4AI with LLMExtractionStrategy for intelligent content extraction  
-- **Multi-Model AI Analysis**: Integrates OpenAI GPT-4o-mini and AWS Bedrock for comprehensive analysis
-- **Smart Company Search**: Real-time suggestions with intelligent matching
-- **Vector Storage**: Optimized Pinecone integration for semantic search (72% cost reduction)
-- **Demo Mode**: Instant testing with mock data for development
+- **Intelligent Company Scraper**: 4-phase processing with link discovery, LLM page selection, parallel extraction, and AI aggregation
+- **Real-time Progress Tracking**: Live phase-by-phase status updates with detailed logging
+- **Enhanced Sales Intelligence**: AI-generated 2-3 paragraph summaries optimized for sales teams
+- **Modern Web Interface**: Beautiful gradient-styled UI with progress visualization at http://localhost:5001
+- **Multi-Source Discovery**: Combines Pinecone similarity search with AI-powered recommendations
+- **Smart Database Browser**: View companies with sales intelligence status and metadata
 
-## 🏗️ Architecture
+## 🏗️ Intelligent Scraper Architecture
 
 ```
-Survey Data → AI Web Scraping → Structured Extraction → Vector Storage → Semantic Search
-     ↓              ↓                    ↓               ↓              ↓
-   CSV File    Crawl4AI +           Pydantic         Pinecone      Company Clusters
-              OpenAI GPT          Validation        5-Field        & Insights
-                                                   Metadata
+Company Input → Link Discovery → LLM Page Selection → Parallel Extraction → AI Aggregation → Sales Intelligence
+      ↓              ↓                    ↓                    ↓                   ↓                ↓
+  Name + URL    robots.txt +       Gemini/Claude         10 Concurrent         Gemini 2.5 Pro    2-3 Paragraph
+               sitemaps.xml        Page Analysis          Crawl4AI             Content Fusion     Summary
+                +670 links          Select Best           Extractions          (1M tokens)       Optimized
+                                   5-10 pages                                                   for Sales
 ```
 
 ## 📊 Current Status
 
-### ✅ Working Features
-- **Web Interface**: Modern UI with gradient styling and real-time search
-- **Company Search**: Smart suggestions with database-driven results  
-- **Demo Mode**: Instant testing with mock similarity data
-- **AI Components**: Individual AI extraction and analysis modules
-- **Configuration**: Pydantic-based settings management
+### ✅ Production Ready Features
+- **Intelligent Company Processing**: Complete 4-phase scraper with real-time progress tracking
+- **Enhanced Sales Intelligence**: AI-generated summaries replacing hardcoded schemas
+- **Modern Web Interface**: Beautiful UI with live progress visualization
+- **Database Browser**: View and manage companies with sales intelligence status
+- **Multi-Model Integration**: Gemini 2.5 Pro + AWS Bedrock + OpenAI working together
+- **Vector Storage**: Optimized Pinecone integration with sales intelligence metadata
 
-### ✅ Recently Fixed (December 2025)
-- **Real AI Discovery**: ✅ Now uses Claude Sonnet 4 for actual similarity analysis
-- **Pipeline Integration**: ✅ All components properly connected and initialized
-- **Bedrock Configuration**: ✅ Fixed model access and inference profile usage
-- **Environment Variables**: ✅ All services properly configured and loading
-- **End-to-End Functionality**: ✅ Complete pipeline working from web UI to AI analysis
+### ✅ Latest Major Update (June 2025)
+- **Intelligent Scraper**: ✅ Complete overhaul from hardcoded extraction to dynamic LLM-driven processing
+- **Real-time Progress**: ✅ Live 4-phase tracking with detailed logging and UI updates
+- **Enhanced Discovery**: ✅ Multi-source similarity discovery (Pinecone + AI recommendations)
+- **Sales Intelligence**: ✅ AI-generated 2-3 paragraph summaries optimized for sales teams
+- **UI Integration**: ✅ Fixed database browser, progress tracking, and result display
 
-### 🎯 Current Capabilities
-- **Modern Web Interface**: Beautiful gradient UI with real-time search
-- **Real AI-Powered Discovery**: Uses AWS Bedrock Claude Sonnet 4 for company analysis
-- **Vector Storage**: Optimized Pinecone integration with 72% cost reduction
-- **Smart Search**: Intelligent company suggestions with live results
-- **Production Ready**: All critical systems functional and tested
+### 🎯 Technical Achievements
+- **Dynamic Link Discovery**: Automatically discovers 670+ links per company (robots.txt, sitemaps, recursive)
+- **LLM Page Selection**: AI chooses most promising 5-10 pages for sales intelligence
+- **Parallel Processing**: 10 concurrent Crawl4AI extractions for speed
+- **Large Context Processing**: Gemini 2.5 Pro handles 1M+ tokens for content aggregation
+- **Production Architecture**: Async processing, error handling, progress tracking, and user feedback
 
 ## 🚀 Quick Start
 
@@ -103,19 +105,19 @@ result = pipeline.process_single_company("Company Name", "https://company.com")
 
 ## ✨ Key Features
 
-### 🤖 AI-Powered Extraction
+### 🧠 Intelligent Company Scraper
 
-- **Schema-Based Extraction**: Structured JSON output using Pydantic models
-- **Page-Priority System**: Dynamic extraction strategies based on page importance
-- **Smart Chunking**: Adaptive token optimization (800-2500 tokens per page type)
-- **Cost Optimization**: 33% reduction in extraction costs through intelligent parameter tuning
+- **Dynamic Link Discovery**: Crawls robots.txt, sitemaps.xml, and recursive page discovery
+- **LLM Page Selection**: AI analyzes and selects most promising pages for sales intelligence
+- **Parallel Content Extraction**: 10 concurrent Crawl4AI processes for maximum speed
+- **AI Content Aggregation**: Gemini 2.5 Pro processes up to 1M tokens for comprehensive summaries
 
-### 🔍 Intelligent Web Scraping
+### 🎯 Sales Intelligence Generation
 
-- **Multi-Page Crawling**: Homepage, about, services, team, contact pages
-- **Content Filtering**: CSS selectors target main content, exclude navigation/ads
-- **Caching Strategy**: Company-specific sessions reduce redundant API calls
-- **Error Recovery**: Graceful degradation with comprehensive error handling
+- **AI-Generated Summaries**: 2-3 focused paragraphs optimized for sales teams
+- **Dynamic Content**: No hardcoded schemas - LLM decides what's important
+- **Business Context**: Includes market positioning, value propositions, and competitive advantages
+- **Real-time Progress**: Live 4-phase tracking with detailed logging and status updates
 
 ### 📊 Vector Storage & Search
 
@@ -126,19 +128,19 @@ result = pipeline.process_single_company("Company Name", "https://company.com")
 
 ## 📈 Performance Metrics
 
-- **Extraction Accuracy**: 85-95% (vs 40-60% with regex)
-- **Processing Speed**: 11 pages in ~77 seconds (with caching)
-- **Cost Efficiency**: $0.08-0.12 per company (down from $0.12-0.18)
-- **Storage Optimization**: 92% reduction in vector database costs
-- **Success Rate**: 95% completion rate with error recovery
+- **Link Discovery**: 670+ links discovered per company (robots.txt + sitemaps + recursive)
+- **Content Quality**: 2-3 paragraph AI summaries vs previous hardcoded 15+ fields
+- **Processing Speed**: Parallel extraction with 10 concurrent requests
+- **Large Context**: Gemini 2.5 Pro handles 1M+ token aggregation
+- **Success Rate**: End-to-end processing with comprehensive error handling
 
 ## 🛠️ Technical Stack
 
-- **Web Scraping**: Crawl4AI with LLMExtractionStrategy
-- **AI Models**: OpenAI GPT-4o-mini, AWS Bedrock Nova Premier
-- **Vector Database**: Pinecone serverless with optimized metadata
-- **Data Validation**: Pydantic v2 with comprehensive schemas
-- **Async Processing**: Python AsyncIO with intelligent rate limiting
+- **Intelligent Scraping**: Custom 4-phase pipeline with Crawl4AI integration
+- **AI Models**: Gemini 2.5 Pro (1M context), AWS Bedrock Claude Sonnet 4, OpenAI GPT-4o-mini
+- **Vector Database**: Pinecone serverless with sales intelligence metadata
+- **Progress Tracking**: Real-time JSON-based logging with thread-safe updates
+- **Web Interface**: Flask + modern CSS/JS with gradient design and live updates
 
 ## 📁 Project Structure
 
@@ -148,10 +150,12 @@ Theodore/
 ├── src/                       # 🔧 Core application code
 │   ├── main_pipeline.py       # Main orchestration
 │   ├── models.py              # Pydantic data models  
-│   ├── crawl4ai_scraper.py    # AI-powered web scraping
+│   ├── intelligent_company_scraper.py # 🧠 4-phase intelligent scraper
+│   ├── intelligent_url_discovery.py  # 🔍 Dynamic link discovery
+│   ├── progress_logger.py     # 📊 Real-time progress tracking
 │   ├── bedrock_client.py      # AWS AI integration
 │   ├── pinecone_client.py     # Optimized vector storage
-│   ├── company_discovery.py   # AI company discovery
+│   ├── similarity_engine.py   # Enhanced similarity calculations
 │   └── similarity_pipeline.py # Similarity processing
 ├── templates/                 # 🎨 Web UI templates
 ├── static/                    # 📱 CSS, JavaScript, assets
