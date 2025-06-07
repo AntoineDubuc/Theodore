@@ -75,10 +75,10 @@ class PineconeClient:
             return False
         
         try:
-            # Prepare complete metadata with all company data
-            metadata = self._prepare_complete_metadata(company)
+            # Prepare optimized metadata for filtering
+            metadata = self._prepare_optimized_metadata(company)
             
-            # Upsert vector with complete company data in metadata
+            # Upsert vector with optimized metadata (full data is in vector content)
             self.index.upsert(
                 vectors=[{
                     "id": company.id,
@@ -108,8 +108,8 @@ class PineconeClient:
                     logger.warning(f"Skipping {company.name} - no embedding")
                     continue
                 
-                # Prepare complete metadata
-                metadata = self._prepare_complete_metadata(company)
+                # Prepare optimized metadata
+                metadata = self._prepare_optimized_metadata(company)
                 
                 vectors.append({
                     "id": company.id,
@@ -128,8 +128,22 @@ class PineconeClient:
         return successful_upserts
     
     def find_similar_companies(self, company_id: str, top_k: int = 10, 
-                             min_similarity: float = 0.7) -> List[Dict[str, Any]]:
-        """Find companies similar to the given company"""
+                             min_similarity: float = 0.7, 
+                             industry_filter: str = None,
+                             business_model_filter: str = None,
+                             company_size_filter: List[str] = None,
+                             use_enhanced: bool = True) -> List[Dict[str, Any]]:
+        """Find companies similar to the given company with optional filtering"""
+        
+        if use_enhanced:
+            return self.find_similar_companies_enhanced(
+                company_id, 
+                similarity_threshold=min_similarity,
+                top_k=top_k,
+                industry_filter=industry_filter
+            )
+        
+        # Fallback to original vector similarity approach
         try:
             # Get the company's vector
             fetch_response = self.index.fetch(ids=[company_id])
@@ -140,10 +154,28 @@ class PineconeClient:
             
             company_vector = fetch_response.vectors[company_id].values
             
+            # Build filter query
+            filter_conditions = []
+            if industry_filter:
+                filter_conditions.append({"industry": {"$eq": industry_filter}})
+            if business_model_filter:
+                filter_conditions.append({"business_model": {"$eq": business_model_filter}})
+            if company_size_filter:
+                filter_conditions.append({"company_size": {"$in": company_size_filter}})
+            
+            # Construct final filter
+            filter_query = None
+            if filter_conditions:
+                if len(filter_conditions) == 1:
+                    filter_query = filter_conditions[0]
+                else:
+                    filter_query = {"$and": filter_conditions}
+            
             # Query for similar companies
             query_response = self.index.query(
                 vector=company_vector,
                 top_k=top_k + 1,  # +1 to exclude self
+                filter=filter_query,
                 include_metadata=True,
                 include_values=False
             )
@@ -170,99 +202,105 @@ class PineconeClient:
             return []
     
     def find_companies_by_industry(self, industry: str, top_k: int = 50) -> List[Dict[str, Any]]:
-        """Find companies in a specific industry"""
+        """Find companies in a specific industry using optimized filtering"""
         try:
+            # Use the new filtering approach without dummy vectors
+            return self.find_companies_by_filters(
+                filters={"industry": {"$eq": industry}},
+                top_k=top_k
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to find companies in industry {industry}: {e}")
+            return []
+    
+    def find_companies_by_filters(self, filters: Dict[str, Any], top_k: int = 50) -> List[Dict[str, Any]]:
+        """Find companies using metadata filters without dummy vectors"""
+        try:
+            # Use scan or list operations if available, otherwise minimal vector query
+            # For now, we'll use a minimal vector query with filters
             query_response = self.index.query(
-                vector=[0.0] * self.config.pinecone_dimension,  # Dummy vector
+                vector=[0.0] * self.config.pinecone_dimension,  # Minimal dummy vector
                 top_k=top_k,
+                filter=filters,
                 include_metadata=True,
-                include_values=False,
-                filter={"industry": {"$eq": industry}}
+                include_values=False
             )
             
             companies = []
             for match in query_response.matches:
                 companies.append({
                     "company_id": match.id,
-                    "metadata": match.metadata
+                    "metadata": match.metadata,
+                    "score": match.score
                 })
             
             return companies
             
         except Exception as e:
-            logger.error(f"Failed to find companies in industry {industry}: {e}")
+            logger.error(f"Failed to find companies with filters {filters}: {e}")
             return []
     
     def find_company_by_name(self, company_name: str) -> Optional[CompanyData]:
-        """Find a company by name in the Pinecone index"""
+        """Find a company by name using optimized filtering"""
         try:
-            # Search with dummy vector and name filter
-            query_response = self.index.query(
-                vector=[0.0] * self.config.pinecone_dimension,  # Dummy vector
-                top_k=50,  # Search more results to find exact name match
-                include_metadata=True,
-                include_values=True,
-                filter={"company_name": {"$eq": company_name}}
+            # Search with exact name filter first
+            companies = self.find_companies_by_filters(
+                filters={"company_name": {"$eq": company_name}},
+                top_k=10
             )
             
-            if not query_response.matches:
-                # Try partial name matching if exact match fails
-                query_response = self.index.query(
-                    vector=[0.0] * self.config.pinecone_dimension,
-                    top_k=10,
-                    include_metadata=True,
-                    include_values=True
-                )
-                
-                # Look for partial matches in company names
-                for match in query_response.matches:
-                    stored_name = match.metadata.get('company_name', '').lower()
-                    search_name = company_name.lower()
-                    if search_name in stored_name or stored_name in search_name:
-                        return self._vector_match_to_company_data(match)
-                
-                return None
+            if companies:
+                # Convert first match to CompanyData
+                match_data = companies[0]
+                return self._metadata_to_company_data(match_data["company_id"], match_data["metadata"])
             
-            # Return the first exact match
-            match = query_response.matches[0]
-            return self._vector_match_to_company_data(match)
+            # Try partial matching if exact fails
+            # Get a broader set and filter client-side
+            all_companies = self.find_companies_by_filters(filters={}, top_k=100)
+            
+            search_name = company_name.lower()
+            for company_data in all_companies:
+                stored_name = company_data["metadata"].get('company_name', '').lower()
+                if search_name in stored_name or stored_name in search_name:
+                    return self._metadata_to_company_data(company_data["company_id"], company_data["metadata"])
+                
+            return None
             
         except Exception as e:
             logger.error(f"Failed to find company by name {company_name}: {e}")
             return None
     
-    def _vector_match_to_company_data(self, match) -> CompanyData:
-        """Convert a Pinecone vector match to CompanyData object"""
-        metadata = match.metadata
-        
-        # Helper function to safely get metadata values
-        def safe_get_meta(meta_dict: dict, key: str, default=None):
-            value = meta_dict.get(key, default)
-            # Handle list fields that might be stored as strings
-            if key in ['tech_stack', 'key_services', 'pain_points'] and isinstance(value, str):
-                try:
-                    import json
-                    return json.loads(value)
-                except:
-                    return value.split(', ') if value else []
-            return value
-        
+    def _metadata_to_company_data(self, company_id: str, metadata: Dict[str, Any]) -> CompanyData:
+        """Convert metadata to CompanyData object using enhanced similarity fields"""
         company = CompanyData(
-            id=match.id,
-            name=safe_get_meta(metadata, 'company_name', ''),
-            website=safe_get_meta(metadata, 'website', ''),
-            industry=safe_get_meta(metadata, 'industry'),
-            business_model=safe_get_meta(metadata, 'business_model'),
-            company_size=safe_get_meta(metadata, 'company_size'),
-            target_market=safe_get_meta(metadata, 'target_market'),
-            ai_summary=safe_get_meta(metadata, 'ai_summary', ''),
-            has_chat_widget=safe_get_meta(metadata, 'has_chat_widget', False),
-            has_forms=safe_get_meta(metadata, 'has_forms', False),
-            scrape_status=safe_get_meta(metadata, 'scrape_status', 'unknown'),
-            tech_stack=safe_get_meta(metadata, 'tech_stack', []),
-            key_services=safe_get_meta(metadata, 'key_services', []),
-            pain_points=safe_get_meta(metadata, 'pain_points', [])
+            id=company_id,
+            name=metadata.get('company_name', ''),
+            website=metadata.get('website', ''),  # Add website field - required by model
+            industry=metadata.get('industry', ''),
+            business_model=metadata.get('business_model', ''),
+            target_market=metadata.get('target_market', ''),
+            company_size=metadata.get('company_size', ''),
+            funding_status=metadata.get('funding_stage', '')
         )
+        
+        # Add similarity-specific fields
+        company.company_stage = metadata.get('company_stage')
+        company.tech_sophistication = metadata.get('tech_sophistication')
+        company.business_model_type = metadata.get('business_model_type')
+        company.geographic_scope = metadata.get('geographic_scope')
+        company.decision_maker_type = metadata.get('decision_maker_type')
+        
+        # Add confidence scores
+        company.stage_confidence = metadata.get('stage_confidence')
+        company.tech_confidence = metadata.get('tech_confidence')
+        company.industry_confidence = metadata.get('industry_confidence')
+        
+        return company
+    
+    def _vector_match_to_company_data(self, match) -> CompanyData:
+        """Convert a Pinecone vector match to CompanyData object using optimized metadata"""
+        company = self._metadata_to_company_data(match.id, match.metadata)
         
         # Set embedding if available
         if hasattr(match, 'values') and match.values:
@@ -361,81 +399,124 @@ class PineconeClient:
             logger.error(f"Failed to get index stats: {e}")
             return {}
     
-    def _prepare_complete_metadata(self, company: CompanyData) -> Dict[str, Any]:
-        """Prepare complete company data as Pinecone metadata"""
+    def _prepare_optimized_metadata(self, company: CompanyData) -> Dict[str, Any]:
+        """Prepare enhanced metadata for similarity-based filtering"""
         
-        def safe_str(value) -> str:
-            """Convert value to string, handling None and complex types"""
-            if value is None:
-                return ""
-            elif isinstance(value, (list, dict)):
-                return json.dumps(value) if value else ""
-            elif hasattr(value, 'isoformat'):  # datetime objects
-                return value.isoformat()
-            else:
-                return str(value)
+        def safe_get(value, default="Unknown"):
+            """Safely get value with default"""
+            return value if value and value.strip() else default
         
-        def safe_get_attr(obj, attr_name: str, default=""):
-            """Safely get attribute from object"""
-            return safe_str(getattr(obj, attr_name, default))
-        
+        # Enhanced metadata with similarity metrics and sales intelligence
         metadata = {
-            # Core identifiers
-            "company_name": safe_get_attr(company, "name"),
-            "website": safe_get_attr(company, "website"),
+            # Core identification
+            "company_name": safe_get(company.name),
+            "website": safe_get(company.website),
             
-            # Business fundamentals
-            "industry": safe_get_attr(company, "industry"),
-            "business_model": safe_get_attr(company, "business_model"),
-            "target_market": safe_get_attr(company, "target_market"),
-            "company_description": safe_get_attr(company, "company_description"),
-            "value_proposition": safe_get_attr(company, "value_proposition"),
+            # Sales intelligence (key addition for new scraper)
+            "company_description": safe_get(company.company_description, ""),
+            "has_description": bool(company.company_description and company.company_description.strip()),
             
-            # Company details
-            "founding_year": safe_get_attr(company, "founding_year"),
-            "location": safe_get_attr(company, "location"),
-            "employee_count_range": safe_get_attr(company, "employee_count_range"),
-            "company_culture": safe_get_attr(company, "company_culture"),
-            "company_size": safe_get_attr(company, "company_size"),
+            # Processing metadata
+            "pages_crawled": company.pages_crawled if company.pages_crawled else [],
+            "crawl_duration": company.crawl_duration or 0,
+            "scrape_status": safe_get(company.scrape_status, "unknown"),
+            "last_updated": company.last_updated.isoformat() if company.last_updated else "",
             
-            # Services and technology
-            "key_services": safe_get_attr(company, "key_services"),
-            "tech_stack": safe_get_attr(company, "tech_stack"),
-            "competitive_advantages": safe_get_attr(company, "competitive_advantages"),
-            "pain_points": safe_get_attr(company, "pain_points"),
+            # Similarity dimensions
+            "company_stage": safe_get(company.company_stage),
+            "tech_sophistication": safe_get(company.tech_sophistication), 
+            "industry": safe_get(company.industry),
+            "business_model_type": safe_get(company.business_model_type),
+            "geographic_scope": safe_get(company.geographic_scope),
+            "decision_maker_type": safe_get(company.decision_maker_type),
             
-            # Team and leadership
-            "leadership_team": safe_get_attr(company, "leadership_team"),
-            
-            # Contact information
-            "contact_info": safe_get_attr(company, "contact_info"),
-            "social_media": safe_get_attr(company, "social_media"),
-            
-            # Crawling metadata
-            "scrape_status": safe_get_attr(company, "scrape_status"),
-            "scrape_error": safe_get_attr(company, "scrape_error"),
-            "crawl_depth": safe_get_attr(company, "crawl_depth"),
-            "crawl_duration": safe_get_attr(company, "crawl_duration"),
-            "pages_crawled": safe_get_attr(company, "pages_crawled"),
-            "created_at": safe_get_attr(company, "created_at"),
-            
-            # Technical features
-            "has_chat_widget": safe_get_attr(company, "has_chat_widget"),
-            "has_forms": safe_get_attr(company, "has_forms"),
-            
-            # Additional fields that might exist
-            "funding_status": safe_get_attr(company, "funding_status"),
-            "recent_news": safe_get_attr(company, "recent_news"),
-            "certifications": safe_get_attr(company, "certifications"),
-            "partnerships": safe_get_attr(company, "partnerships"),
-            "awards": safe_get_attr(company, "awards")
+            # Legacy fields (for compatibility)
+            "business_model": safe_get(company.business_model),
+            "target_market": safe_get(company.target_market),
+            "company_size": safe_get(company.company_size or company.employee_count_range)
         }
         
-        # Remove empty values to optimize storage
-        return {k: v for k, v in metadata.items() if v}
+        # Add confidence scores if available
+        confidence_fields = ['stage_confidence', 'tech_confidence', 'industry_confidence']
+        for field in confidence_fields:
+            if hasattr(company, field) and getattr(company, field) is not None:
+                metadata[field] = getattr(company, field)
+        
+        return metadata
+    
+    def _prepare_vector_content(self, company: CompanyData) -> str:
+        """Prepare comprehensive company data as text content for vector embedding"""
+        
+        def safe_join(items, separator=", "):
+            """Safely join list items"""
+            if not items:
+                return ""
+            if isinstance(items, str):
+                return items
+            return separator.join(str(item) for item in items if item)
+        
+        def safe_get(value, default=""):
+            """Safely get value"""
+            return str(value).strip() if value else default
+        
+        # Create comprehensive text representation
+        content_parts = [
+            f"Company Name: {safe_get(company.name)}",
+            f"Website: {safe_get(company.website)}",
+            f"Industry: {safe_get(company.industry)}",
+            f"Business Model: {safe_get(company.business_model)}",
+            f"Target Market: {safe_get(company.target_market)}",
+            f"Company Size: {safe_get(company.company_size or company.employee_count_range)}",
+        ]
+        
+        # Add detailed descriptions
+        if company.company_description:
+            content_parts.append(f"Description: {safe_get(company.company_description)}")
+        
+        if company.value_proposition:
+            content_parts.append(f"Value Proposition: {safe_get(company.value_proposition)}")
+        
+        # Add services and technology
+        if company.key_services:
+            content_parts.append(f"Key Services: {safe_join(company.key_services)}")
+            
+        if company.tech_stack:
+            content_parts.append(f"Technology Stack: {safe_join(company.tech_stack)}")
+        
+        # Add competitive advantages
+        if company.competitive_advantages:
+            content_parts.append(f"Competitive Advantages: {safe_join(company.competitive_advantages)}")
+        
+        # Add leadership and culture
+        if company.leadership_team:
+            content_parts.append(f"Leadership Team: {safe_join(company.leadership_team)}")
+            
+        if company.company_culture:
+            content_parts.append(f"Company Culture: {safe_get(company.company_culture)}")
+        
+        # Add location and other details
+        if company.location:
+            content_parts.append(f"Location: {safe_get(company.location)}")
+            
+        if company.founding_year:
+            content_parts.append(f"Founded: {safe_get(company.founding_year)}")
+        
+        # Add pain points if available
+        if company.pain_points:
+            content_parts.append(f"Pain Points Addressed: {safe_join(company.pain_points)}")
+        
+        # Add AI summary if available
+        if company.ai_summary:
+            content_parts.append(f"AI Analysis: {safe_get(company.ai_summary)}")
+        
+        return "\n".join(content_parts)
     
     def get_full_company_data(self, company_id: str) -> Optional[CompanyData]:
-        """Retrieve complete company data from Pinecone metadata"""
+        """
+        Retrieve company data from Pinecone optimized metadata.
+        Note: Full company details are now embedded in the vector content, 
+        so this only returns the basic fields stored in metadata.
+        """
         try:
             logger.info(f"Fetching company {company_id} from Pinecone...")
             fetch_response = self.index.fetch(ids=[company_id])
@@ -446,82 +527,29 @@ class PineconeClient:
                 logger.info(f"Available vector IDs: {list(fetch_response.vectors.keys())}")
                 return None
             
-            metadata = fetch_response.vectors[company_id].metadata
+            vector_data = fetch_response.vectors[company_id]
+            metadata = vector_data.metadata
             
-            # Convert metadata back to CompanyData
-            # Parse JSON strings back to lists/dicts where needed
-            def parse_value(key: str, value: str):
-                if not value:
-                    return None
-                
-                # Lists that were JSON encoded
-                if key in ['key_services', 'tech_stack', 'competitive_advantages', 'leadership_team', 'pages_crawled']:
-                    try:
-                        parsed = json.loads(value)
-                        return parsed if isinstance(parsed, list) else None
-                    except json.JSONDecodeError:
-                        return None
-                
-                # Dicts that were JSON encoded
-                elif key in ['contact_info']:
-                    try:
-                        parsed = json.loads(value)
-                        return parsed if isinstance(parsed, dict) else None
-                    except json.JSONDecodeError:
-                        return None
-                
-                # Integers
-                elif key in ['founding_year', 'crawl_depth']:
-                    try:
-                        return int(value)
-                    except (ValueError, TypeError):
-                        return None
-                
-                # Floats
-                elif key in ['crawl_duration']:
-                    try:
-                        return float(value)
-                    except (ValueError, TypeError):
-                        return None
-                
-                # Booleans
-                elif key in ['has_chat_widget', 'has_forms']:
-                    return value.lower() in ['true', '1', 'yes']
-                
-                # Datetime
-                elif key in ['created_at']:
-                    try:
-                        from datetime import datetime
-                        return datetime.fromisoformat(value)
-                    except ValueError:
-                        return None
-                
-                # Everything else as string
-                else:
-                    return value
+            # Build CompanyData object with available metadata
+            company = CompanyData(
+                id=company_id,
+                name=metadata.get('company_name', ''),
+                website=metadata.get('website', ''),  # Add website field - required by model
+                industry=metadata.get('industry', ''),
+                business_model=metadata.get('business_model', ''),
+                target_market=metadata.get('target_market', ''),
+                company_size=metadata.get('company_size', ''),
+                embedding=list(vector_data.values) if vector_data.values else None
+            )
             
-            # Build CompanyData object
-            company_dict = {
-                'id': company_id,
-                'name': metadata.get('company_name', ''),
-                'website': metadata.get('website', ''),
-                'embedding': fetch_response.vectors[company_id].values
-            }
+            # Add funding stage if available
+            if 'funding_stage' in metadata:
+                company.funding_status = metadata['funding_stage']
             
-            # Add all other fields
-            for key, value in metadata.items():
-                if key == 'company_name':
-                    continue  # Already mapped to 'name'
-                
-                # Map metadata keys to CompanyData fields
-                field_name = key
-                parsed_value = parse_value(key, value)
-                company_dict[field_name] = parsed_value
-            
-            return CompanyData(**company_dict)
+            return company
             
         except Exception as e:
-            logger.error(f"Failed to load full data for {company_id}: {e}")
+            logger.error(f"Failed to load data for {company_id}: {e}")
             return None
     
     def search_companies_by_text(self, query_text: str, embedding_function, 
@@ -652,7 +680,7 @@ class PineconeClient:
             logger.error(f"Failed to add similarity to company metadata: {e}")
             return False
     
-    def find_similar_companies(self, company_id: str, limit: int = 10) -> List['CompanySimilarity']:
+    def get_stored_similarities(self, company_id: str, limit: int = 10) -> List['CompanySimilarity']:
         """
         Find companies similar to the given company ID
         """
@@ -724,3 +752,175 @@ class PineconeClient:
         Get company data by ID (alias for get_full_company_data)
         """
         return self.get_full_company_data(company_id)
+    
+    def find_similar_companies_enhanced(self, company_id: str, 
+                                     similarity_threshold: float = 0.7,
+                                     top_k: int = 10,
+                                     stage_filter: str = None,
+                                     tech_filter: str = None,
+                                     industry_filter: str = None) -> List[Dict[str, Any]]:
+        """Find similar companies using enhanced similarity algorithm"""
+        try:
+            from src.similarity_engine import SimilarityEngine
+            
+            # Get target company
+            target_company = self.get_full_company_data(company_id)
+            if not target_company:
+                logger.warning(f"Target company {company_id} not found")
+                return []
+            
+            # Build filter query
+            filter_conditions = []
+            if stage_filter:
+                filter_conditions.append({"company_stage": {"$eq": stage_filter}})
+            if tech_filter:
+                filter_conditions.append({"tech_sophistication": {"$eq": tech_filter}})
+            if industry_filter:
+                filter_conditions.append({"industry": {"$eq": industry_filter}})
+            
+            filter_query = None
+            if filter_conditions:
+                if len(filter_conditions) == 1:
+                    filter_query = filter_conditions[0]
+                else:
+                    filter_query = {"$and": filter_conditions}
+            
+            # Get candidate companies
+            query_response = self.index.query(
+                vector=[0.0] * self.config.pinecone_dimension,  # Dummy vector for metadata search
+                top_k=min(top_k * 5, 100),  # Get more candidates for similarity filtering
+                filter=filter_query,
+                include_metadata=True,
+                include_values=False
+            )
+            
+            # Convert to CompanyData objects
+            candidate_companies = []
+            for match in query_response.matches:
+                if match.id != company_id:  # Exclude self
+                    company = self._metadata_to_company_data(match.id, match.metadata)
+                    candidate_companies.append(company)
+            
+            # Calculate similarities using enhanced algorithm
+            similarity_engine = SimilarityEngine()
+            similar_companies = similarity_engine.find_similar_companies(
+                target_company, 
+                candidate_companies, 
+                threshold=similarity_threshold,
+                limit=top_k
+            )
+            
+            # Format results
+            results = []
+            for company, similarity_result in similar_companies:
+                results.append({
+                    "company_id": company.id,
+                    "company_name": company.name,
+                    "similarity_score": similarity_result['overall_similarity'],
+                    "confidence": similarity_result['overall_confidence'],
+                    "explanation": similarity_result['explanation'],
+                    "dimension_scores": similarity_result['dimension_similarities'],
+                    "metadata": {
+                        "company_stage": company.company_stage,
+                        "tech_sophistication": company.tech_sophistication,
+                        "industry": company.industry,
+                        "business_model_type": company.business_model_type,
+                        "geographic_scope": company.geographic_scope
+                    }
+                })
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Enhanced similarity search failed for {company_id}: {e}")
+            return []
+    
+    def get_similarity_insights(self, company_id: str) -> Dict[str, Any]:
+        """Get similarity insights and recommendations for a company"""
+        try:
+            company = self.get_full_company_data(company_id)
+            if not company:
+                return {"error": "Company not found"}
+            
+            # Get similar companies
+            similar_companies = self.find_similar_companies_enhanced(company_id, top_k=5)
+            
+            # Analyze patterns
+            if similar_companies:
+                # Extract common characteristics
+                stages = [comp["metadata"]["company_stage"] for comp in similar_companies]
+                tech_levels = [comp["metadata"]["tech_sophistication"] for comp in similar_companies]
+                industries = [comp["metadata"]["industry"] for comp in similar_companies]
+                
+                common_stage = max(set(stages), key=stages.count) if stages else "unknown"
+                common_tech = max(set(tech_levels), key=tech_levels.count) if tech_levels else "unknown"
+                common_industry = max(set(industries), key=industries.count) if industries else "unknown"
+                
+                insights = {
+                    "target_company": {
+                        "id": company.id,
+                        "name": company.name,
+                        "stage": company.company_stage,
+                        "tech_level": company.tech_sophistication,
+                        "industry": company.industry
+                    },
+                    "similar_companies": similar_companies,
+                    "patterns": {
+                        "common_stage": common_stage,
+                        "common_tech_level": common_tech,
+                        "common_industry": common_industry
+                    },
+                    "sales_recommendations": self._generate_sales_recommendations(company, similar_companies)
+                }
+            else:
+                insights = {
+                    "target_company": {
+                        "id": company.id,
+                        "name": company.name
+                    },
+                    "similar_companies": [],
+                    "message": "No similar companies found with current criteria"
+                }
+            
+            return insights
+            
+        except Exception as e:
+            logger.error(f"Failed to get similarity insights for {company_id}: {e}")
+            return {"error": str(e)}
+    
+    def _generate_sales_recommendations(self, target_company: CompanyData, similar_companies: List[Dict]) -> List[str]:
+        """Generate sales approach recommendations based on similar companies"""
+        recommendations = []
+        
+        if not similar_companies:
+            return ["Unique company profile - develop custom sales approach"]
+        
+        # Analyze patterns from similar companies
+        avg_similarity = sum(comp["similarity_score"] for comp in similar_companies) / len(similar_companies)
+        
+        if avg_similarity > 0.85:
+            recommendations.append("High similarity - use proven playbooks from similar companies")
+        elif avg_similarity > 0.7:
+            recommendations.append("Good similarity - adapt successful approaches with minor modifications")
+        else:
+            recommendations.append("Moderate similarity - use similar companies as starting point but customize heavily")
+        
+        # Stage-specific recommendations
+        stage = target_company.company_stage
+        if stage == "startup":
+            recommendations.append("Focus on ROI and fast implementation")
+        elif stage == "growth":
+            recommendations.append("Emphasize scalability and growth enablement")
+        elif stage == "enterprise":
+            recommendations.append("Highlight security, compliance, and enterprise features")
+        
+        # Tech sophistication recommendations
+        tech_level = target_company.tech_sophistication
+        if tech_level == "high":
+            recommendations.append("Lead with technical depth and API capabilities")
+        elif tech_level == "medium":
+            recommendations.append("Balance technical features with business benefits")
+        elif tech_level == "low":
+            recommendations.append("Focus on ease of use and business outcomes")
+        
+        return recommendations

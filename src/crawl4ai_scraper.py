@@ -51,6 +51,9 @@ class PageType(Enum):
     SOLUTIONS = ("solutions", 0.6, "/solutions")
     TEAM = ("team", 0.5, "/team")
     LEADERSHIP = ("leadership", 0.5, "/leadership")
+    PRICING = ("pricing", 0.9, "/pricing")
+    CUSTOMERS = ("customers", 0.8, "/customers")
+    CASE_STUDIES = ("case-studies", 0.8, "/case-studies")
     CAREERS = ("careers", 0.3, "/careers")
     CONTACT = ("contact", 0.2, "/contact")
     
@@ -61,12 +64,20 @@ class PageType(Enum):
 
 
 class Crawl4AICompanyScraper:
-    """Advanced company scraper using Crawl4AI with proper LLM extraction"""
+    """Advanced company scraper using Crawl4AI with intelligent URL discovery"""
     
-    def __init__(self, config: CompanyIntelligenceConfig):
+    def __init__(self, config: CompanyIntelligenceConfig, bedrock_client=None):
         self.config = config
+        self.bedrock_client = bedrock_client
         
-        # Define target pages with priorities
+        # Initialize intelligent URL discovery if bedrock client available
+        if self.bedrock_client:
+            from src.intelligent_url_discovery import IntelligentURLDiscovery
+            self.url_discovery = IntelligentURLDiscovery(self.bedrock_client)
+        else:
+            self.url_discovery = None
+        
+        # Define target pages with priorities (fallback)
         self.target_pages = [page_type for page_type in PageType]
         
         # Enhanced extraction instruction for better results
@@ -233,19 +244,45 @@ Prioritize factual information over marketing language.
                 verbose=False
             ) as crawler:
                 
-                # Crawl multiple pages and extract intelligence
+                # Discover URLs intelligently or fall back to patterns
+                if self.url_discovery:
+                    logger.info("Using intelligent URL discovery...")
+                    try:
+                        target_urls = await self.url_discovery.get_crawl_priority_list(
+                            base_url, company_data.name
+                        )
+                        logger.info(f"Discovered {len(target_urls)} priority URLs to crawl")
+                    except Exception as e:
+                        logger.warning(f"Intelligent URL discovery failed: {e}, falling back to patterns")
+                        target_urls = [(urljoin(base_url, page_type.path), page_type.page_name, page_type.priority) 
+                                     for page_type in self.target_pages]
+                else:
+                    logger.info("Using fallback URL patterns...")
+                    target_urls = [(urljoin(base_url, page_type.path), page_type.page_name, page_type.priority) 
+                                 for page_type in self.target_pages]
+                
+                # Crawl discovered pages and extract intelligence
                 crawled_pages = []
                 all_intelligence = []
                 
-                for page_type in self.target_pages:
+                for page_url, page_type_name, priority in target_urls:
                     try:
-                        page_url = urljoin(base_url, page_type.path)
-                        
-                        # Skip if same as base URL
-                        if page_url == base_url and page_type.path != "":
+                        # Skip if same as base URL (except homepage)
+                        if page_url == base_url and not page_url.endswith('/'):
                             continue
                         
-                        logger.info(f"AI-extracting from {page_url} ({page_type.page_name})")
+                        logger.info(f"AI-extracting from {page_url} ({page_type_name})")
+                        
+                        # Find corresponding PageType for extraction strategy, or use default
+                        page_type = None
+                        for pt in self.target_pages:
+                            if pt.page_name == page_type_name:
+                                page_type = pt
+                                break
+                        
+                        if not page_type:
+                            # Create a default PageType for unknown types
+                            page_type = PageType.HOMEPAGE if page_type_name == 'homepage' else PageType.ABOUT
                         
                         # Create optimized extraction strategy for this page type
                         page_extraction_strategy = self._create_extraction_strategy(page_type)
@@ -284,17 +321,25 @@ Prioritize factual information over marketing language.
                                         # Extract the first valid result from the list
                                         if isinstance(extracted_list, list) and len(extracted_list) > 0:
                                             intelligence_data = extracted_list[0]  # Take the first extraction result
+                                        elif isinstance(extracted_list, list) and len(extracted_list) == 0:
+                                            # Empty list - no data extracted
+                                            intelligence_data = {"raw_extracted": "no_content_extracted"}
                                         else:
                                             intelligence_data = extracted_list
+                                            
+                                        # Ensure intelligence_data is a dict
+                                        if not isinstance(intelligence_data, dict):
+                                            intelligence_data = {"raw_extracted": str(intelligence_data)}
+                                            
                                     except json.JSONDecodeError:
                                         # Store as raw text if not valid JSON
                                         intelligence_data = {"raw_extracted": result.extracted_content}
                                     
                                     all_intelligence.append({
                                         'page_url': page_url,
-                                        'page_path': page_type.path,
-                                        'page_type': page_type.page_name,
-                                        'priority': page_type.priority,
+                                        'page_path': page_type.path if page_type else '',
+                                        'page_type': page_type_name,
+                                        'priority': priority,
                                         'intelligence': intelligence_data
                                     })
                                     
@@ -366,7 +411,12 @@ Prioritize factual information over marketing language.
             page_path = page_data.get('page_path', '')
             page_priority = page_data.get('priority', 0.0)
             
-            # Skip if raw extracted content
+            # Ensure intelligence is a dict
+            if not isinstance(intelligence, dict):
+                logger.warning(f"Intelligence data is not a dict: {type(intelligence)}, skipping")
+                continue
+            
+            # Skip if raw extracted content or no content
             if 'raw_extracted' in intelligence:
                 continue
                 
@@ -507,9 +557,9 @@ Prioritize factual information over marketing language.
 class CompanyWebScraper:
     """Wrapper to maintain compatibility with existing pipeline"""
     
-    def __init__(self, config: CompanyIntelligenceConfig):
+    def __init__(self, config: CompanyIntelligenceConfig, bedrock_client=None):
         self.config = config
-        self.crawl4ai_scraper = Crawl4AICompanyScraper(config)
+        self.crawl4ai_scraper = Crawl4AICompanyScraper(config, bedrock_client)
     
     def scrape_company(self, company_data: CompanyData) -> CompanyData:
         """Synchronous wrapper for AI-powered company scraping"""
@@ -549,3 +599,77 @@ class CompanyWebScraper:
         except Exception as e:
             logger.error(f"Batch AI scraping error: {e}")
             return companies
+    
+    def extract_similarity_metrics(self, company: CompanyData) -> CompanyData:
+        """Extract similarity metrics from scraped content"""
+        try:
+            from src.similarity_prompts import extract_similarity_metrics
+            
+            # Combine relevant content for analysis
+            similarity_content = self._prepare_similarity_content(company)
+            
+            # Extract metrics using LLM
+            bedrock_client = self._get_bedrock_client()
+            metrics = extract_similarity_metrics(similarity_content, bedrock_client)
+            
+            # Apply metrics to company object
+            company = self._apply_similarity_metrics(company, metrics)
+            
+            logger.info(f"Extracted similarity metrics for {company.name}")
+            return company
+            
+        except Exception as e:
+            logger.error(f"Failed to extract similarity metrics for {company.name}: {e}")
+            return company
+    
+    def _prepare_similarity_content(self, company: CompanyData) -> str:
+        """Prepare content focused on similarity indicators"""
+        content_parts = []
+        
+        # Prioritize content that indicates company stage, tech level, business model
+        if company.raw_content:
+            # Extract key sections
+            content = company.raw_content
+            
+            # Look for specific similarity indicators
+            indicators = [
+                "about us", "our team", "careers", "jobs",
+                "pricing", "customers", "case studies",
+                "api", "documentation", "developers",
+                "contact", "offices", "locations"
+            ]
+            
+            # Extract relevant sections (simplified approach)
+            for indicator in indicators:
+                if indicator in content.lower():
+                    # Find context around indicator
+                    start = max(0, content.lower().find(indicator) - 200)
+                    end = min(len(content), content.lower().find(indicator) + 500)
+                    section = content[start:end]
+                    content_parts.append(f"{indicator.title()}: {section}")
+        
+        return "\n\n".join(content_parts)[:5000]  # Limit to 5000 chars
+    
+    def _apply_similarity_metrics(self, company: CompanyData, metrics: dict) -> CompanyData:
+        """Apply extracted metrics to company object"""
+        
+        for metric_name, metric_data in metrics.items():
+            if isinstance(metric_data, dict) and 'value' in metric_data:
+                # Set the metric value
+                setattr(company, metric_name, metric_data['value'])
+                
+                # Set confidence score
+                confidence_field = f"{metric_name.replace('_type', '')}_confidence"
+                if hasattr(company, confidence_field):
+                    setattr(company, confidence_field, metric_data.get('confidence', 0.5))
+        
+        return company
+    
+    def _get_bedrock_client(self):
+        """Get Bedrock client for LLM analysis"""
+        # Import here to avoid circular imports
+        from src.bedrock_client import BedrockClient
+        from src.models import CompanyIntelligenceConfig
+        
+        config = CompanyIntelligenceConfig()
+        return BedrockClient(config)

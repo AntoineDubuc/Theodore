@@ -30,13 +30,18 @@ class SimilarityDiscoveryPipeline:
         self.bedrock_client = None
         self.discovery_service = None
         self.similarity_validator = None
-        self.scraper = Crawl4AICompanyScraper(self.config)
+        self.scraper = None  # Will be initialized when bedrock_client is available
         self.pinecone_client = None
         
         # Pipeline settings
         self.max_candidates = 10
         self.similarity_threshold = 0.6
         self.require_votes = 2
+
+    def _ensure_scraper_initialized(self):
+        """Initialize scraper with bedrock client if not already done"""
+        if self.scraper is None:
+            self.scraper = Crawl4AICompanyScraper(self.config, self.bedrock_client)
         
     async def discover_and_validate_similar_companies(self, 
                                                     company_id: str,
@@ -150,6 +155,9 @@ class SimilarityDiscoveryPipeline:
         Crawl suggested companies to get their detailed data
         """
         logger.info(f"Crawling {len(suggestions)} candidate companies")
+        
+        # Ensure scraper is initialized with bedrock client
+        self._ensure_scraper_initialized()
         
         crawled_companies = []
         

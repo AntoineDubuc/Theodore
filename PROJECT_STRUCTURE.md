@@ -4,32 +4,49 @@
 
 ```
 Theodore/
-├── 📚 docs/                          # Complete documentation suite
-│   ├── README.md                     # Main developer onboarding
-│   ├── SETUP_GUIDE.md               # Installation & configuration
-│   ├── ARCHITECTURE.md              # System architecture
-│   ├── AI_EXTRACTION_PIPELINE.md    # AI extraction deep dive
-│   ├── VECTOR_STORAGE_STRATEGY.md   # Pinecone optimization
-│   ├── TECHNICAL_DECISIONS.md       # Decisions & lessons learned
-│   └── INDEX.md                     # Documentation navigation
+├── 🌐 app.py                        # Main Flask web application
 │
-├── 🔧 src/                          # Production code
+├── 📚 docs/                          # Streamlined documentation (7 files)
+│   ├── DEVELOPER_ONBOARDING.md      # Complete getting started guide  
+│   ├── setup_guide.md               # Installation & configuration
+│   ├── architecture.md              # System architecture
+│   ├── ai_extraction_pipeline.md    # AI extraction deep dive
+│   ├── vector_storage_strategy.md   # Pinecone optimization
+│   ├── crawl4ai_configuration.md    # Web scraping configuration
+│   └── technical_decisions.md       # Decisions & lessons learned
+│
+├── 🔧 src/                          # Core application code
+│   ├── main_pipeline.py            # Main orchestration
 │   ├── models.py                    # Pydantic data models
 │   ├── crawl4ai_scraper.py         # AI-powered web scraper
 │   ├── bedrock_client.py           # AWS AI integration
 │   ├── pinecone_client.py          # Optimized vector storage
-│   ├── clustering.py               # Company clustering logic
-│   └── main_pipeline.py            # Main orchestration
+│   ├── company_discovery.py        # AI company discovery
+│   ├── similarity_pipeline.py      # Similarity processing
+│   ├── similarity_validator.py     # Similarity validation
+│   └── clustering.py               # Company clustering logic
 │
-├── 🧪 tests/                        # Test suite
+├── 🎨 templates/                    # Web UI templates
+│   └── index.html                  # Main web interface
+│
+├── 📱 static/                       # Web assets
+│   ├── css/style.css               # Modern gradient styling
+│   ├── js/app.js                   # Frontend JavaScript
+│   └── img/favicon.ico             # Site assets
+│
+├── 🧪 tests/                        # Test suite  
 │   ├── test_ai_extraction.py       # AI extraction tests
 │   ├── test_single_company.py      # Single company processing
-│   └── test_visterra_query.py      # Query functionality tests
+│   ├── test_visterra_query.py      # Query functionality tests
+│   ├── test_claude_direct.py       # Direct Claude testing (moved from root)
+│   ├── test_real_ai.py             # Real AI testing (moved from root)
+│   └── run_similarity_tests.py     # Similarity testing suite
 │
-├── 🛠️ scripts/                      # Production utilities
+├── 🛠️ scripts/                      # Utility scripts
 │   ├── clear_pinecone.py           # Database maintenance
 │   ├── extract_raw_pinecone_data.py # Data extraction
-│   └── pinecone_review.py          # Health monitoring
+│   ├── pinecone_review.py          # Health monitoring
+│   └── theodore_cli.py             # CLI interface (moved from root)
 │
 ├── ⚙️ config/                       # Configuration
 │   ├── settings.py                 # Application settings
@@ -56,10 +73,10 @@ Theodore/
 ## 🎯 Clean Architecture Benefits
 
 ### For New Developers
-- **Clear Entry Point**: Start with `docs/README.md` for complete onboarding
-- **Production Focus**: Only current, working code in main directories
-- **Comprehensive Docs**: Every aspect documented with examples
-- **Test Coverage**: Working tests for all major components
+- **Clear Entry Point**: Start with `docs/DEVELOPER_ONBOARDING.md` for complete setup
+- **Modern Web Interface**: Beautiful UI at `app.py` → http://localhost:5001
+- **Streamlined Docs**: Reduced from 16 to 7 documentation files  
+- **Organized Structure**: No loose files at root, everything properly categorized
 
 ### For System Maintenance
 - **Logical Organization**: Related code grouped in focused modules
@@ -73,20 +90,19 @@ Theodore/
 - **Historical Context**: Archive provides lessons learned and evolution
 - **Documentation**: Comprehensive guides for all technical decisions
 
-## 🧹 Archive Summary
+## 🧹 Organization Summary
 
-**Files Archived**: 23 obsolete Python files
-**Categories**:
-- **Development Experiments** (6 files): LLMConfig research and debugging
-- **Old Implementations** (5 files): Superseded scraper and client versions  
-- **Debug Scripts** (11 files): One-time analysis and debugging utilities
-- **Temp Files** (6 files): Temporary data and early documentation
+**Files Reorganized**: 
+- **Moved to tests/**: `test_claude_direct.py`, `test_real_ai.py` (from root)  
+- **Moved to scripts/**: `theodore_cli.py` (from root)
+- **Documentation Reduced**: 16 files → 7 files (56% reduction)
+- **Archive Preserved**: 23 development files safely archived
 
-**Archive Value**:
-- Preserves complete development journey
-- Documents problem-solving process (especially LLMConfig ForwardRef fix)
-- Shows architecture evolution
-- Maintains learning context for future developers
+**Documentation Consolidation**:
+- **Removed Duplicates**: Merged overlapping docs into comprehensive guides
+- **Enhanced DEVELOPER_ONBOARDING.md**: Now includes troubleshooting and setup
+- **Kept Technical Depth**: Preserved specialized docs for AI pipeline details
+- **Clear Structure**: Essential docs vs technical deep dives
 
 ## 🚀 Production-Ready Components
 

@@ -5,13 +5,17 @@ class TheodoreUI {
         this.initializeEventListeners();
         this.setupFormValidation();
         this.initializeAnimations();
+        this.initializeDatabaseBrowser();
     }
 
     initializeEventListeners() {
         // Main search form
         const searchForm = document.getElementById('searchForm');
         if (searchForm) {
+            console.log('Search form found, attaching event listener'); // Debug log
             searchForm.addEventListener('submit', this.handleDiscovery.bind(this));
+        } else {
+            console.log('Search form NOT found!'); // Debug log
         }
 
         // Process company form
@@ -39,6 +43,36 @@ class TheodoreUI {
                     this.handleRealTimeSearch(e.target.value, searchController);
                 }, 300);
             });
+            
+            // TEMPORARILY DISABLED - Hide suggestions when input loses focus (with small delay to allow clicks)
+            // companyInput.addEventListener('blur', () => {
+            //     setTimeout(() => {
+            //         this.hideSearchSuggestions('input_blur');
+            //     }, 150);
+            // });
+            
+            // TEMPORARILY DISABLED ALL CLICK OUTSIDE LOGIC FOR DEBUGGING
+            // // Hide suggestions when clicking outside (use a named function to avoid duplicates)
+            // this.clickOutsideHandler = (e) => {
+            //     const inputWrapper = companyInput.closest('.input-wrapper');
+            //     const suggestionsElement = document.getElementById('searchSuggestions');
+            //     
+            //     // Don't hide if clicking on input, wrapper, or suggestions
+            //     if (inputWrapper && inputWrapper.contains(e.target)) {
+            //         return; // Clicked inside input area
+            //     }
+            //     
+            //     if (suggestionsElement && suggestionsElement.contains(e.target)) {
+            //         return; // Clicked on suggestions
+            //     }
+            //     
+            //     // Clicked outside, hide suggestions
+            //     this.hideSearchSuggestions('click_outside');
+            // };
+            // 
+            // // Remove any existing listener and add new one
+            // document.removeEventListener('click', this.clickOutsideHandler);
+            // document.addEventListener('click', this.clickOutsideHandler);
         }
 
         // Tab switching
@@ -94,11 +128,14 @@ class TheodoreUI {
     }
 
     async handleDiscovery(event) {
+        console.log('handleDiscovery called'); // Debug log
         event.preventDefault();
         
         const formData = new FormData(event.target);
         const companyName = formData.get('company_name');
         const limit = formData.get('limit') || 5;
+        
+        console.log('Discovery request:', { companyName, limit }); // Debug log
 
         if (!companyName.trim()) {
             this.showError('Please enter a company name');
@@ -124,9 +161,18 @@ class TheodoreUI {
             const data = await response.json();
 
             if (response.ok) {
+                console.log('🎉 Discovery successful! Results:', data); // Debug log
+                console.log('📊 Companies found:', data.results); // Debug log
+                
+                // Log each company to console for debugging
+                data.results.forEach((company, index) => {
+                    console.log(`${index + 1}. ${company.company_name} (${(company.similarity_score * 100).toFixed(0)}% match)`);
+                });
+                
                 this.displayResults(data);
                 this.showSuccess(`Found ${data.total_found} similar companies for ${data.target_company}`);
             } else {
+                console.log('❌ Discovery failed:', data); // Debug log
                 this.showError(data.error || 'Discovery failed');
                 if (data.suggestion) {
                     this.showInfo(data.suggestion);
@@ -153,12 +199,30 @@ class TheodoreUI {
             return;
         }
 
-        const submitBtn = event.target.querySelector('button[type="submit"]');
-        this.setButtonLoading(submitBtn, true);
-        this.clearMessages();
+        // Start processing with progress display
+        this.startProcessing(companyName.trim(), website.trim());
+    }
 
+    async startProcessing(companyName, website) {
+        // Show progress container and hide results
+        document.getElementById('processResults').style.display = 'none';
+        document.getElementById('progressContainer').style.display = 'block';
+        
+        // Update progress title
+        document.getElementById('progressTitle').textContent = `Processing ${companyName}...`;
+        
+        // Reset all phases to pending
+        this.resetProgressPhases();
+        
+        // Disable form
+        const processButton = document.getElementById('processButton');
+        processButton.disabled = true;
+        processButton.innerHTML = '<span>⏳</span> Processing...';
+        
+        this.clearMessages();
+        
         try {
-            const response = await fetch('/api/process', {
+            const response = await fetch('/api/process-company', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -171,27 +235,170 @@ class TheodoreUI {
 
             const data = await response.json();
 
-            if (response.ok) {
-                this.showProcessingResult(data);
-                this.showSuccess(`Successfully processed ${data.company_name}`);
+            if (data.success) {
+                this.showProcessingResults(data);
+                this.showSuccess(`Successfully processed ${companyName}! Generated ${data.sales_intelligence.length} character sales intelligence.`);
             } else {
-                this.showError(data.error || 'Processing failed');
+                this.showProcessingError(data.error || 'Processing failed');
+                this.showError(`Failed to process ${companyName}: ${data.error}`);
             }
 
         } catch (error) {
-            this.showError('Network error occurred. Please try again.');
             console.error('Processing error:', error);
+            this.showProcessingError(`Network error: ${error.message}`);
+            this.showError(`Failed to process ${companyName}: ${error.message}`);
         } finally {
-            this.setButtonLoading(submitBtn, false);
+            // Re-enable form
+            processButton.disabled = false;
+            processButton.innerHTML = '<span>🧠</span> Generate Sales Intelligence';
+            
+            // Hide progress spinner
+            const spinner = document.querySelector('.progress-spinner');
+            if (spinner) {
+                spinner.style.display = 'none';
+            }
         }
     }
 
+    resetProgressPhases() {
+        const phases = [
+            { id: 'phase-link-discovery', name: 'Link Discovery' },
+            { id: 'phase-page-selection', name: 'LLM Page Selection' },
+            { id: 'phase-content-extraction', name: 'Content Extraction' },
+            { id: 'phase-intelligence-generation', name: 'Sales Intelligence Generation' }
+        ];
+        
+        phases.forEach(phase => {
+            const element = document.getElementById(phase.id);
+            if (element) {
+                element.className = 'phase-item';
+                const statusEl = element.querySelector('.phase-status');
+                const detailsEl = element.querySelector('.phase-details');
+                const checkEl = element.querySelector('.phase-check');
+                
+                if (statusEl) statusEl.textContent = 'Pending';
+                if (detailsEl) detailsEl.textContent = '';
+                if (checkEl) checkEl.textContent = '⏳';
+            }
+        });
+        
+        // Clear log
+        const logEl = document.getElementById('progressLog');
+        if (logEl) {
+            logEl.innerHTML = '';
+        }
+        
+        // Show progress spinner
+        const spinner = document.querySelector('.progress-spinner');
+        if (spinner) {
+            spinner.style.display = 'block';
+        }
+    }
+
+    showProcessingResults(result) {
+        // Hide progress and show results
+        document.getElementById('progressContainer').style.display = 'none';
+        document.getElementById('processResults').style.display = 'block';
+        
+        // Update summary stats
+        const pagesEl = document.getElementById('resultPages');
+        const timeEl = document.getElementById('resultTime');
+        const lengthEl = document.getElementById('resultLength');
+        
+        if (pagesEl) pagesEl.textContent = result.pages_processed || 0;
+        if (timeEl) timeEl.textContent = `${(result.processing_time || 0).toFixed(1)}s`;
+        if (lengthEl) lengthEl.textContent = `${result.sales_intelligence.length} chars`;
+        
+        // Display sales intelligence
+        const intelligenceEl = document.getElementById('salesIntelligence');
+        if (intelligenceEl) {
+            intelligenceEl.textContent = result.sales_intelligence;
+        }
+        
+        // Mark all phases as completed for visual effect
+        ['Link Discovery', 'LLM Page Selection', 'Content Extraction', 'Sales Intelligence Generation'].forEach(phase => {
+            this.updatePhaseProgress(phase, 'completed');
+        });
+        
+        // Add final log entry
+        this.addToProgressLog('Processing', 'completed', `Generated sales intelligence in ${(result.processing_time || 0).toFixed(1)}s`);
+    }
+
+    showProcessingError(error) {
+        // Keep progress visible but mark current phase as failed
+        const runningPhase = document.querySelector('.phase-item.running');
+        if (runningPhase) {
+            runningPhase.className = 'phase-item failed';
+            const statusEl = runningPhase.querySelector('.phase-status');
+            const checkEl = runningPhase.querySelector('.phase-check');
+            
+            if (statusEl) statusEl.textContent = 'Failed';
+            if (checkEl) checkEl.textContent = '❌';
+        }
+        
+        // Add error to log
+        this.addToProgressLog('Error', 'failed', error);
+    }
+
+    updatePhaseProgress(phaseName, status, details = '') {
+        const phaseMap = {
+            'Link Discovery': 'phase-link-discovery',
+            'LLM Page Selection': 'phase-page-selection', 
+            'Content Extraction': 'phase-content-extraction',
+            'Sales Intelligence Generation': 'phase-intelligence-generation'
+        };
+        
+        const phaseId = phaseMap[phaseName];
+        if (!phaseId) return;
+        
+        const element = document.getElementById(phaseId);
+        if (!element) return;
+        
+        element.className = `phase-item ${status}`;
+        
+        const statusEl = element.querySelector('.phase-status');
+        const detailsEl = element.querySelector('.phase-details');
+        const checkEl = element.querySelector('.phase-check');
+        
+        if (statusEl) statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        if (detailsEl) detailsEl.textContent = details;
+        
+        // Update check icon
+        const checkIcon = status === 'completed' ? '✅' : 
+                         status === 'failed' ? '❌' : 
+                         status === 'running' ? '🔄' : '⏳';
+        if (checkEl) checkEl.textContent = checkIcon;
+        
+        // Add to log
+        this.addToProgressLog(phaseName, status, details);
+    }
+    
+    addToProgressLog(phaseName, status, details) {
+        const logContainer = document.getElementById('progressLog');
+        if (!logContainer) return;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        logEntry.innerHTML = `
+            <span class="log-timestamp">[${timestamp}]</span>
+            <strong>${phaseName}</strong>: ${status} ${details ? `- ${details}` : ''}
+        `;
+        
+        logContainer.appendChild(logEntry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
     async handleRealTimeSearch(query, controller = null) {
+        console.log(`[${new Date().toLocaleTimeString()}] handleRealTimeSearch called with:`, query); // Debug log
+        
         // Store current query to prevent showing stale results
         this.currentSearchQuery = query.trim().toLowerCase();
         
         if (!query.trim() || query.length < 2) {
-            this.hideSearchSuggestions();
+            console.log('Query too short, hiding suggestions'); // Debug log
+            this.hideSearchSuggestions('query_too_short');
             return;
         }
 
@@ -214,18 +421,23 @@ class TheodoreUI {
             }
 
             if (response.ok && data.results.length > 0) {
+                console.log('Search API returned:', data.results); // Debug log
+                console.log('Current query:', this.currentSearchQuery); // Debug log
+                
                 // Filter results to only show matches that contain the search query
                 const filteredResults = data.results.filter(result => 
                     result.name.toLowerCase().includes(this.currentSearchQuery)
                 );
                 
+                console.log('Filtered results:', filteredResults); // Debug log
+                
                 if (filteredResults.length > 0) {
                     this.showSearchSuggestions(filteredResults);
                 } else {
-                    this.hideSearchSuggestions();
+                    this.hideSearchSuggestions('no_filtered_results');
                 }
             } else {
-                this.hideSearchSuggestions();
+                this.hideSearchSuggestions('no_api_results');
             }
 
         } catch (error) {
@@ -234,7 +446,7 @@ class TheodoreUI {
                 return;
             }
             console.error('Search error:', error);
-            this.hideSearchSuggestions();
+            this.hideSearchSuggestions('search_error');
         }
     }
 
@@ -257,27 +469,69 @@ class TheodoreUI {
         if (targetTab) {
             targetTab.classList.add('active');
         }
+
+        // If switching to database tab, load the database
+        if (tabId === 'databaseTab') {
+            this.loadDatabaseBrowser();
+        }
     }
 
     displayResults(data) {
+        console.log('📋 displayResults called with:', data); // Debug log
+        
         const resultsContainer = document.getElementById('results');
         const resultsSection = document.getElementById('resultsSection');
+        const resultsCountElement = document.getElementById('resultsCount');
 
-        if (!resultsContainer || !resultsSection) return;
+        console.log('📍 Results container found:', !!resultsContainer); // Debug log
+        console.log('📍 Results section found:', !!resultsSection); // Debug log
+        console.log('📍 Results count element found:', !!resultsCountElement); // Debug log
 
-        if (data.results.length === 0) {
-            resultsContainer.innerHTML = this.createEmptyState();
-        } else {
-            resultsContainer.innerHTML = data.results.map(result => 
-                this.createResultCard(result)
-            ).join('');
+        if (!resultsContainer || !resultsSection) {
+            console.log('❌ Missing results container or section!'); // Debug log
+            return;
         }
 
+        // Update the results count
+        const resultCount = data.results.length;
+        if (resultsCountElement) {
+            resultsCountElement.textContent = `${resultCount} found`;
+            console.log('🔢 Updated results count to:', resultCount); // Debug log
+        }
+
+        if (data.results.length === 0) {
+            console.log('📭 No results, showing empty state'); // Debug log
+            resultsContainer.innerHTML = this.createEmptyState();
+        } else {
+            console.log('🏗️ Creating HTML for', data.results.length, 'results'); // Debug log
+            const resultCards = data.results.map(result => {
+                const cardHTML = this.createResultCard(result);
+                console.log('📄 Generated card HTML length:', cardHTML.length); // Debug log
+                return cardHTML;
+            });
+            
+            const finalHTML = resultCards.join('');
+            console.log('🎯 Final HTML to insert (length:', finalHTML.length, '):', finalHTML.substring(0, 200) + '...'); // Debug log
+            
+            resultsContainer.innerHTML = finalHTML;
+            
+            // Check if HTML was actually set
+            setTimeout(() => {
+                console.log('✅ Results container after insert:', resultsContainer.innerHTML.length, 'characters'); // Debug log
+                console.log('🔍 Child elements count:', resultsContainer.children.length); // Debug log
+            }, 100);
+        }
+
+        console.log('👁️ Showing results section'); // Debug log
         resultsSection.classList.remove('hidden');
+        
+        // Ensure results section is properly visible
+        resultsSection.style.display = 'block';
         
         // Animate result cards
         setTimeout(() => {
             const cards = resultsContainer.querySelectorAll('.result-card');
+            console.log('🎯 Animating', cards.length, 'result cards'); // Debug log
             cards.forEach((card, index) => {
                 setTimeout(() => {
                     card.classList.add('fade-in-up');
@@ -287,6 +541,8 @@ class TheodoreUI {
     }
 
     createResultCard(result) {
+        console.log('🃏 Creating result card for:', result); // Debug log
+        
         const scoreClass = result.similarity_score >= 0.8 ? 'high' : 
                           result.similarity_score >= 0.6 ? 'medium' : 'low';
 
@@ -362,6 +618,11 @@ class TheodoreUI {
     }
 
     showSearchSuggestions(results) {
+        console.log('showSearchSuggestions called with:', results); // Debug log
+        
+        // Record when suggestions were shown to prevent immediate hiding
+        this.suggestionsShownAt = Date.now();
+        
         const input = document.getElementById('companyName');
         const wrapper = input.closest('.input-wrapper');
         
@@ -377,7 +638,7 @@ class TheodoreUI {
             wrapper.appendChild(suggestions);
         }
 
-        suggestions.innerHTML = results.map(result => `
+        const suggestionHTML = results.map(result => `
             <div class="suggestion-item" data-name="${this.escapeHtml(result.name)}">
                 <div class="suggestion-name">${this.escapeHtml(result.name)}</div>
                 <div class="suggestion-details">
@@ -386,19 +647,46 @@ class TheodoreUI {
                 </div>
             </div>
         `).join('');
+        
+        console.log('Setting suggestion HTML:', suggestionHTML); // Debug log
+        suggestions.innerHTML = suggestionHTML;
 
-        // Add click handlers
-        suggestions.querySelectorAll('.suggestion-item').forEach(item => {
-            item.addEventListener('click', () => {
-                input.value = item.dataset.name;
-                this.hideSearchSuggestions();
+        // Add click handlers with proper safeguards
+        suggestions.onclick = null; // Clear any existing handlers
+        
+        // Use mousedown instead of click to avoid conflicts, and add delay
+        setTimeout(() => {
+            suggestions.addEventListener('mousedown', (e) => {
+                console.log('Mousedown on suggestions:', e.target, 'isTrusted:', e.isTrusted); // Debug log
+                const suggestionItem = e.target.closest('.suggestion-item');
+                if (suggestionItem && e.isTrusted) { // Only handle real user interactions
+                    console.log('Real suggestion selected:', suggestionItem.dataset.name); // Debug log
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Fill in the input field
+                    input.value = suggestionItem.dataset.name;
+                    
+                    // Hide suggestions after a small delay to ensure the value is set
+                    setTimeout(() => {
+                        this.hideSearchSuggestions('suggestion_selected');
+                    }, 50);
+                }
             });
-        });
+        }, 200); // Wait 200ms before attaching handlers to avoid phantom events
 
         suggestions.classList.add('show');
     }
 
-    hideSearchSuggestions() {
+    hideSearchSuggestions(reason = 'unknown') {
+        // Prevent hiding if suggestions were just shown (within 200ms)
+        if (this.suggestionsShownAt && (Date.now() - this.suggestionsShownAt) < 200) {
+            console.log('Ignoring hide request - suggestions just shown, reason:', reason);
+            return;
+        }
+        
+        console.log('hideSearchSuggestions called, reason:', reason); // Debug log
+        console.trace(); // Show stack trace to see what called this
         const suggestions = document.getElementById('searchSuggestions');
         if (suggestions) {
             suggestions.classList.remove('show');
@@ -538,6 +826,231 @@ class TheodoreUI {
         return text.replace(/[&<>"']/g, m => map[m]);
     }
 
+    // Database Browser Methods
+    initializeDatabaseBrowser() {
+        // No initialization needed, will load when tab is clicked
+    }
+
+    async loadDatabaseBrowser() {
+        console.log('Loading database browser...');
+        
+        const tableContainer = document.getElementById('companiesTable');
+        const totalElement = document.getElementById('totalCompanies');
+        
+        // Show loading state
+        tableContainer.innerHTML = '<div class="loading">Loading companies...</div>';
+        if (totalElement) {
+            totalElement.textContent = 'Loading...';
+        }
+        
+        try {
+            // Try the new companies endpoint first
+            let response = await fetch('/api/companies');
+            let data = await response.json();
+
+            if (response.ok && data.success) {
+                console.log('Using new companies API:', data);
+                this.updateDatabaseStats({ total_companies: data.total });
+                this.updateCompaniesTable(data.companies);
+            } else {
+                // Fallback to old database endpoint
+                console.log('Trying fallback database endpoint...');
+                response = await fetch('/api/database');
+                data = await response.json();
+                
+                if (response.ok) {
+                    console.log('Using fallback database API:', data);
+                    this.updateDatabaseStats(data);
+                    this.updateCompaniesTable(data.companies || []);
+                } else {
+                    this.showDatabaseError(data.error || 'Failed to load database');
+                }
+            }
+        } catch (error) {
+            console.error('Database browser error:', error);
+            this.showDatabaseError('Network error loading database');
+        }
+    }
+
+    updateDatabaseStats(data) {
+        const totalElement = document.getElementById('totalCompanies');
+        if (totalElement) {
+            totalElement.textContent = data.total_companies || 0;
+        }
+    }
+
+    updateCompaniesTable(companies) {
+        const tableContainer = document.getElementById('companiesTable');
+        
+        if (!companies || companies.length === 0) {
+            tableContainer.innerHTML = `
+                <div class="loading">
+                    <p>📑 No companies in database</p>
+                    <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">
+                        Use "Add Sample Companies" to populate the database with test data.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        const tableHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Website</th>
+                        <th>Industry</th>
+                        <th>Business Model</th>
+                        <th>Sales Intelligence</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${companies.map(company => `
+                        <tr>
+                            <td>
+                                <div class="company-name">${this.escapeHtml(company.name || 'Unknown')}</div>
+                                <div class="company-id">${this.escapeHtml((company.id || '').substring(0, 8))}...</div>
+                            </td>
+                            <td>
+                                <div class="company-website">
+                                    ${company.website ? `<a href="${company.website}" target="_blank">${this.escapeHtml(company.website.replace('https://', '').replace('http://', ''))}</a>` : 'N/A'}
+                                </div>
+                            </td>
+                            <td>${this.escapeHtml(company.industry || 'Unknown')}</td>
+                            <td>${this.escapeHtml(company.business_model || 'Unknown')}</td>
+                            <td>
+                                <div class="sales-intelligence-preview">
+                                    ${company.has_sales_intelligence ? 
+                                        `<span class="intelligence-indicator">✅ Available</span>
+                                         <button class="btn-mini" onclick="viewSalesIntelligence('${company.id}')">View</button>` : 
+                                        '<span class="intelligence-indicator">❌ Not Available</span>'
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="update-time">${company.last_updated ? new Date(company.last_updated).toLocaleDateString() : 'Unknown'}</div>
+                            </td>
+                            <td>
+                                <button class="btn-mini btn-primary" onclick="testSimilarity('${this.escapeHtml(company.name)}')">
+                                    🔍 Test Similarity
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        tableContainer.innerHTML = tableHTML;
+    }
+
+    showDatabaseError(message) {
+        const tableContainer = document.getElementById('companiesTable');
+        tableContainer.innerHTML = `
+            <div class="loading">
+                <p style="color: #ff6b6b;">❌ Error: ${this.escapeHtml(message)}</p>
+            </div>
+        `;
+    }
+
+    async refreshDatabase() {
+        console.log('Refreshing database...');
+        await this.loadDatabaseBrowser();
+        this.showSuccess('Database refreshed');
+    }
+
+    async addSampleCompanies() {
+        console.log('Adding sample companies...');
+        
+        const addButton = document.querySelector('button[onclick="addSampleCompanies()"]');
+        if (addButton) {
+            this.setButtonLoading(addButton, true);
+        }
+        
+        try {
+            const response = await fetch('/api/database/add-sample', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                this.showSuccess('Sample companies added successfully');
+                
+                // Show results if available
+                if (data.results) {
+                    console.log('Sample company results:', data.results);
+                    data.results.forEach(result => {
+                        console.log(' -', result);
+                    });
+                }
+                
+                // Refresh the database view
+                setTimeout(() => {
+                    this.loadDatabaseBrowser();
+                }, 1000);
+            } else {
+                this.showError(data.error || 'Failed to add sample companies');
+            }
+        } catch (error) {
+            console.error('Add sample companies error:', error);
+            this.showError('Network error adding sample companies');
+        } finally {
+            if (addButton) {
+                this.setButtonLoading(addButton, false);
+            }
+        }
+    }
+
+    async clearDatabase() {
+        // Confirm before clearing
+        if (!confirm('Are you sure you want to clear all companies from the database? This action cannot be undone.')) {
+            return;
+        }
+        
+        console.log('Clearing database...');
+        
+        const clearButton = document.querySelector('button[onclick="clearDatabase()"]');
+        if (clearButton) {
+            this.setButtonLoading(clearButton, true);
+        }
+        
+        try {
+            const response = await fetch('/api/database/clear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                this.showSuccess('Database cleared successfully');
+                
+                // Refresh the database view
+                setTimeout(() => {
+                    this.loadDatabaseBrowser();
+                }, 500);
+            } else {
+                this.showError(data.error || 'Failed to clear database');
+            }
+        } catch (error) {
+            console.error('Clear database error:', error);
+            this.showError('Network error clearing database');
+        } finally {
+            if (clearButton) {
+                this.setButtonLoading(clearButton, false);
+            }
+        }
+    }
+
     async runDemo(companyName = null) {
         const company = companyName || document.getElementById('companyName').value || 'Visterra';
         const limit = document.getElementById('similarLimit').value || 3;
@@ -575,10 +1088,25 @@ class TheodoreUI {
     }
 }
 
-// Global function for demo button
+// Global functions
 function runDemo() {
     const ui = window.theodoreUI || new TheodoreUI();
     ui.runDemo();
+}
+
+function refreshDatabase() {
+    const ui = window.theodoreUI || new TheodoreUI();
+    ui.refreshDatabase();
+}
+
+function addSampleCompanies() {
+    const ui = window.theodoreUI || new TheodoreUI();
+    ui.addSampleCompanies();
+}
+
+function clearDatabase() {
+    const ui = window.theodoreUI || new TheodoreUI();
+    ui.clearDatabase();
 }
 
 // Initialize the app when DOM is loaded
@@ -730,3 +1258,76 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Global utility functions for the HTML
+function resetProcessForm() {
+    document.getElementById('processForm').reset();
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('processResults').style.display = 'none';
+}
+
+function switchToDiscoveryTab() {
+    // Switch to discovery tab
+    document.querySelector('.tab-button[data-tab="discoveryTab"]').click();
+    
+    // Fill in the last processed company name if available
+    const processedCompany = document.getElementById('progressTitle').textContent.replace('Processing ', '').replace('...', '');
+    if (processedCompany && processedCompany !== 'Processing Company') {
+        document.getElementById('companyName').value = processedCompany;
+    }
+}
+
+// Additional utility functions for database browser
+async function viewSalesIntelligence(companyId) {
+    try {
+        const response = await fetch(`/api/company/${companyId}`);
+        const data = await response.json();
+        
+        if (data.success && data.company.sales_intelligence) {
+            // Create modal to display sales intelligence
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>${data.company.name} - Sales Intelligence</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="intelligence-content">
+                            ${data.company.sales_intelligence.replace(/\n/g, '<br>')}
+                        </div>
+                        <div class="modal-stats" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+                            <div class="stat-row">
+                                <strong>Pages Processed:</strong> ${data.company.pages_crawled ? data.company.pages_crawled.length : 0}
+                            </div>
+                            <div class="stat-row">
+                                <strong>Processing Time:</strong> ${data.company.processing_time ? data.company.processing_time.toFixed(1) + 's' : 'Unknown'}
+                            </div>
+                            <div class="stat-row">
+                                <strong>Last Updated:</strong> ${data.company.last_updated ? new Date(data.company.last_updated).toLocaleString() : 'Unknown'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        } else {
+            alert('Sales intelligence not available for this company.');
+        }
+    } catch (error) {
+        console.error('Error fetching sales intelligence:', error);
+        alert('Failed to load sales intelligence.');
+    }
+}
+
+function testSimilarity(companyName) {
+    // Switch to discovery tab and fill in company name
+    document.querySelector('.tab-button[data-tab="discoveryTab"]').click();
+    document.getElementById('companyName').value = companyName;
+    
+    // Show a brief message
+    if (window.theodoreUI) {
+        window.theodoreUI.showMessage(`Testing similarity for "${companyName}" - enter your search in the Discovery tab`, 'info');
+    }
+}

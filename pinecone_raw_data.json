@@ -1,0 +1,92 @@
+[
+  {
+    "id": "b1486b56-80a4-41f8-bfc4-a31389837a15",
+    "score": 0.0,
+    "metadata": {
+      "business_model": "B2B and B2C",
+      "business_model_type": "saas",
+      "company_name": "Anthropic",
+      "company_size": "enterprise",
+      "company_stage": "enterprise",
+      "decision_maker_type": "technical",
+      "geographic_scope": "global",
+      "industry": "artificial intelligence",
+      "target_market": "developers, businesses, researchers, and general consumers seeking AI assistance",
+      "tech_sophistication": "high",
+      "website": "https://anthropic.com"
+    },
+    "embedding_sample": [
+      0.85546875,
+      0.134765625,
+      0.127929688,
+      -0.29296875,
+      0.318359375,
+      0.185546875,
+      -0.0854492188,
+      0.000736236572,
+      -0.310546875,
+      -0.216796875
+    ],
+    "embedding_length": 1536
+  },
+  {
+    "id": "0a72575b-100b-4b26-9b7c-5505dbccb3f9",
+    "score": 0.0,
+    "metadata": {
+      "business_model": "B2B",
+      "business_model_type": "saas",
+      "company_name": "OpenAI",
+      "company_size": "enterprise",
+      "company_stage": "Unknown",
+      "decision_maker_type": "Unknown",
+      "geographic_scope": "global",
+      "industry": "artificial intelligence",
+      "target_market": "businesses and enterprises seeking AI integration",
+      "tech_sophistication": "high",
+      "website": "https://openai.com"
+    },
+    "embedding_sample": [
+      0.31640625,
+      0.184570312,
+      0.14453125,
+      -0.099609375,
+      0.291015625,
+      -0.0281982422,
+      0.044921875,
+      0.000583648682,
+      -0.185546875,
+      -0.1796875
+    ],
+    "embedding_length": 1536
+  },
+  {
+    "id": "46260cac-dad5-4beb-b7e7-99ae79275803",
+    "score": 0.0,
+    "metadata": {
+      "business_model": "B2B",
+      "business_model_type": "other",
+      "company_name": "Cloud Geometry",
+      "company_size": "SMB",
+      "company_stage": "[unable to determine]",
+      "decision_maker_type": "Unknown",
+      "geographic_scope": "Unknown",
+      "industry": "cloud consulting",
+      "target_market": "mid-market and enterprise companies seeking cloud transformation",
+      "tech_sophistication": "Unknown",
+      "website": "https://cloudgeometry.io"
+    },
+    "embedding_sample": [
+      0.490234375,
+      0.0966796875,
+      0.349609375,
+      0.00793457,
+      0.00160217285,
+      0.0439453125,
+      -0.0590820312,
+      0.00065612793,
+      -0.427734375,
+      0.0603027344
+    ],
+    "embedding_length": 1536
+  }
+]

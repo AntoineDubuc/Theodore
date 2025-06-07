@@ -7,8 +7,8 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# Add src to path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from src.models import CompanyIntelligenceConfig
 from src.pinecone_client import PineconeClient

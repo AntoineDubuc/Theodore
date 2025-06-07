@@ -228,30 +228,83 @@ class BedrockClient:
     def generate_text(self, prompt: str, max_tokens: int = 4000) -> str:
         """Generate text using the LLM for general purpose prompts"""
         try:
-            request_body = {
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": max_tokens,
-                "temperature": 0.7,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
+            # Check if using Nova (inference profile) or Anthropic model
+            if "Nova" in self.analysis_model:
+                # Nova API format
+                request_body = {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    "inferenceConfig": {
+                        "maxTokens": max_tokens,
+                        "temperature": 0.7
                     }
-                ]
-            }
+                }
+            else:
+                # Anthropic Claude API format
+                request_body = {
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": max_tokens,
+                    "temperature": 0.7,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                }
             
             response = self.bedrock_runtime.invoke_model(
                 modelId=self.config.bedrock_analysis_model,
-                body=json.dumps(request_body)
+                body=json.dumps(request_body),
+                contentType="application/json",
+                accept="application/json"
             )
             
             response_body = json.loads(response['body'].read())
             
-            if response_body.get('content') and len(response_body['content']) > 0:
-                return response_body['content'][0].get('text', '')
+            # Handle different response formats
+            if "Nova" in self.analysis_model:
+                # Nova response format
+                if response_body.get('output') and response_body['output'].get('message'):
+                    content = response_body['output']['message'].get('content', [])
+                    if content and len(content) > 0:
+                        return content[0].get('text', '')
+            else:
+                # Anthropic response format
+                if response_body.get('content') and len(response_body['content']) > 0:
+                    return response_body['content'][0].get('text', '')
             
             return ""
             
         except Exception as e:
             logger.error(f"Error generating text: {e}")
             return ""
+    
+    # Wrapper methods for backward compatibility with other components
+    def get_embeddings(self, text: str) -> Optional[List[float]]:
+        """
+        Wrapper for generate_embedding() - used by similarity_validator.py
+        
+        Args:
+            text: Text to generate embedding for
+            
+        Returns:
+            List of floats representing the embedding vector
+        """
+        return self.generate_embedding(text)
+    
+    def analyze_content(self, content: str) -> str:
+        """
+        Wrapper for generate_text() - used by similarity_validator.py
+        
+        Args:
+            content: Content/prompt to analyze
+            
+        Returns:
+            Generated analysis text
+        """
+        return self.generate_text(content)

@@ -96,13 +96,25 @@ class CompanyDiscoveryService:
     
     def _create_mock_suggestions(self, target_company: CompanyData, limit: int = 10) -> List[CompanySuggestion]:
         """Create mock suggestions for testing when LLM is unavailable"""
-        mock_companies = [
-            ("GoDaddy", "https://godaddy.com", "Domain registration and web hosting services"),
-            ("Namecheap", "https://namecheap.com", "Domain registrar and web hosting"),
-            ("Domain.com", "https://domain.com", "Domain registration and website builder"),
-            ("Afternic", "https://afternic.com", "Domain marketplace for buying and selling"),
-            ("Sedo", "https://sedo.com", "Domain marketplace and parking services")
-        ]
+        
+        # Create context-appropriate mock data based on industry
+        if target_company.industry and 'biotech' in target_company.industry.lower():
+            mock_companies = [
+                ("Genmab", "https://genmab.com", "Antibody therapeutics focused on cancer immunotherapy"),
+                ("Regeneron", "https://regeneron.com", "Biopharmaceutical company developing monoclonal antibodies"),
+                ("Moderna", "https://moderna.com", "Biotechnology company focused on mRNA therapeutics"),
+                ("Gilead Sciences", "https://gilead.com", "Biopharmaceutical company with focus on antiviral drugs"),
+                ("Amgen", "https://amgen.com", "Biotechnology company developing human therapeutics")
+            ]
+        else:
+            # Generic tech companies for non-biotech
+            mock_companies = [
+                ("Stripe", "https://stripe.com", "Financial technology platform for online payments"),
+                ("Twilio", "https://twilio.com", "Cloud communications platform APIs"),
+                ("Auth0", "https://auth0.com", "Identity platform for application builders"),
+                ("Segment", "https://segment.com", "Customer data platform for data collection"),
+                ("Netlify", "https://netlify.com", "Platform for building and deploying web applications")
+            ]
         
         suggestions = []
         for i, (name, url, reason) in enumerate(mock_companies[:limit]):

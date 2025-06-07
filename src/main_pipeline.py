@@ -14,6 +14,7 @@ from src.models import (
     CompanyIntelligenceConfig, SectorCluster, CompanySimilarity
 )
 from src.crawl4ai_scraper import CompanyWebScraper
+from src.intelligent_company_scraper import IntelligentCompanyScraperSync
 from src.bedrock_client import BedrockClient
 from src.pinecone_client import PineconeClient
 from src.clustering import SectorClusteringEngine
@@ -37,8 +38,11 @@ class TheodoreIntelligencePipeline:
         self.config = config
         
         # Initialize components
-        self.scraper = CompanyWebScraper(config)
         self.bedrock_client = BedrockClient(config)
+        # Use intelligent scraper for comprehensive sales intelligence
+        self.scraper = IntelligentCompanyScraperSync(config, self.bedrock_client)
+        # Keep legacy scraper as fallback
+        self.legacy_scraper = CompanyWebScraper(config, self.bedrock_client)
         self.pinecone_client = PineconeClient(
             config, pinecone_api_key, pinecone_environment, pinecone_index
         )
@@ -115,6 +119,10 @@ class TheodoreIntelligencePipeline:
         # Analyze with Bedrock
         analysis_result = self.bedrock_client.analyze_company_content(company)
         self._apply_analysis_to_company(company, analysis_result)
+        
+        # NEW: Extract similarity metrics
+        logger.info(f"Extracting similarity metrics for {company_name}")
+        company = self.scraper.extract_similarity_metrics(company)
         
         # Generate embedding
         embedding_text = self._prepare_embedding_text(company)
@@ -281,26 +289,9 @@ class TheodoreIntelligencePipeline:
             company.pain_points = list(existing_pains.union(new_pains))
     
     def _prepare_embedding_text(self, company: CompanyData) -> str:
-        """Prepare text for embedding generation"""
-        text_parts = [
-            f"Company: {company.name}",
-            f"Industry: {company.industry or 'unknown'}",
-            f"Business Model: {company.business_model or 'unknown'}",
-        ]
-        
-        if company.key_services:
-            text_parts.append(f"Services: {', '.join(company.key_services)}")
-        
-        if company.tech_stack:
-            text_parts.append(f"Technologies: {', '.join(company.tech_stack)}")
-        
-        if company.pain_points:
-            text_parts.append(f"Challenges: {', '.join(company.pain_points)}")
-        
-        if company.ai_summary:
-            text_parts.append(f"Summary: {company.ai_summary}")
-        
-        return " | ".join(text_parts)
+        """Prepare comprehensive text for embedding generation using vector content approach"""
+        # Use the comprehensive vector content from PineconeClient
+        return self.pinecone_client._prepare_vector_content(company)
     
     def _save_results_csv(self, companies: List[CompanyData], sectors: List[SectorCluster], output_path: str):
         """Save processing results to CSV"""
@@ -359,6 +350,101 @@ class TheodoreIntelligencePipeline:
             json.dump(sector_data, file, indent=2)
         
         logger.info(f"Results saved to {output_path} and {sector_output_path}")
+    
+    def analyze_company_similarity(self, company_name: str, top_k: int = 5) -> Dict[str, Any]:
+        """Analyze similarity for a company and return insights"""
+        try:
+            # Find company in database
+            company = self.pinecone_client.find_company_by_name(company_name)
+            if not company:
+                return {
+                    "error": f"Company '{company_name}' not found in database",
+                    "suggestion": "Try processing the company first"
+                }
+            
+            # Get similarity insights
+            insights = self.pinecone_client.get_similarity_insights(company.id)
+            return insights
+            
+        except Exception as e:
+            logger.error(f"Similarity analysis failed for {company_name}: {e}")
+            return {"error": str(e)}
+    
+    def find_companies_like(self, company_name: str, 
+                           filters: Dict[str, str] = None,
+                           top_k: int = 10) -> List[Dict[str, Any]]:
+        """Find companies similar to the given company with optional filters"""
+        try:
+            # Find target company
+            company = self.pinecone_client.find_company_by_name(company_name)
+            if not company:
+                return []
+            
+            # Apply filters
+            stage_filter = filters.get('stage') if filters else None
+            tech_filter = filters.get('tech_level') if filters else None
+            industry_filter = filters.get('industry') if filters else None
+            
+            # Find similar companies
+            similar_companies = self.pinecone_client.find_similar_companies_enhanced(
+                company.id,
+                top_k=top_k,
+                stage_filter=stage_filter,
+                tech_filter=tech_filter,
+                industry_filter=industry_filter
+            )
+            
+            return similar_companies
+            
+        except Exception as e:
+            logger.error(f"Find companies like {company_name} failed: {e}")
+            return []
+    
+    def get_similarity_report(self, company_name: str) -> str:
+        """Generate a detailed similarity report for sales team"""
+        try:
+            insights = self.analyze_company_similarity(company_name)
+            
+            if "error" in insights:
+                return f"Error: {insights['error']}"
+            
+            # Generate report
+            target = insights["target_company"]
+            similar = insights.get("similar_companies", [])
+            recommendations = insights.get("sales_recommendations", [])
+            
+            report = f"""
+SIMILARITY ANALYSIS REPORT
+==========================
+
+Target Company: {target['name']}
+Company Stage: {target.get('stage', 'Unknown')}
+Tech Level: {target.get('tech_level', 'Unknown')}
+Industry: {target.get('industry', 'Unknown')}
+
+SIMILAR COMPANIES ({len(similar)} found):
+"""
+            
+            for i, comp in enumerate(similar[:5], 1):
+                report += f"""
+{i}. {comp['company_name']} (Similarity: {comp['similarity_score']:.2f})
+   - {comp['explanation']}
+   - Stage: {comp['metadata'].get('company_stage', 'Unknown')}
+   - Tech: {comp['metadata'].get('tech_sophistication', 'Unknown')}
+"""
+            
+            if recommendations:
+                report += f"""
+
+SALES RECOMMENDATIONS:
+"""
+                for rec in recommendations:
+                    report += f"• {rec}\n"
+            
+            return report
+            
+        except Exception as e:
+            return f"Error generating report: {e}"
 
 
 # CLI interface

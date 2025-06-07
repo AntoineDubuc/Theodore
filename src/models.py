@@ -28,13 +28,16 @@ class CompanyData(BaseModel):
     # Business intelligence
     pain_points: List[str] = Field(default_factory=list, description="Inferred business challenges")
     key_services: List[str] = Field(default_factory=list, description="Main offerings")
+    competitive_advantages: List[str] = Field(default_factory=list, description="Company competitive advantages")
     target_market: Optional[str] = Field(None, description="Who they serve")
     
     # Extended metadata from Crawl4AI
     company_description: Optional[str] = Field(None, description="About/description from website")
+    value_proposition: Optional[str] = Field(None, description="Main value proposition")
     founding_year: Optional[int] = Field(None, description="Year company was founded")
     location: Optional[str] = Field(None, description="Company headquarters location")
     employee_count_range: Optional[str] = Field(None, description="Estimated employee count")
+    company_culture: Optional[str] = Field(None, description="Company culture and values")
     funding_status: Optional[str] = Field(None, description="Funding stage/status")
     social_media: Dict[str, str] = Field(default_factory=dict, description="Social media links")
     contact_info: Dict[str, str] = Field(default_factory=dict, description="Contact information")
@@ -48,6 +51,19 @@ class CompanyData(BaseModel):
     pages_crawled: List[str] = Field(default_factory=list, description="URLs successfully crawled")
     crawl_depth: int = Field(default=1, description="Number of pages deep crawled")
     crawl_duration: Optional[float] = Field(None, description="Time taken to crawl in seconds")
+    
+    # Similarity metrics for sales intelligence
+    company_stage: Optional[str] = Field(None, description="startup, growth, enterprise")
+    tech_sophistication: Optional[str] = Field(None, description="low, medium, high")
+    geographic_scope: Optional[str] = Field(None, description="local, regional, global")
+    business_model_type: Optional[str] = Field(None, description="saas, services, marketplace, ecommerce, other")
+    decision_maker_type: Optional[str] = Field(None, description="technical, business, hybrid")
+    sales_complexity: Optional[str] = Field(None, description="simple, moderate, complex")
+    
+    # Confidence scores for similarity metrics
+    stage_confidence: Optional[float] = Field(None, description="Confidence in company stage classification (0-1)")
+    tech_confidence: Optional[float] = Field(None, description="Confidence in tech sophistication (0-1)")
+    industry_confidence: Optional[float] = Field(None, description="Confidence in industry classification (0-1)")
     
     # AI analysis
     raw_content: Optional[str] = Field(None, description="Scraped website content")
@@ -216,7 +232,18 @@ class CompanyIntelligenceConfig(BaseModel):
     # AI analysis configuration
     bedrock_embedding_model: str = Field(default="amazon.titan-embed-text-v1")
     bedrock_analysis_model: str = Field(default="anthropic.claude-3-sonnet-20240229-v1:0")
-    bedrock_region: str = Field(default="us-east-1")
+    bedrock_region: str = Field(default="us-west-2")
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Load from environment variables if available
+        import os
+        if os.getenv('BEDROCK_ANALYSIS_MODEL'):
+            self.bedrock_analysis_model = os.getenv('BEDROCK_ANALYSIS_MODEL').strip('"')
+        if os.getenv('BEDROCK_REGION'):
+            self.bedrock_region = os.getenv('BEDROCK_REGION')
+        if os.getenv('BEDROCK_EMBEDDING_MODEL'):
+            self.bedrock_embedding_model = os.getenv('BEDROCK_EMBEDDING_MODEL')
     
     # Clustering configuration
     similarity_threshold: float = Field(default=0.7, description="Minimum similarity for clustering")

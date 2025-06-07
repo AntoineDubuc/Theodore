@@ -78,4 +78,4 @@ tmp/
 # API keys and secrets
 *.key
 *.pem
-secrets/
+secrets/research/crawl4ai/

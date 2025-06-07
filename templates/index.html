@@ -50,6 +50,9 @@
                     <button class="btn btn-secondary tab-button" data-tab="processTab">
                         ➕ Add New Company
                     </button>
+                    <button class="btn btn-secondary tab-button" data-tab="databaseTab">
+                        🗄️ Browse Database
+                    </button>
                 </div>
             </div>
 
@@ -70,6 +73,8 @@
                                     placeholder="Enter company name (e.g., Visterra, Google, Microsoft)"
                                     required
                                     autocomplete="off"
+                                    spellcheck="false"
+                                    data-form-type="other"
                                 >
                             </div>
                         </div>
@@ -109,7 +114,12 @@
             <!-- Process Tab -->
             <div id="processTab" class="tab-content">
                 <div class="search-card">
-                    <h3 style="margin-bottom: 24px; color: var(--text-primary);">Add New Company to Database</h3>
+                    <h3 style="margin-bottom: 24px; color: var(--text-primary);">Intelligent Company Processing</h3>
+                    <p style="margin-bottom: 24px; color: var(--text-secondary); font-size: 14px;">
+                        Add companies to the database with AI-powered sales intelligence extraction. 
+                        The system will discover links, select relevant pages, and generate comprehensive sales insights.
+                    </p>
+                    
                     <form id="processForm">
                         <div class="form-group">
                             <label for="newCompanyName" class="form-label">
@@ -121,7 +131,7 @@
                                     id="newCompanyName" 
                                     name="company_name" 
                                     class="form-input" 
-                                    placeholder="Enter company name"
+                                    placeholder="Enter company name (e.g., Linear, Stripe)"
                                     required
                                 >
                             </div>
@@ -144,16 +154,147 @@
                         </div>
 
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-accent">
-                                <span>📊</span>
-                                Process Company
+                            <button type="submit" class="btn btn-accent" id="processButton">
+                                <span>🧠</span>
+                                Generate Sales Intelligence
                             </button>
-                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('processForm').reset();">
+                            <button type="button" class="btn btn-secondary" onclick="resetProcessForm()">
                                 <span>🔄</span>
                                 Clear
                             </button>
                         </div>
                     </form>
+
+                    <!-- Real-time Progress Display -->
+                    <div id="progressContainer" class="progress-container" style="display: none;">
+                        <div class="progress-header">
+                            <h4 id="progressTitle">Processing Company...</h4>
+                            <div class="progress-spinner"></div>
+                        </div>
+                        
+                        <div class="progress-phases">
+                            <div class="phase-item" id="phase-link-discovery">
+                                <div class="phase-icon">🔍</div>
+                                <div class="phase-content">
+                                    <div class="phase-name">Link Discovery</div>
+                                    <div class="phase-status">Pending</div>
+                                    <div class="phase-details"></div>
+                                </div>
+                                <div class="phase-check">⏳</div>
+                            </div>
+                            
+                            <div class="phase-item" id="phase-page-selection">
+                                <div class="phase-icon">🧠</div>
+                                <div class="phase-content">
+                                    <div class="phase-name">LLM Page Selection</div>
+                                    <div class="phase-status">Pending</div>
+                                    <div class="phase-details"></div>
+                                </div>
+                                <div class="phase-check">⏳</div>
+                            </div>
+                            
+                            <div class="phase-item" id="phase-content-extraction">
+                                <div class="phase-icon">📥</div>
+                                <div class="phase-content">
+                                    <div class="phase-name">Content Extraction</div>
+                                    <div class="phase-status">Pending</div>
+                                    <div class="phase-details"></div>
+                                </div>
+                                <div class="phase-check">⏳</div>
+                            </div>
+                            
+                            <div class="phase-item" id="phase-intelligence-generation">
+                                <div class="phase-icon">📄</div>
+                                <div class="phase-content">
+                                    <div class="phase-name">Sales Intelligence Generation</div>
+                                    <div class="phase-status">Pending</div>
+                                    <div class="phase-details"></div>
+                                </div>
+                                <div class="phase-check">⏳</div>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-log">
+                            <h5>Processing Log:</h5>
+                            <div id="progressLog" class="log-content"></div>
+                        </div>
+                    </div>
+
+                    <!-- Results Display -->
+                    <div id="processResults" class="results-container" style="display: none;">
+                        <div class="result-header">
+                            <h4>🎉 Processing Complete!</h4>
+                        </div>
+                        
+                        <div class="result-summary">
+                            <div class="summary-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Pages Processed:</span>
+                                    <span class="stat-value" id="resultPages">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Processing Time:</span>
+                                    <span class="stat-value" id="resultTime">0s</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Intelligence Length:</span>
+                                    <span class="stat-value" id="resultLength">0 chars</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="sales-intelligence">
+                            <h5>Generated Sales Intelligence:</h5>
+                            <div id="salesIntelligence" class="intelligence-content"></div>
+                        </div>
+                        
+                        <div class="result-actions">
+                            <button class="btn btn-accent" onclick="switchToDiscoveryTab()">
+                                <span>🔍</span>
+                                Test Similarity Discovery
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetProcessForm()">
+                                <span>➕</span>
+                                Process Another Company
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Tab -->
+            <div id="databaseTab" class="tab-content">
+                <div class="search-card">
+                    <h3 style="margin-bottom: 24px; color: var(--text-primary);">Database Browser</h3>
+                    
+                    <!-- Database Stats -->
+                    <div id="databaseStats" class="database-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Companies:</span>
+                            <span class="stat-value" id="totalCompanies">Loading...</span>
+                        </div>
+                    </div>
+
+                    <!-- Database Actions -->
+                    <div class="form-actions" style="margin-bottom: 24px;">
+                        <button type="button" class="btn btn-primary" onclick="refreshDatabase()">
+                            <span>🔄</span>
+                            Refresh
+                        </button>
+                        <button type="button" class="btn btn-accent" onclick="addSampleCompanies()">
+                            <span>⚡</span>
+                            Add Sample Companies
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="clearDatabase()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24);">
+                            <span>🗑️</span>
+                            Clear Database
+                        </button>
+                    </div>
+
+                    <!-- Companies Table -->
+                    <div id="companiesTable" class="companies-table">
+                        <div class="loading">Loading companies...</div>
+                    </div>
                 </div>
             </div>
 
@@ -371,6 +512,104 @@
             .stat-item:nth-child(4) { animation-delay: 0.4s; }
         }
 
+        /* Database Browser Styles */
+        .database-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+        }
+
+        .database-stats .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .database-stats .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .database-stats .stat-value {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .companies-table {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .companies-table .loading {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .companies-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .companies-table th {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--text-primary);
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .companies-table td {
+            padding: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: top;
+        }
+
+        .companies-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .companies-table .company-name {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .companies-table .company-id {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #ee5a24, #c0392b);
+            transform: translateY(-2px);
+        }
+
         /* Mobile responsiveness */
         @media (max-width: 768px) {
             .tab-nav {
@@ -383,6 +622,18 @@
             
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .companies-table {
+                overflow-x: auto;
+            }
+
+            .companies-table table {
+                min-width: 600px;
+            }
+
+            .database-stats {
+                grid-template-columns: 1fr;
             }
         }
     </style>

@@ -5,7 +5,8 @@ Centralized configuration management
 
 import os
 from typing import Optional
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class TheodoreSettings(BaseSettings):
@@ -32,7 +33,7 @@ class TheodoreSettings(BaseSettings):
         env="BEDROCK_EMBEDDING_MODEL"
     )
     bedrock_analysis_model: str = Field(
-        default="anthropic.claude-3-sonnet-20240229-v1:0",
+        default="us.anthropic.claude-sonnet-4-20250514-v1:0",
         env="BEDROCK_ANALYSIS_MODEL"
     )
     bedrock_region: str = Field(default="us-west-2", env="BEDROCK_REGION")
@@ -49,6 +50,7 @@ class TheodoreSettings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Ignore extra environment variables
 
 
 # Global settings instance
