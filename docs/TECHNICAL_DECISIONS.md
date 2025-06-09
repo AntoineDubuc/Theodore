@@ -35,6 +35,7 @@ strategy = LLMExtractionStrategy(
 - ✅ **Accuracy**: 85-95% vs 40-60% with regex
 - ✅ **Maintenance**: Minimal vs high for regex patterns
 - ✅ **Adaptability**: Handles HTML changes automatically
+- ✅ **Research Transparency**: Detailed metadata showing pages crawled and processing time
 - ❌ **Cost**: $0.08-0.12 per company vs free for regex
 - ❌ **Latency**: 45-65 seconds vs 5-10 seconds
 
@@ -42,6 +43,7 @@ strategy = LLMExtractionStrategy(
 1. AI extraction quality justifies the cost for business intelligence
 2. Structured schemas are critical for consistent output
 3. LLMConfig ForwardRef issues require careful import management
+4. Research metadata tracking is essential for user confidence and debugging
 
 ### 2. Multi-Model AI Strategy
 

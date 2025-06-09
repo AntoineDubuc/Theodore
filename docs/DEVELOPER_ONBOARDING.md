@@ -27,8 +27,9 @@ Theodore transforms company research through intelligent AI-powered processing. 
 - **Intelligent Company Scraping**: 4-phase processing with dynamic link discovery, LLM page selection, parallel extraction, and AI aggregation
 - **Sales Intelligence Generation**: AI-generated 2-3 paragraph summaries optimized for sales teams
 - **Real-time Progress Tracking**: Live phase-by-phase status updates with detailed logging
+- **Research Metadata Tracking**: Shows pages crawled, processing time, and research timestamps
 - **Multi-Source Discovery**: Combines Pinecone similarity search with AI-powered recommendations
-- **Modern Web Interface**: Beautiful gradient UI with progress visualization and live updates
+- **Modern Web Interface**: Beautiful gradient UI with scrollable modals and detailed research views
 
 ### Business Value
 - Transforms manual company research into automated AI-powered sales intelligence

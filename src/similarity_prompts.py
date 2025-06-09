@@ -2,6 +2,60 @@
 LLM prompts for extracting similarity metrics from company websites
 """
 
+INDUSTRY_CLASSIFICATION_FROM_RESEARCH_PROMPT = """
+Based on the comprehensive company research data provided below, determine what industry this company operates in. 
+Use ALL the detailed information provided - not just the company name - to make an accurate classification.
+
+If the research data clearly indicates the industry through products, services, partnerships, or certifications, provide that classification.
+If the data is insufficient or unclear, respond with "Insufficient Data" rather than guessing.
+
+COMPANY RESEARCH DATA:
+======================
+
+Company Name: {company_name}
+Website: {website}
+
+BUSINESS OVERVIEW:
+Company Description: {company_description}
+Value Proposition: {value_proposition}
+Business Model: {business_model}
+Target Market: {target_market}
+
+PRODUCTS & SERVICES:
+Key Services: {key_services}
+Competitive Advantages: {competitive_advantages}
+Pain Points They Address: {pain_points}
+
+COMPANY DETAILS:
+Location: {location}
+Founded: {founding_year}
+Company Size: {company_size}
+Employee Count: {employee_count_range}
+Funding Status: {funding_status}
+
+TECHNOLOGY & OPERATIONS:
+Technology Stack: {tech_stack}
+Has Customer Support Chat: {has_chat_widget}
+Has Lead Capture Forms: {has_forms}
+
+MARKET PRESENCE:
+Industry Certifications: {certifications}
+Key Partnerships: {partnerships}
+Awards & Recognition: {awards}
+Leadership Team: {leadership_team}
+Recent News/Updates: {recent_news}
+
+ANALYSIS INSTRUCTIONS:
+- Look for explicit industry indicators in services, partnerships, certifications
+- Consider the target market and what problems they solve
+- Pay attention to industry-specific terminology in descriptions
+- Check if partnerships or certifications indicate specific industries
+- Only classify if you have strong evidence from the research data
+- If evidence is weak or contradictory, respond with "Insufficient Data"
+
+Industry: [provide single industry category in plain English, or "Insufficient Data"]
+"""
+
 COMPANY_STAGE_PROMPT = """
 Based on the website content provided, classify this company's stage as one of:
 - startup: Early stage, small team (< 50 employees), recent founding, seed/series A funding

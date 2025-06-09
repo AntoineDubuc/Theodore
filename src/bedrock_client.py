@@ -57,26 +57,11 @@ class BedrockClient:
         prompt = self._build_analysis_prompt(company_data)
         
         try:
-            body = json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1000,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            })
+            # Use the generate_text method which handles Nova API properly
+            analysis_text = self.generate_text(prompt, max_tokens=1500)
             
-            response = self.bedrock_runtime.invoke_model(
-                body=body,
-                modelId=self.analysis_model,
-                accept="application/json",
-                contentType="application/json"
-            )
-            
-            response_body = json.loads(response.get('body').read())
-            analysis_text = response_body['content'][0]['text']
+            if not analysis_text:
+                return {"error": "No response from LLM"}
             
             # Parse the structured response
             return self._parse_analysis_response(analysis_text)
@@ -143,7 +128,9 @@ class BedrockClient:
     def _build_analysis_prompt(self, company_data: CompanyData) -> str:
         """Build analysis prompt for company intelligence extraction"""
         
-        content_preview = (company_data.raw_content or "")[:3000]  # First 3000 chars
+        # Get content from either raw_content or company_description field
+        content_source = company_data.raw_content or company_data.company_description or ""
+        content_preview = content_source[:4000]  # First 4000 chars for Nova
         
         prompt = f"""
         Analyze this company's website content and extract structured intelligence:
@@ -229,13 +216,13 @@ class BedrockClient:
         """Generate text using the LLM for general purpose prompts"""
         try:
             # Check if using Nova (inference profile) or Anthropic model
-            if "Nova" in self.analysis_model:
+            if "nova" in self.analysis_model.lower():
                 # Nova API format
                 request_body = {
                     "messages": [
                         {
                             "role": "user",
-                            "content": prompt
+                            "content": [{"text": prompt}]
                         }
                     ],
                     "inferenceConfig": {
@@ -267,7 +254,7 @@ class BedrockClient:
             response_body = json.loads(response['body'].read())
             
             # Handle different response formats
-            if "Nova" in self.analysis_model:
+            if "nova" in self.analysis_model.lower():
                 # Nova response format
                 if response_body.get('output') and response_body['output'].get('message'):
                     content = response_body['output']['message'].get('content', [])

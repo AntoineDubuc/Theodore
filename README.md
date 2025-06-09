@@ -7,11 +7,18 @@ Theodore provides an advanced company analysis platform with dynamic link discov
 ## 🎯 Current Features
 
 - **Intelligent Company Scraper**: 4-phase processing with link discovery, LLM page selection, parallel extraction, and AI aggregation
+- **Structured Research System**: 8 predefined research prompts with cost transparency and JSON/CSV export
+- **Nova Pro AI Model**: 6x cost reduction ($0.66 → $0.11 per research) with enterprise-grade performance
 - **Real-time Progress Tracking**: Live phase-by-phase status updates with detailed logging
+- **Research Metadata Display**: Shows pages crawled, processing time, and research timestamps in UI
 - **Enhanced Sales Intelligence**: AI-generated 2-3 paragraph summaries optimized for sales teams
-- **Modern Web Interface**: Beautiful gradient-styled UI with progress visualization at http://localhost:5001
+- **Scrollable Research Modals**: Detailed company information with comprehensive research metadata
+- **Modern Web Interface**: Beautiful glass morphism UI with perfect dark mode accessibility at http://localhost:5002
 - **Multi-Source Discovery**: Combines Pinecone similarity search with AI-powered recommendations
-- **Smart Database Browser**: View companies with sales intelligence status and metadata
+- **Research Session Management**: Track multi-prompt research operations with comprehensive metrics
+- **Smart Database Browser**: View companies with sales intelligence status and one-click website access
+- **Universal Website Integration**: Green website buttons throughout the interface for seamless company access
+- **WCAG-Compliant Design**: High-contrast dark mode with light blue (#60a5fa) links for optimal readability
 
 ## 🏗️ Intelligent Scraper Architecture
 
@@ -31,15 +38,16 @@ Company Input → Link Discovery → LLM Page Selection → Parallel Extraction 
 - **Enhanced Sales Intelligence**: AI-generated summaries replacing hardcoded schemas
 - **Modern Web Interface**: Beautiful UI with live progress visualization
 - **Database Browser**: View and manage companies with sales intelligence status
-- **Multi-Model Integration**: Gemini 2.5 Pro + AWS Bedrock + OpenAI working together
+- **Multi-Model Integration**: Gemini 2.5 Pro + AWS Bedrock Nova Pro + OpenAI working together
 - **Vector Storage**: Optimized Pinecone integration with sales intelligence metadata
 
-### ✅ Latest Major Update (June 2025)
-- **Intelligent Scraper**: ✅ Complete overhaul from hardcoded extraction to dynamic LLM-driven processing
-- **Real-time Progress**: ✅ Live 4-phase tracking with detailed logging and UI updates
-- **Enhanced Discovery**: ✅ Multi-source similarity discovery (Pinecone + AI recommendations)
-- **Sales Intelligence**: ✅ AI-generated 2-3 paragraph summaries optimized for sales teams
-- **UI Integration**: ✅ Fixed database browser, progress tracking, and result display
+### ✅ Latest Major Update (December 2025)
+- **Structured Research System**: ✅ 8 predefined research prompts covering job listings, decision makers, funding, tech stack, and more
+- **Nova Pro Model Integration**: ✅ 6x cost reduction with `amazon.nova-pro-v1:0` for enhanced research operations
+- **Research Session Management**: ✅ Track multi-prompt research with cost transparency and export capabilities
+- **Enhanced API Endpoints**: ✅ Complete REST API for structured research operations and session management
+- **Cost Optimization**: ✅ Real-time cost estimation and tracking for all research operations
+- **Export Functionality**: ✅ JSON and CSV export for comprehensive research analysis
 
 ### 🎯 Technical Achievements
 - **Dynamic Link Discovery**: Automatically discovers 670+ links per company (robots.txt, sitemaps, recursive)
@@ -84,7 +92,29 @@ cp .env.example .env
 python app.py
 
 # Access the modern web interface
-# Open: http://localhost:5001
+# Open: http://localhost:5002
+```
+
+### 📊 Research Metadata Features
+
+Theodore now provides comprehensive research transparency:
+
+**In Result Cards**:
+- Pages crawled count (e.g., "5 pages crawled")
+- Processing time (e.g., "2.3s processing time")
+- Research timestamp with full date/time
+
+**In Research Details Modal**:
+- Dedicated "Research Metadata" section
+- Scrollable interface for long content
+- Comprehensive debugging information in browser console
+
+**For Developers**:
+```javascript
+// Console logs show detailed research metadata
+📋 Pages Crawled: [page1, page2, page3, ...]
+📋 Processing Time: 2.5
+📋 Research Timestamp: 2024-12-08T18:25:30.123Z
 ```
 
 **Programmatic Usage**:
@@ -104,6 +134,14 @@ result = pipeline.process_single_company("Company Name", "https://company.com")
 ```
 
 ## ✨ Key Features
+
+### 📋 Structured Research System
+
+- **8 Predefined Research Prompts**: Job listings, decision makers, products/services, funding, tech stack, news, competitive landscape, customer analysis
+- **Cost Transparency**: Real-time cost estimation with Nova Pro pricing ($0.011 per 1K tokens)
+- **Research Sessions**: Track multi-prompt research operations with comprehensive metrics
+- **Export Capabilities**: JSON and CSV export for analysis and reporting
+- **Session Management**: Historical research tracking with success rates and cost analysis
 
 ### 🧠 Intelligent Company Scraper
 
@@ -137,7 +175,7 @@ result = pipeline.process_single_company("Company Name", "https://company.com")
 ## 🛠️ Technical Stack
 
 - **Intelligent Scraping**: Custom 4-phase pipeline with Crawl4AI integration
-- **AI Models**: Gemini 2.5 Pro (1M context), AWS Bedrock Claude Sonnet 4, OpenAI GPT-4o-mini
+- **AI Models**: Gemini 2.5 Pro (1M context), AWS Bedrock Nova Pro, OpenAI GPT-4o-mini
 - **Vector Database**: Pinecone serverless with sales intelligence metadata
 - **Progress Tracking**: Real-time JSON-based logging with thread-safe updates
 - **Web Interface**: Flask + modern CSS/JS with gradient design and live updates
@@ -196,6 +234,51 @@ Theodore/
 - **Market Mapping**: Understand competitive landscapes
 - **Due Diligence**: Automated company intelligence gathering
 
+## 🔗 API Endpoints
+
+### Structured Research APIs
+```bash
+# Get available research prompts
+GET /api/research/prompts/available
+
+# Estimate research cost
+POST /api/research/prompts/estimate
+{
+  "selected_prompts": ["job_listings", "decision_makers", "funding_stage"]
+}
+
+# Start structured research
+POST /api/research/structured/start
+{
+  "company_name": "OpenAI",
+  "website": "https://openai.com",
+  "selected_prompts": ["job_listings", "decision_makers"],
+  "include_base_research": true
+}
+
+# Get research session results
+GET /api/research/structured/session/{session_id}
+
+# Export research results
+GET /api/research/structured/export/{session_id}?format=csv
+```
+
+### Company Discovery APIs
+```bash
+# Discover similar companies
+POST /api/discover
+{
+  "company_name": "Stripe",
+  "max_results": 10
+}
+
+# Browse database
+GET /api/database/browse?page=1&limit=20
+
+# Get company details
+GET /api/company/{company_id}
+```
+
 ## 💡 Example Queries
 
 ```python
@@ -211,11 +294,12 @@ saas_startups = pipeline.semantic_search(
     filters={"business_model": "SaaS", "company_size": "startup"}
 )
 
-# Find companies with specific technology
-tech_companies = pipeline.semantic_search(
-    "Python React AWS cloud infrastructure",
-    top_k=10
+# Structured research with cost estimation
+from src.research_prompts import research_prompt_library
+cost_estimate = research_prompt_library.estimate_total_cost(
+    ["job_listings", "decision_makers", "tech_stack"]
 )
+print(f"Estimated cost: ${cost_estimate['total_cost']:.4f}")
 ```
 
 ## 🔧 Configuration

@@ -2,37 +2,51 @@
 
 ## 🏗️ High-Level Architecture
 
-Theodore implements a modular, event-driven architecture optimized for AI-powered company intelligence extraction and analysis.
+Theodore implements a modular, event-driven architecture optimized for AI-powered company intelligence extraction, real-time research, and similarity discovery with a modern web interface.
 
 ```mermaid
 graph TB
-    A[Survey CSV Input] --> B[Data Validation]
-    B --> C[Company Data Models]
-    C --> D[Web Scraping Pipeline]
-    D --> E[AI Extraction Engine]
-    E --> F[Data Processing & Merging]
-    F --> G[Vector Embedding Generation]
-    G --> H[Pinecone Storage]
-    H --> I[Semantic Search & Clustering]
+    A[Web UI / API Input] --> B[Discovery Engine]
+    A --> C[Research Manager]
+    B --> D[Enhanced Similarity Discovery]
+    C --> E[Intelligent Company Scraper]
+    D --> F[LLM + Vector Analysis]
+    E --> G[Multi-threaded Research]
+    F --> H[Industry Classification]
+    G --> H
+    H --> I[Vector Embedding Generation]
+    I --> J[Pinecone Storage]
+    J --> K[Real-time Progress Tracking]
+    K --> L[Modern Web Interface]
     
     subgraph "AI Services"
-        E1[OpenAI GPT-4o-mini]
-        E2[AWS Bedrock Nova Premier]
-        E3[Amazon Titan Embeddings]
+        AI1[AWS Bedrock Nova Pro]
+        AI2[Amazon Titan Embeddings]
+        AI3[Crawl4AI LLM Extraction]
+        AI4[Structured Research Prompts]
     end
     
-    subgraph "Storage Layer"
-        H1[Pinecone Vector DB]
-        H2[Local File Storage]
-        H3[Metadata Cache]
+    subgraph "Storage & Discovery"
+        S1[Pinecone Vector DB]
+        S2[Enhanced Similarity Engine]
+        S3[Research Progress Store]
     end
     
-    E --> E1
-    E --> E2
-    G --> E3
-    H --> H1
-    H --> H2
-    H --> H3
+    subgraph "User Interface"
+        UI1[Modern Web UI]
+        UI2[Real-time Discovery Progress]
+        UI3[Company Research Modals]
+    end
+    
+    F --> AI1
+    I --> AI2
+    E --> AI3
+    J --> S1
+    D --> S2
+    C --> S3
+    L --> UI1
+    L --> UI2
+    L --> UI3
 ```
 
 ## 🧩 Component Architecture
@@ -108,8 +122,9 @@ class BedrockClient:
 
 **Multi-Model Strategy:**
 - **OpenAI GPT-4o-mini**: Fast, accurate structured extraction
-- **AWS Nova Premier**: Deep business analysis and insights
+- **AWS Nova Pro**: Cost-optimized business analysis and insights (6x cheaper)
 - **Amazon Titan**: High-quality embeddings for semantic search
+- **Structured Research Prompts**: 8 predefined research categories
 
 **Analysis Pipeline:**
 1. **Content Preprocessing**: Text cleaning and chunking
@@ -324,6 +339,187 @@ logger.info("AI-extracting from {url}", extra={
 - Storage capacity tracking
 - Data quality metrics
 
+## 🚀 Enhanced Similarity Discovery System (`src/simple_enhanced_discovery.py`)
+
+### Purpose
+Advanced multi-source company discovery that combines LLM reasoning with vector similarity for comprehensive company intelligence gathering.
+
+### Architecture
+```python
+class SimpleEnhancedDiscovery:
+    """
+    Enhanced discovery with dual-mode operation:
+    - Known companies: LLM + Vector hybrid analysis
+    - Unknown companies: LLM-only research with web scraping
+    """
+```
+
+### Discovery Flow
+1. **Company Lookup**: Check if target company exists in database
+2. **Discovery Mode Selection**:
+   - **Known Company Path**: Hybrid LLM + Vector similarity analysis
+   - **Unknown Company Path**: LLM-only discovery with comprehensive web research
+3. **Result Enhancement**: Enrich discoveries with business context and confidence scoring
+4. **Quality Assurance**: Validate results and provide reasoning transparency
+
+### Key Features
+- **Dual-Mode Discovery**: Handles both indexed and unknown companies intelligently
+- **LLM Reasoning**: Uses Claude Sonnet 4 for sophisticated business relationship analysis
+- **Vector Similarity**: Leverages semantic embeddings for precise matching
+- **Research Integration**: Automatically triggers web research for unknown companies
+- **Confidence Scoring**: Provides transparency in discovery quality
+
+## 🔬 Research Manager System (`src/research_manager.py`)
+
+### Purpose
+Orchestrates multithreaded company research with real-time progress tracking and intelligent industry classification.
+
+### Core Components
+
+#### Research Status Tracking
+```python
+class ResearchStatus(str, Enum):
+    UNKNOWN = "unknown"           # LLM-suggested company, not in database
+    NOT_RESEARCHED = "not_researched"  # In database but lacks sales intelligence
+    RESEARCHING = "researching"   # Currently being processed
+    COMPLETED = "completed"       # Fully researched with sales intelligence
+    FAILED = "failed"            # Research failed
+    QUEUED = "queued"            # Waiting to be processed
+```
+
+#### Multithreaded Processing
+- **ThreadPoolExecutor**: Up to 3 concurrent research operations
+- **Progress Tracking**: Real-time status updates with phase-based progression
+- **Error Recovery**: Graceful handling of research failures
+- **Resource Management**: Controlled concurrency to respect API limits
+
+#### Research Pipeline
+1. **Company Profile Creation**: Initialize research target
+2. **Intelligent Web Scraping**: Multi-page content extraction using Crawl4AI
+3. **Industry Classification**: LLM-based categorization using comprehensive research data
+4. **Embedding Generation**: Create vector representations for similarity search
+5. **Database Storage**: Persist enriched company data in Pinecone
+
+### Industry Classification System
+```python
+def _classify_industry(self, company: CompanyData) -> str:
+    """
+    Uses comprehensive research data for accurate industry classification:
+    - Business overview and value proposition
+    - Products, services, and competitive advantages
+    - Technology stack and certifications
+    - Partnerships and market presence
+    - Anti-guessing logic for data quality
+    """
+```
+
+## 🌐 Modern Web Interface (`static/js/app.js`, `static/css/style.css`)
+
+### Design Philosophy
+Modern, responsive interface with glass morphism design, real-time progress tracking, and installer-style user experience.
+
+### Key UI Components
+
+#### Discovery Progress System
+- **5-Phase Progress**: Initialize → Database Check → AI Research → Enhance → Complete
+- **Real-time Updates**: Live progress bars with percentage completion
+- **Company Discovery Tracking**: Shows discovered companies as they're found
+- **Installer-Style UX**: Transforms waiting time into engaging experience
+
+#### Modal System
+```javascript
+function showCompanyDetailsModal(company) {
+    // Large, scrollable modals for comprehensive company information
+    // Glass morphism styling with backdrop blur
+    // Responsive design for all screen sizes
+}
+```
+
+#### Search Intelligence
+- **Smart Suggestions**: Context-aware company recommendations
+- **Request Cancellation**: Prevents suggestion flickering with rapid typing
+- **Fallback Handling**: Graceful degradation for unknown companies
+
+### CSS Architecture
+- **Glass Morphism**: Modern translucent design with backdrop filters
+- **Gradient Animations**: Shimmer effects and animated progress indicators
+- **Responsive Grid**: Flexible layouts that adapt to all screen sizes
+- **Dark Theme Optimized**: WCAG-compliant high contrast with accessible color schemes
+- **Smart Color System**: Light blue (#60a5fa) links for perfect dark mode visibility
+- **Interactive Elements**: Green website buttons with hover effects and transitions
+
+## 🤖 Industry Classification Pipeline (`src/similarity_prompts.py`)
+
+### Enhanced Classification Prompt
+```python
+INDUSTRY_CLASSIFICATION_FROM_RESEARCH_PROMPT = """
+Based on the comprehensive company research data provided below, determine what industry this company operates in. 
+Use ALL the detailed information provided - not just the company name - to make an accurate classification.
+
+If the research data clearly indicates the industry through products, services, partnerships, or certifications, provide that classification.
+If the data is insufficient or unclear, respond with "Insufficient Data" rather than guessing.
+"""
+```
+
+### Anti-Guessing Logic
+- **Evidence-Based Classification**: Requires strong indicators from research data
+- **Insufficient Data Handling**: Explicit handling of uncertain classifications
+- **Comprehensive Data Analysis**: Uses all available research fields for decision-making
+
+## 🔄 Real-Time Progress Tracking
+
+### Progress Architecture
+```javascript
+// Installer-style progress with 5 distinct phases
+const discoveryPhases = [
+    { name: 'Initialize', duration: 10 },
+    { name: 'Database Check', duration: 20 },
+    { name: 'AI Research', duration: 40 },
+    { name: 'Enhance', duration: 20 },
+    { name: 'Complete', duration: 10 }
+];
+```
+
+### Features
+- **Phase-Based Progression**: Clear milestones for user understanding
+- **Discovery Stats**: Real-time count of companies found during research
+- **Visual Feedback**: Animated progress bars with shimmer effects
+- **Error Handling**: Graceful failure states with retry options
+
+## 📊 API Integration Architecture (`app.py`)
+
+### Enhanced Endpoints
+- **`/api/discover`**: Multi-source company discovery with fallback logic
+- **`/api/research/start`**: Single company research initiation
+- **`/api/research/bulk`**: Multi-company research orchestration
+- **`/api/research/progress`**: Real-time progress monitoring
+- **`/api/classify-unknown-industries`**: Bulk industry classification for existing companies
+
+### Research Manager Integration
+```python
+# Initialization with dependency injection
+pipeline.research_manager = ResearchManager(
+    intelligent_scraper=pipeline.scraper,
+    pinecone_client=pipeline.pinecone_client,
+    bedrock_client=pipeline.bedrock_client
+)
+```
+
+## 🔧 Configuration Management
+
+### Environment-Based Setup
+```python
+class CompanyIntelligenceConfig:
+    # AI model selection for different use cases
+    bedrock_analysis_model: str = "anthropic.claude-3-sonnet-20240229-v1:0"
+    bedrock_embedding_model: str = "amazon.titan-embed-text-v1"
+    
+    # Research processing controls
+    max_content_length: int = 50000
+    request_timeout: int = 10
+    requests_per_second: float = 2.0
+```
+
 ## 🔮 Future Architecture Considerations
 
 ### Planned Enhancements
@@ -338,6 +534,20 @@ logger.info("AI-extracting from {url}", extra={
 - **CQRS**: Separate read/write optimizations
 - **GraphQL**: Flexible data querying interface
 
+## 📈 Performance Optimizations
+
+### Implemented Optimizations
+- **Concurrent Research**: ThreadPoolExecutor for parallel company processing
+- **Request Cancellation**: Prevents UI flickering and reduces API calls
+- **Smart Caching**: Intelligent data reuse to minimize redundant operations
+- **Progress Streaming**: Real-time updates without polling overhead
+
+### Scalability Features
+- **Configurable Concurrency**: Adjustable thread pool sizing
+- **Rate Limiting**: Respectful API usage with backoff strategies
+- **Memory Management**: Efficient handling of large research datasets
+- **Error Recovery**: Robust failure handling with retry mechanisms
+
 ---
 
-*This architecture documentation reflects the current production-ready state of Theodore, optimized for AI-powered company intelligence extraction at scale.*
+*This architecture documentation reflects the current production-ready state of Theodore, featuring enhanced similarity discovery, real-time research management, and a modern web interface optimized for AI-powered company intelligence extraction at scale.*
