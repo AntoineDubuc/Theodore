@@ -47,7 +47,9 @@
 
 #### Enhanced Modal System
 - **Large, Scrollable Modals**: Comprehensive company information display with proper overflow handling
-- **Research Metadata Display**: Shows pages crawled, processing time, and research timestamp
+- **Complete Research Data Display**: Shows all 13+ data points including tech stack, company size, value proposition, and pain points
+- **Research Metadata Display**: Shows pages crawled, crawl depth, processing time, and research timestamp
+- **Organized Data Sections**: Basic Information, Business Details, Technology Information, and Research Metadata
 - **Glass Morphism Styling**: Modern translucent design with backdrop blur
 - **Dark Mode Optimized**: High-contrast links (#60a5fa) for perfect readability
 - **Fixed Modal Issues**: Proper DOM appending and responsive design

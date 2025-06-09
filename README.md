@@ -95,19 +95,26 @@ python app.py
 # Open: http://localhost:5002
 ```
 
-### 📊 Research Metadata Features
+### 📊 Complete Research Data Display
 
-Theodore now provides comprehensive research transparency:
+Theodore now displays all extracted company intelligence in organized sections:
 
-**In Result Cards**:
-- Pages crawled count (e.g., "5 pages crawled")
-- Processing time (e.g., "2.3s processing time")
-- Research timestamp with full date/time
+**Basic Information**:
+- Industry, Business Model, Location, Company Size
+
+**Business Details**:
+- Target Market, Key Services, Value Proposition, Pain Points
+
+**Technology Information**:
+- Tech Stack (development tools, frameworks, platforms)
+
+**Research Metadata**:
+- Pages crawled count, Crawl depth, Processing time, Research timestamp
 
 **In Research Details Modal**:
-- Dedicated "Research Metadata" section
-- Scrollable interface for long content
-- Comprehensive debugging information in browser console
+- Complete data across all 13+ fields when available
+- Scrollable interface for comprehensive company profiles
+- Organized sections for easy information discovery
 
 **For Developers**:
 ```javascript

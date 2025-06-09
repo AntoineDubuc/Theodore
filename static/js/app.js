@@ -1035,6 +1035,11 @@ class TheodoreUI {
             console.log(`📋 Target Market: "${researchedCompany.target_market}"`);
             console.log(`📋 Key Services:`, researchedCompany.key_services);
             console.log(`📋 Location: "${researchedCompany.location}"`);
+            console.log(`📋 Tech Stack:`, researchedCompany.tech_stack);
+            console.log(`📋 Company Size: "${researchedCompany.company_size}"`);
+            console.log(`📋 Value Proposition: "${researchedCompany.value_proposition}"`);
+            console.log(`📋 Pain Points:`, researchedCompany.pain_points);
+            console.log(`📋 Crawl Depth:`, researchedCompany.crawl_depth);
             console.log(`📋 Pages Crawled:`, researchedCompany.pages_crawled);
             console.log(`📋 Pages Crawled Type:`, typeof researchedCompany.pages_crawled);
             console.log(`📋 Pages Crawled Length:`, researchedCompany.pages_crawled ? researchedCompany.pages_crawled.length : 'undefined');
@@ -1075,9 +1080,30 @@ class TheodoreUI {
                             <strong>Location:</strong> ${this.escapeHtml(researchedCompany.location)}
                         </div>
                     ` : ''}
+                    ${researchedCompany.company_size && researchedCompany.company_size !== 'Unknown' ? `
+                        <div class="research-section">
+                            <strong>Company Size:</strong> ${this.escapeHtml(researchedCompany.company_size)}
+                        </div>
+                    ` : ''}
+                    ${researchedCompany.tech_stack && researchedCompany.tech_stack.length > 0 ? `
+                        <div class="research-section">
+                            <strong>Tech Stack:</strong> ${researchedCompany.tech_stack.map(t => this.escapeHtml(t)).join(', ')}
+                        </div>
+                    ` : ''}
+                    ${researchedCompany.value_proposition && researchedCompany.value_proposition.trim() ? `
+                        <div class="research-section">
+                            <strong>Value Proposition:</strong> ${this.escapeHtml(researchedCompany.value_proposition.substring(0, 150))}${researchedCompany.value_proposition.length > 150 ? '...' : ''}
+                        </div>
+                    ` : ''}
+                    ${researchedCompany.pain_points && researchedCompany.pain_points.length > 0 ? `
+                        <div class="research-section">
+                            <strong>Pain Points:</strong> ${researchedCompany.pain_points.map(p => this.escapeHtml(p)).join(', ')}
+                        </div>
+                    ` : ''}
                     <div class="research-section research-meta-info">
                         <strong>Research Info:</strong> 
                         ${researchedCompany.pages_crawled && researchedCompany.pages_crawled.length > 0 ? `${researchedCompany.pages_crawled.length} pages crawled` : 'Pages data unavailable'}
+                        ${researchedCompany.crawl_depth && researchedCompany.crawl_depth > 0 ? ` • ${researchedCompany.crawl_depth} levels deep` : ''}
                         ${researchedCompany.processing_time && researchedCompany.processing_time > 0 ? ` • ${researchedCompany.processing_time.toFixed(1)}s processing time` : ''}
                         ${researchedCompany.research_timestamp ? ` • ${new Date(researchedCompany.research_timestamp).toLocaleString()}` : ''}
                     </div>
@@ -1415,6 +1441,14 @@ class TheodoreUI {
         console.log(`📋 Extracted Key Services: "${keyServices}"`);
         const location = this.extractResearchField(researchData, 'Location') || 'Unknown';
         console.log(`📋 Extracted Location: "${location}"`);
+        const companySize = this.extractResearchField(researchData, 'Company Size') || 'Unknown';
+        console.log(`📋 Extracted Company Size: "${companySize}"`);
+        const techStack = this.extractResearchField(researchData, 'Tech Stack') || 'Not available';
+        console.log(`📋 Extracted Tech Stack: "${techStack}"`);
+        const valueProposition = this.extractResearchField(researchData, 'Value Proposition') || 'Not available';
+        console.log(`📋 Extracted Value Proposition: "${valueProposition}"`);
+        const painPoints = this.extractResearchField(researchData, 'Pain Points') || 'Not available';
+        console.log(`📋 Extracted Pain Points: "${painPoints}"`);
         const researchInfo = this.extractResearchField(researchData, 'Research Info') || 'Research metadata unavailable';
         console.log(`📋 Extracted Research Info: "${researchInfo}"`);
         
@@ -1433,6 +1467,9 @@ class TheodoreUI {
                     <div class="detail-item">
                         <strong>Location:</strong> ${this.escapeHtml(location)}
                     </div>
+                    <div class="detail-item">
+                        <strong>Company Size:</strong> ${this.escapeHtml(companySize)}
+                    </div>
                 </div>
                 
                 <div class="detail-section">
@@ -1443,7 +1480,26 @@ class TheodoreUI {
                     <div class="detail-item">
                         <strong>Key Services:</strong> ${this.escapeHtml(keyServices)}
                     </div>
+                    ${valueProposition !== 'Not available' ? `
+                        <div class="detail-item">
+                            <strong>Value Proposition:</strong> ${this.escapeHtml(valueProposition)}
+                        </div>
+                    ` : ''}
+                    ${painPoints !== 'Not available' ? `
+                        <div class="detail-item">
+                            <strong>Pain Points:</strong> ${this.escapeHtml(painPoints)}
+                        </div>
+                    ` : ''}
                 </div>
+                
+                ${techStack !== 'Not available' ? `
+                    <div class="detail-section">
+                        <h4>Technology Information</h4>
+                        <div class="detail-item">
+                            <strong>Tech Stack:</strong> ${this.escapeHtml(techStack)}
+                        </div>
+                    </div>
+                ` : ''}
                 
                 <div class="detail-section">
                     <h4>Company Description</h4>
