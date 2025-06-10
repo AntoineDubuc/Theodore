@@ -189,6 +189,13 @@ class TheodoreV2UI {
                     <span>🔬</span>
                     Research Now
                 </button>
+                <button class="btn-review" 
+                        id="${companyId}-review-btn"
+                        style="display: none;"
+                        onclick="theodoreV2.showResearchReview('${companyId}', '${this.escapeJs(company.name)}')">
+                    <span>📊</span>
+                    Review Research
+                </button>
             </div>
             
             <div id="${companyId}-progress" class="research-progress" style="display: none;">
@@ -360,6 +367,9 @@ class TheodoreV2UI {
                 // Use stored results from the completed job
                 this.displayResearchResults(companyId, progressData.progress.results);
                 this.showMessage(`Research completed for ${companyName}!`, 'success');
+                
+                // Show review button and store research data
+                this.showReviewButton(companyId, progressData.progress.results);
             } else {
                 // Fallback: call the synchronous endpoint to get fresh results
                 const activeJob = this.activeResearchJobs.get(companyId);
@@ -383,6 +393,9 @@ class TheodoreV2UI {
                 if (result.success) {
                     this.displayResearchResults(companyId, result);
                     this.showMessage(`Research completed for ${companyName}!`, 'success');
+                    
+                    // Show review button and store research data
+                    this.showReviewButton(companyId, result);
                 } else {
                     this.displayResearchError(companyId, result.error || 'Failed to get results');
                     this.showMessage(`Failed to get results for ${companyName}`, 'error');
@@ -531,6 +544,333 @@ ${this.escapeHtml(result.analysis)}
                   .replace(/\n/g, '\\n')
                   .replace(/\r/g, '\\r')
                   .replace(/\t/g, '\\t');
+    }
+    
+    showReviewButton(companyId, researchData) {
+        const reviewBtn = document.getElementById(`${companyId}-review-btn`);
+        if (reviewBtn) {
+            reviewBtn.style.display = 'inline-block';
+            
+            // Store research data for review
+            if (!this.researchDataStore) {
+                this.researchDataStore = new Map();
+            }
+            this.researchDataStore.set(companyId, researchData);
+            
+            // Hide the old markdown-style results since we now have the review button
+            const resultsDiv = document.getElementById(`${companyId}-results`);
+            if (resultsDiv) {
+                resultsDiv.style.display = 'none';
+            }
+        }
+    }
+    
+    showResearchReview(companyId, companyName) {
+        const researchData = this.researchDataStore?.get(companyId);
+        if (!researchData) {
+            this.showMessage('No research data available for review', 'error');
+            return;
+        }
+        
+        // Debug: Log the research data to see what we have
+        console.log('🔍 Research data for modal:', researchData);
+        
+        this.openResearchModal(companyName, researchData);
+    }
+    
+    openResearchModal(companyName, researchData) {
+        const modal = document.getElementById('researchModal');
+        if (!modal) return;
+        
+        // Build modal content based on CompanyData model
+        const modalContent = this.buildResearchModalContent(companyName, researchData);
+        modal.innerHTML = modalContent;
+        
+        // Show modal
+        modal.style.display = 'flex';
+        
+        // Add event listeners
+        this.setupModalEventListeners(companyName, researchData);
+    }
+    
+    buildResearchModalContent(companyName, researchData) {
+        // Calculate completion percentage based on CompanyData model fields
+        const completionStats = this.calculateCompletionStats(researchData);
+        
+        return `
+            <div class="research-modal-content">
+                <div class="research-modal-header">
+                    <h2 class="research-modal-title">Research Review: ${this.escapeHtml(companyName)}</h2>
+                    <button class="research-modal-close" onclick="theodoreV2.closeResearchModal()">
+                        ×
+                    </button>
+                </div>
+                
+                <div class="research-modal-body">
+                    <!-- Completion Stats -->
+                    <div class="completion-stats">
+                        <div class="completion-percentage">${completionStats.percentage}%</div>
+                        <div class="completion-label">
+                            ${completionStats.completed} of ${completionStats.total} fields completed
+                        </div>
+                    </div>
+                    
+                    <!-- Company Data Fields -->
+                    <div class="field-grid">
+                        ${this.buildFieldItems(researchData)}
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="theodoreV2.closeResearchModal()">
+                        Cancel
+                    </button>
+                    <button class="btn-save" onclick="theodoreV2.saveToIndex('${this.escapeJs(companyName)}')">
+                        💾 Save to Index
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    calculateCompletionStats(researchData) {
+        // Complete CompanyData model fields from models.py
+        const allFields = [
+            'company_name', 'website', 'industry', 'business_model', 'company_size',
+            'tech_stack', 'has_chat_widget', 'has_forms', 'pain_points', 'key_services',
+            'competitive_advantages', 'target_market', 'company_description', 'value_proposition',
+            'founding_year', 'location', 'employee_count_range', 'company_culture',
+            'funding_status', 'social_media', 'contact_info', 'leadership_team',
+            'recent_news', 'certifications', 'partnerships', 'awards', 'company_stage',
+            'tech_sophistication', 'geographic_scope', 'business_model_type',
+            'decision_maker_type', 'sales_complexity', 'ai_summary'
+        ];
+        
+        let completed = 0;
+        allFields.forEach(field => {
+            const value = researchData[field];
+            if (value !== null && value !== undefined && value !== '' && 
+                !(Array.isArray(value) && value.length === 0) &&
+                !(typeof value === 'object' && Object.keys(value).length === 0)) {
+                completed++;
+            }
+        });
+        
+        const percentage = Math.round((completed / allFields.length) * 100);
+        
+        return {
+            completed,
+            total: allFields.length,
+            percentage
+        };
+    }
+    
+    buildFieldItems(researchData) {
+        // Complete CompanyData model structure with organized categories
+        const fieldCategories = {
+            'Basic Information': [
+                { key: 'company_name', label: 'Company Name' },
+                { key: 'website', label: 'Website' },
+                { key: 'industry', label: 'Industry' },
+                { key: 'business_model', label: 'Business Model' },
+                { key: 'company_size', label: 'Company Size' },
+                { key: 'location', label: 'Location' },
+                { key: 'founding_year', label: 'Founded' }
+            ],
+            'Business Intelligence': [
+                { key: 'company_description', label: 'Description' },
+                { key: 'value_proposition', label: 'Value Proposition' },
+                { key: 'target_market', label: 'Target Market' },
+                { key: 'key_services', label: 'Key Services' },
+                { key: 'competitive_advantages', label: 'Competitive Advantages' },
+                { key: 'pain_points', label: 'Pain Points' }
+            ],
+            'Technology & Operations': [
+                { key: 'tech_stack', label: 'Technology Stack' },
+                { key: 'has_chat_widget', label: 'Has Chat Widget' },
+                { key: 'has_forms', label: 'Has Lead Forms' },
+                { key: 'tech_sophistication', label: 'Tech Sophistication' }
+            ],
+            'Company Details': [
+                { key: 'employee_count_range', label: 'Employee Count' },
+                { key: 'company_culture', label: 'Company Culture' },
+                { key: 'funding_status', label: 'Funding Status' },
+                { key: 'company_stage', label: 'Company Stage' },
+                { key: 'geographic_scope', label: 'Geographic Scope' },
+                { key: 'business_model_type', label: 'Business Model Type' },
+                { key: 'decision_maker_type', label: 'Decision Maker Type' },
+                { key: 'sales_complexity', label: 'Sales Complexity' }
+            ],
+            'Contacts & Social': [
+                { key: 'leadership_team', label: 'Leadership Team' },
+                { key: 'contact_info', label: 'Contact Information', isObject: true },
+                { key: 'social_media', label: 'Social Media', isObject: true }
+            ],
+            'Additional Intelligence': [
+                { key: 'recent_news', label: 'Recent News' },
+                { key: 'certifications', label: 'Certifications' },
+                { key: 'partnerships', label: 'Partnerships' },
+                { key: 'awards', label: 'Awards' }
+            ],
+            'Research Metadata': [
+                { key: 'pages_analyzed', label: 'Pages Analyzed' },
+                { key: 'total_content_length', label: 'Content Length (chars)' },
+                { key: 'page_breakdown', label: 'Page Breakdown', isSpecial: true }
+            ],
+            'AI Analysis': [
+                { key: 'ai_summary', label: 'AI Summary', isLongText: true }
+            ]
+        };
+        
+        let fieldsHtml = '';
+        
+        Object.entries(fieldCategories).forEach(([category, fields]) => {
+            fieldsHtml += `<div class="field-item" style="grid-column: 1 / -1;"><h4 style="margin: 0; color: var(--primary-color);">${category}</h4></div>`;
+            
+            fields.forEach(field => {
+                const value = researchData[field.key];
+                let displayValue;
+                
+                if (field.isSpecial && field.key === 'page_breakdown') {
+                    // Special formatting for page breakdown
+                    if (Array.isArray(value) && value.length > 0) {
+                        displayValue = value.map(page => 
+                            `<div style="margin-bottom: 8px;">
+                                <strong>${page.type || 'Page'}:</strong> 
+                                ${page.content_length ? page.content_length.toLocaleString() + ' chars' : 'N/A'}
+                                <br><small style="color: var(--text-muted);">${page.url || 'Unknown URL'}</small>
+                            </div>`
+                        ).join('');
+                    } else {
+                        displayValue = 'No page data available';
+                    }
+                } else if (field.isLongText) {
+                    // Special formatting for long analysis text
+                    displayValue = value ? 
+                        `<div style="max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-family: inherit;">${this.escapeHtml(value)}</div>` : 
+                        'No analysis available';
+                } else if (field.isObject) {
+                    // Special formatting for object fields like contact_info, social_media
+                    if (value && typeof value === 'object' && Object.keys(value).length > 0) {
+                        displayValue = Object.entries(value)
+                            .filter(([k, v]) => v)
+                            .map(([k, v]) => `<strong>${k}:</strong> ${this.escapeHtml(v)}`)
+                            .join('<br>');
+                    } else {
+                        displayValue = 'Not available';
+                    }
+                } else {
+                    displayValue = this.formatFieldValue(value);
+                }
+                
+                const isEmpty = this.isFieldEmpty(value);
+                
+                fieldsHtml += `
+                    <div class="field-item" ${field.isLongText ? 'style="grid-column: 1 / -1;"' : ''}>
+                        <div class="field-label">${field.label}</div>
+                        <div class="field-value ${isEmpty ? 'field-empty' : ''}">
+                            ${displayValue}
+                        </div>
+                    </div>
+                `;
+            });
+        });
+        
+        return fieldsHtml;
+    }
+    
+    formatFieldValue(value) {
+        if (this.isFieldEmpty(value)) {
+            return 'Not available';
+        }
+        
+        if (Array.isArray(value)) {
+            return value.length > 0 ? value.join(', ') : 'Not available';
+        }
+        
+        if (typeof value === 'object') {
+            const entries = Object.entries(value).filter(([k, v]) => v);
+            return entries.length > 0 ? 
+                entries.map(([k, v]) => `${k}: ${v}`).join('<br>') : 
+                'Not available';
+        }
+        
+        if (typeof value === 'boolean') {
+            return value ? 'Yes' : 'No';
+        }
+        
+        return this.escapeHtml(String(value));
+    }
+    
+    isFieldEmpty(value) {
+        return value === null || 
+               value === undefined || 
+               value === '' || 
+               (Array.isArray(value) && value.length === 0) ||
+               (typeof value === 'object' && Object.keys(value).length === 0);
+    }
+    
+    setupModalEventListeners(companyName, researchData) {
+        // Close modal when clicking outside
+        const modal = document.getElementById('researchModal');
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeResearchModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeResearchModal();
+            }
+        });
+    }
+    
+    closeResearchModal() {
+        const modal = document.getElementById('researchModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    async saveToIndex(companyName) {
+        // Show saving state
+        const saveBtn = document.querySelector('.btn-save');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<div class="loading-spinner"></div> Saving...';
+        
+        try {
+            // Call backend to save to Pinecone
+            const response = await fetch('/api/v2/save-to-index', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    company_name: companyName,
+                    // Additional data can be sent here
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showMessage(`${companyName} saved to index successfully!`, 'success');
+                this.closeResearchModal();
+            } else {
+                this.showMessage(`Failed to save ${companyName}: ${result.error}`, 'error');
+            }
+            
+        } catch (error) {
+            console.error('Save to index error:', error);
+            this.showMessage(`Failed to save ${companyName} to index`, 'error');
+        } finally {
+            // Reset button
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
     }
 }
 

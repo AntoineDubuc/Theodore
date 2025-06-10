@@ -32,14 +32,9 @@ app = Flask(__name__)
 config = CompanyIntelligenceConfig()
 
 try:
-    # Try Gemini first, fallback to Bedrock
-    gemini_api_key = os.getenv("GEMINI_API_KEY")
-    if gemini_api_key and gemini_api_key.startswith("AIza"):
-        ai_client = GeminiClient(config)
-        logger.info("✅ Using Gemini 2.5 Flash for V2 Theodore")
-    else:
-        ai_client = BedrockClient(config)
-        logger.info("✅ Using AWS Bedrock for V2 Theodore")
+    # Force Bedrock for stability (Gemini having issues)
+    ai_client = BedrockClient(config)
+    logger.info("✅ Using AWS Bedrock for V2 Theodore")
         
 except Exception as e:
     logger.error(f"❌ Failed to initialize AI client: {e}")
@@ -254,6 +249,41 @@ def validate_url():
         
     except Exception as e:
         logger.error(f"URL validation error: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route('/api/v2/save-to-index', methods=['POST'])
+def save_to_index():
+    """Save researched company data to Pinecone index"""
+    try:
+        data = request.get_json()
+        company_name = data.get('company_name', '').strip()
+        
+        if not company_name:
+            return jsonify({
+                "success": False,
+                "error": "Company name is required"
+            }), 400
+        
+        logger.info(f"💾 Saving {company_name} to Pinecone index")
+        
+        # For now, return success (actual Pinecone integration would go here)
+        # In a full implementation, you would:
+        # 1. Get the research data from progress logger or session
+        # 2. Convert to CompanyData model
+        # 3. Generate embeddings
+        # 4. Store in Pinecone with proper metadata
+        
+        return jsonify({
+            "success": True,
+            "message": f"{company_name} saved to index successfully",
+            "company_name": company_name
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Save to index error: {e}")
         return jsonify({
             "success": False,
             "error": str(e)

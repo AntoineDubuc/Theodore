@@ -417,18 +417,18 @@ Focus on the most valuable pages for understanding the business."""
         # Consolidate content by page type
         consolidated_text = self._consolidate_page_contents(page_contents)
         
-        # Generate comprehensive analysis
-        analysis = await self._llm_analyze_company_content(
+        # Generate comprehensive structured analysis
+        structured_analysis = await self._llm_analyze_company_content(
             consolidated_text, company_name, website_url
         )
         
-        return {
+        # Build comprehensive result with both structured data and research metadata
+        result = {
             "success": True,
             "company_name": company_name,
             "website": website_url,
             "pages_analyzed": len(page_contents),
             "total_content_length": len(consolidated_text),
-            "analysis": analysis,
             "page_breakdown": [
                 {
                     "url": page['url'],
@@ -438,6 +438,14 @@ Focus on the most valuable pages for understanding the business."""
                 for page in page_contents
             ]
         }
+        
+        # Merge structured analysis data
+        if isinstance(structured_analysis, dict):
+            result.update(structured_analysis)
+        else:
+            result["analysis"] = structured_analysis
+            
+        return result
     
     def _consolidate_page_contents(self, page_contents: List[Dict[str, str]]) -> str:
         """Consolidate page contents into readable text format"""
@@ -491,10 +499,11 @@ Focus on the most valuable pages for understanding the business."""
         consolidated_content: str, 
         company_name: str,
         website_url: str
-    ) -> str:
-        """Use LLM to analyze consolidated content and extract business intelligence"""
+    ) -> Dict[str, Any]:
+        """Use LLM to analyze consolidated content and extract structured business intelligence"""
         
-        prompt = f"""Analyze the following comprehensive content from {company_name}'s website and create a detailed business intelligence summary.
+        # Enhanced prompt for complete CompanyData model extraction
+        prompt = f"""Analyze the following comprehensive content from {company_name}'s website and extract ALL possible business intelligence data.
 
 Company: {company_name}
 Website: {website_url}
@@ -502,41 +511,92 @@ Website: {website_url}
 Website Content:
 {consolidated_content}
 
-Create a comprehensive business analysis covering:
+Extract the following information and return it as a complete JSON object. For missing information, use null for strings/numbers, [] for arrays, and {{}} for objects. Be thorough and extract as much as possible:
 
-**Company Overview & Business Model:**
-- What the company does and core value proposition
-- Primary business model and revenue approach
-- Target market and customer segments
-- Industry and competitive positioning
+{{
+  "company_name": "{company_name}",
+  "website": "{website_url}",
+  "company_description": "Brief description of what the company does",
+  "industry": "Primary industry/sector (e.g., 'Food & Beverage', 'Technology', 'Healthcare')",
+  "business_model": "B2B, B2C, marketplace, SaaS, franchise, etc.",
+  "company_size": "startup, SMB, enterprise",
+  "value_proposition": "Main value proposition or unique selling point",
+  "target_market": "Who they serve (e.g., 'families', 'small businesses', 'enterprises')",
+  "key_services": ["main service 1", "main service 2", "main service 3"],
+  "competitive_advantages": ["advantage 1", "advantage 2"],
+  "pain_points": ["pain point 1", "pain point 2"],
+  "tech_stack": ["technology 1", "technology 2"],
+  "location": "Company headquarters location (city, state/country)",
+  "founding_year": year_as_number_or_null,
+  "employee_count_range": "1-10, 11-50, 51-200, 201-1000, 1000+",
+  "company_culture": "Description of company culture, values, and work environment",
+  "funding_status": "bootstrap, seed, series_a, series_b, public, acquired, etc.",
+  "leadership_team": ["CEO Name", "Founder Name", "CTO Name"],
+  "recent_news": ["recent announcement 1", "recent update 2"],
+  "contact_info": {{
+    "email": "contact email address",
+    "phone": "phone number", 
+    "address": "physical address"
+  }},
+  "social_media": {{
+    "linkedin": "linkedin company url",
+    "twitter": "twitter url",
+    "facebook": "facebook url",
+    "instagram": "instagram url"
+  }},
+  "certifications": ["certification 1", "certification 2"],
+  "partnerships": ["partner company 1", "partner company 2"],
+  "awards": ["award 1", "award 2"],
+  "company_stage": "startup, growth, mature, established",
+  "tech_sophistication": "low, medium, high",
+  "geographic_scope": "local, regional, national, global",
+  "business_model_type": "saas, services, marketplace, ecommerce, manufacturing, restaurant, other",
+  "decision_maker_type": "technical, business, hybrid",
+  "sales_complexity": "simple, moderate, complex",
+  "has_chat_widget": true_or_false,
+  "has_forms": true_or_false,
+  "ai_summary": "Comprehensive 2-3 paragraph business intelligence summary covering what the company does, who they serve, their market position, and key insights for business development"
+}}
 
-**Products & Services:**
-- Key offerings and solutions
-- Unique features and competitive advantages
-- Pricing approach (if mentioned)
-- Notable customers or use cases
-
-**Company Intelligence:**
-- Company size and growth stage indicators
-- Leadership team and key personnel
-- Recent news, milestones, or developments
-- Company culture and values
-- Location and presence
-
-**Sales Context:**
-- Decision maker types and sales process indicators
-- Technical complexity and sophistication level
-- Growth signals (hiring, expansion, funding mentions)
-- Contact and engagement approach
-
-Focus on factual information extracted from the content. Be specific and actionable for business development purposes. Write in a professional, analytical tone suitable for sales and business intelligence."""
+IMPORTANT: 
+- Extract factual information only from the provided content
+- Use null for missing string/number fields
+- Use [] for missing array fields  
+- Use {{}} for missing object fields
+- Be specific and detailed where information is available
+- The ai_summary should be comprehensive and business-focused
+- Return ONLY the JSON object, no other text"""
 
         try:
             response = await self._call_llm_async(prompt)
-            return response.strip()
+            
+            # Parse JSON response
+            try:
+                # Extract JSON from response
+                json_start = response.find('{')
+                json_end = response.rfind('}') + 1
+                if json_start >= 0 and json_end > json_start:
+                    json_text = response[json_start:json_end]
+                    structured_data = json.loads(json_text)
+                    
+                    # Add the original analysis as a fallback
+                    if not structured_data.get('ai_summary'):
+                        structured_data['ai_summary'] = f"Structured analysis completed for {company_name}"
+                    
+                    return structured_data
+                else:
+                    # Fallback to text analysis
+                    return {"ai_summary": response.strip()}
+                    
+            except json.JSONDecodeError as e:
+                self.logger.warning(f"Failed to parse JSON from LLM response: {e}")
+                return {"ai_summary": response.strip()}
+                
         except Exception as e:
             self.logger.error(f"LLM content analysis failed: {e}")
-            return f"Analysis failed for {company_name}. Content available but AI analysis encountered an error: {str(e)}"
+            return {
+                "ai_summary": f"Analysis failed for {company_name}. Content available but AI analysis encountered an error: {str(e)}"
+            }
     
     async def _call_llm_async(self, prompt: str) -> str:
         """Call LLM asynchronously"""
