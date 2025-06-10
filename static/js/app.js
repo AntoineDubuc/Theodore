@@ -6,6 +6,8 @@ class TheodoreUI {
         this.setupFormValidation();
         this.initializeAnimations();
         this.initializeDatabaseBrowser();
+        this.activeResearchJobs = new Map(); // Track active research jobs
+        this.pollingIntervals = new Map(); // Track polling intervals
     }
 
     initializeEventListeners() {
@@ -628,6 +630,7 @@ class TheodoreUI {
                         <div class="progress-fill" style="width: 0%"></div>
                     </div>
                     <div class="progress-text">Initializing...</div>
+                    <div class="progress-details" style="display: none; font-size: 0.8em; margin-top: 5px; opacity: 0.8; white-space: pre-line;"></div>
                 </div>
             </div>
         `;
@@ -884,6 +887,107 @@ class TheodoreUI {
         return text.replace(/[&<>"']/g, m => map[m]);
     }
 
+    escapeJs(text) {
+        // Escape text for use in JavaScript strings
+        return text.replace(/\\/g, '\\\\')
+                  .replace(/'/g, "\\'")
+                  .replace(/"/g, '\\"')
+                  .replace(/\n/g, '\\n')
+                  .replace(/\r/g, '\\r')
+                  .replace(/\t/g, '\\t');
+    }
+
+    renderJobListingsDetails(jobDetails) {
+        if (!jobDetails || typeof jobDetails !== 'object') {
+            return '';
+        }
+
+        let detailsHtml = '';
+
+        // Career page URL as clickable link
+        if (jobDetails.career_page_url) {
+            detailsHtml += `
+                <div class="job-detail-item">
+                    <strong>📄 Career Page:</strong> 
+                    <a href="${this.escapeHtml(jobDetails.career_page_url)}" target="_blank" class="career-link">
+                        ${this.escapeHtml(jobDetails.career_page_url)}
+                    </a>
+                </div>
+            `;
+        }
+
+        // Best job sites as comma-separated links/text
+        if (jobDetails.best_job_sites && Array.isArray(jobDetails.best_job_sites)) {
+            detailsHtml += `
+                <div class="job-detail-item">
+                    <strong>🔍 Best Job Sites:</strong> ${jobDetails.best_job_sites.map(site => this.escapeHtml(site)).join(', ')}
+                </div>
+            `;
+        }
+
+        // Typical roles as badges
+        if (jobDetails.typical_roles && Array.isArray(jobDetails.typical_roles)) {
+            const roleBadges = jobDetails.typical_roles.map(role => 
+                `<span class="role-badge">${this.escapeHtml(role)}</span>`
+            ).join(' ');
+            detailsHtml += `
+                <div class="job-detail-item">
+                    <strong>💼 Typical Roles:</strong> 
+                    <div class="role-badges">${roleBadges}</div>
+                </div>
+            `;
+        }
+
+        // Search tips
+        if (jobDetails.search_tips) {
+            detailsHtml += `
+                <div class="job-detail-item">
+                    <strong>💡 Search Tips:</strong> ${this.escapeHtml(jobDetails.search_tips)}
+                </div>
+            `;
+        }
+
+        // Company info
+        if (jobDetails.company_info) {
+            detailsHtml += `
+                <div class="job-detail-item">
+                    <strong>🏢 Company Info:</strong> ${this.escapeHtml(jobDetails.company_info)}
+                </div>
+            `;
+        }
+
+        // Hiring status with appropriate icon
+        if (jobDetails.hiring_status) {
+            const statusIcon = jobDetails.hiring_status.toLowerCase().includes('active') ? '✅' : 
+                              jobDetails.hiring_status.toLowerCase().includes('likely') ? '🔄' : '❓';
+            detailsHtml += `
+                <div class="job-detail-item">
+                    <strong>${statusIcon} Hiring Status:</strong> ${this.escapeHtml(jobDetails.hiring_status)}
+                </div>
+            `;
+        }
+
+        return detailsHtml ? `<div class="job-listings-details">${detailsHtml}</div>` : '';
+    }
+
+    extractJobListingsDetailsFromHTML(researchDataElement) {
+        // Look for existing job-listings-section in the research data
+        const jobListingsSection = researchDataElement.querySelector('.job-listings-section');
+        if (!jobListingsSection) {
+            return '';
+        }
+
+        // Look for existing job-listings-details
+        const existingDetails = jobListingsSection.querySelector('.job-listings-details');
+        if (existingDetails) {
+            // Return the existing enhanced details
+            return existingDetails.outerHTML;
+        }
+
+        // If no enhanced details found, return empty (basic display only)
+        return '';
+    }
+
     getResearchStatusBadge(status) {
         const statusConfig = {
             'unknown': { label: 'Unknown', icon: '❓', class: 'status-unknown' },
@@ -901,13 +1005,15 @@ class TheodoreUI {
     getResearchControls(result) {
         const companyId = result.company_name.replace(/\s+/g, '-');
         
-        // Escape values for safe HTML attributes
+        // Escape values for safe HTML attributes and JavaScript
         const escapedName = this.escapeHtml(result.company_name);
         const escapedWebsite = this.escapeHtml(result.website || '');
+        const jsEscapedName = this.escapeJs(result.company_name);
+        const jsEscapedWebsite = this.escapeJs(result.website || '');
         
         // Add Open Website button for all statuses (if website available)
         const websiteButton = escapedWebsite ? `
-            <button class="btn-mini btn-website" onclick="window.open('${escapedWebsite}', '_blank')" title="Open ${escapedName} website">
+            <button class="btn-mini btn-website" onclick="window.open('${jsEscapedWebsite}', '_blank')" title="Open ${escapedName} website">
                 🌐 Website
             </button>
         ` : '';
@@ -917,13 +1023,13 @@ class TheodoreUI {
             if (result.is_researched) {
                 // Researched company - show research-specific controls
                 return `
-                    <button class="btn-mini btn-secondary" onclick="window.theodoreUI.viewResearchDetails('${escapedName}')">
+                    <button class="btn-mini btn-secondary" onclick="window.theodoreUI.viewResearchDetails('${jsEscapedName}')">
                         👁️ View Research
                     </button>
-                    <button class="btn-mini btn-accent" onclick="window.theodoreUI.saveToDatabase('${escapedName}', '${escapedWebsite}')">
+                    <button class="btn-mini btn-accent" onclick="window.theodoreUI.saveToDatabase('${jsEscapedName}', '${jsEscapedWebsite}')">
                         💾 Save to Database
                     </button>
-                    <button class="btn-mini btn-primary" onclick="window.theodoreUI.reResearchCompany('${escapedName}', '${escapedWebsite}')">
+                    <button class="btn-mini btn-primary" onclick="window.theodoreUI.reResearchCompany('${jsEscapedName}', '${jsEscapedWebsite}')">
                         🔄 Re-research
                     </button>
                     ${websiteButton}
@@ -931,10 +1037,10 @@ class TheodoreUI {
             } else {
                 // Database company - show database-specific controls
                 return `
-                    <button class="btn-mini btn-secondary" onclick="window.theodoreUI.viewCompanyDetails('${result.database_id}', '${escapedName}')">
+                    <button class="btn-mini btn-secondary" onclick="window.theodoreUI.viewCompanyDetails('${result.database_id}', '${jsEscapedName}')">
                         👁️ View Details
                     </button>
-                    <button class="btn-mini btn-primary" onclick="window.theodoreUI.reResearchCompany('${escapedName}', '${escapedWebsite}')">
+                    <button class="btn-mini btn-primary" onclick="window.theodoreUI.reResearchCompany('${jsEscapedName}', '${jsEscapedWebsite}')">
                         🔄 Re-research
                     </button>
                     ${websiteButton}
@@ -945,15 +1051,18 @@ class TheodoreUI {
                 <button class="btn-mini btn-secondary" disabled>
                     ⏳ Researching...
                 </button>
+                <button class="btn-mini btn-danger" onclick="window.theodoreUI.cancelResearch('${jsEscapedName}')">
+                    🛑 Cancel
+                </button>
                 ${websiteButton}
             `;
         } else {
             return `
-                <button class="btn-mini btn-primary" onclick="window.theodoreUI.startResearch('${escapedName}', '${escapedWebsite}')">
+                <button class="btn-mini btn-primary" onclick="window.theodoreUI.startResearch('${jsEscapedName}', '${jsEscapedWebsite}')">
                     🔬 Research Now
                 </button>
                 ${result.research_status === 'unknown' ? `
-                    <button class="btn-mini btn-secondary" onclick="window.theodoreUI.previewResearch('${escapedName}', '${escapedWebsite}')">
+                    <button class="btn-mini btn-secondary" onclick="window.theodoreUI.previewResearch('${jsEscapedName}', '${jsEscapedWebsite}')">
                         👁️ Preview
                     </button>
                 ` : ''}
@@ -963,54 +1072,567 @@ class TheodoreUI {
     }
 
     async startResearch(companyName, website) {
-        console.log(`🔬 Starting research for: ${companyName}`);
-        console.log(`🌐 Website: ${website}`);
-        console.log(`📝 Research payload being sent:`, {
+        console.log(`🟦 JS: ===== RESEARCH STARTED =====`);
+        console.log(`🟦 JS: Company: ${companyName}`);
+        console.log(`🟦 JS: Website: ${website}`);
+        console.log(`🟦 JS: Timestamp: ${new Date().toISOString()}`);
+        
+        // Validate inputs
+        if (!companyName || !website) {
+            console.error(`🟦 JS: ❌ VALIDATION ERROR - Missing required data`);
+            console.error(`🟦 JS: companyName: '${companyName}'`);
+            console.error(`🟦 JS: website: '${website}'`);
+            this.showError('Missing company name or website');
+            return;
+        }
+        
+        console.log(`🟦 JS: ✅ Input validation passed`);
+        
+        // Prepare request payload
+        const requestPayload = {
             company: {
                 name: companyName,
                 website: website
             }
-        });
+        };
+        console.log(`🟦 JS: Request payload prepared:`, requestPayload);
         
-        // Update button to show loading state
+        // Update UI immediately
+        console.log(`🟦 JS: Step 1 - Updating UI state...`);
         this.updateResearchButton(companyName, 'researching');
+        console.log(`🟦 JS: ✅ Research button updated`);
+        
+        // Track this research job
+        const jobData = {
+            status: 'starting',
+            startTime: Date.now(),
+            companyName: companyName,
+            website: website
+        };
+        this.activeResearchJobs.set(companyName, jobData);
+        console.log(`🟦 JS: ✅ Job tracking started:`, jobData);
         
         try {
+            console.log(`🟦 JS: Step 2 - Setting up progress tracking...`);
+            const progressContainer = this.showResearchProgressContainer(companyName);
+            console.log(`🟦 JS: ✅ Progress container created`);
+            
+            console.log(`🟦 JS: Starting progress polling immediately...`);
+            // Start polling immediately, no delay
+            this.pollCurrentJobProgress(progressContainer, companyName);
+            console.log(`🟦 JS: ✅ Progress polling started`);
+            
+            console.log(`🟦 JS: Step 3 - Making API request...`);
+            console.log(`🟦 JS: URL: /api/research`);
+            console.log(`🟦 JS: Method: POST`);
+            console.log(`🟦 JS: Headers: Content-Type: application/json`);
+            console.log(`🟦 JS: Body:`, JSON.stringify(requestPayload, null, 2));
+            
+            const requestStartTime = Date.now();
+            
+            // Create abort controller for timeout
+            const abortController = new AbortController();
+            const timeoutId = setTimeout(() => {
+                console.log(`🟦 JS: ⏰ Request timeout after 30 seconds, aborting...`);
+                abortController.abort();
+            }, 30000); // 30 second timeout
+            
+            console.log(`🟦 JS: Sending fetch request with 30s timeout...`);
             const response = await fetch('/api/research', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    company: {
-                        name: companyName,
-                        website: website
-                    }
-                })
+                body: JSON.stringify(requestPayload),
+                signal: abortController.signal
             });
+            
+            // Clear timeout if request completed
+            clearTimeout(timeoutId);
 
+            const requestEndTime = Date.now();
+            const requestDuration = requestEndTime - requestStartTime;
+            
+            console.log(`🟦 JS: ===== API RESPONSE RECEIVED =====`);
+            console.log(`🟦 JS: Response status: ${response.status}`);
+            console.log(`🟦 JS: Response status text: ${response.statusText}`);
+            console.log(`🟦 JS: Response headers:`, Object.fromEntries(response.headers.entries()));
+            console.log(`🟦 JS: Request duration: ${requestDuration}ms`);
+            
+            console.log(`🟦 JS: Parsing JSON response...`);
             const data = await response.json();
-            console.log(`📊 Research API response:`, data);
+            console.log(`🟦 JS: ✅ JSON parsed successfully`);
+            console.log(`🟦 JS: Response data keys:`, Object.keys(data));
+            console.log(`🟦 JS: Full response:`, data);
 
             if (response.ok && data.success) {
-                console.log(`✅ Research successful for ${companyName}`);
-                console.log(`📋 Company data received:`, data.company);
-                this.showSuccess(`Research completed for ${companyName}`);
+                console.log(`🟦 JS: ===== RESEARCH SUCCESS =====`);
+                console.log(`🟦 JS: ✅ Research completed for ${companyName}`);
+                console.log(`🟦 JS: Processing time: ${data.processing_time}s`);
+                console.log(`🟦 JS: Enhanced company data keys:`, Object.keys(data.company || {}));
+                console.log(`🟦 JS: Research status: ${data.company?.research_status}`);
+                console.log(`🟦 JS: Full enhanced data:`, data.company);
+                
+                const enhancedCompany = data.company;
+                console.log(`🟦 JS: Step 4 - Updating UI with results...`);
+                
+                this.showSuccess(`Research completed for ${companyName}! Generated comprehensive business intelligence.`);
+                console.log(`🟦 JS: ✅ Success message shown`);
                 
                 // Update the result card with enhanced data
-                this.updateResultCardWithResearch(companyName, data.company);
+                console.log(`🟦 JS: Updating result card...`);
+                this.updateResultCardWithResearch(companyName, enhancedCompany);
+                console.log(`🟦 JS: ✅ Result card updated`);
+                
+                // Hide progress container and cleanup
+                console.log(`🟦 JS: Cleaning up progress tracking...`);
+                this.hideResearchProgressContainer(companyName);
+                this.cleanupResearchJob(companyName);
+                console.log(`🟦 JS: ✅ Cleanup completed`);
+                
+                console.log(`🟦 JS: ===== RESEARCH FLOW COMPLETED SUCCESSFULLY =====`);
                 
             } else {
-                this.showError(data.error || 'Failed to complete research');
+                console.log(`🟦 JS: ===== RESEARCH FAILED =====`);
+                console.error(`🟦 JS: ❌ Response status: ${response.status}`);
+                console.error(`🟦 JS: ❌ Success flag: ${data.success}`);
+                console.error(`🟦 JS: ❌ Error message: ${data.error}`);
+                console.error(`🟦 JS: ❌ Exception type: ${data.exception_type}`);
+                console.error(`🟦 JS: ❌ Full error data:`, data);
+                
+                const errorMessage = data.error || 'Failed to complete research';
+                console.log(`🟦 JS: Showing error message: ${errorMessage}`);
+                this.showError(errorMessage);
+                
                 // Reset button on error
+                console.log(`🟦 JS: Resetting research button state...`);
                 this.updateResearchButton(companyName, 'unknown');
+                
+                // Hide progress container and cleanup
+                console.log(`🟦 JS: Cleaning up after error...`);
+                this.hideResearchProgressContainer(companyName);
+                this.cleanupResearchJob(companyName);
+                console.log(`🟦 JS: ✅ Error cleanup completed`);
+            }
+        } catch (networkError) {
+            console.log(`🟦 JS: ===== NETWORK/EXCEPTION ERROR =====`);
+            console.error(`🟦 JS: ❌ Exception caught:`, networkError);
+            console.error(`🟦 JS: ❌ Error name: ${networkError.name}`);
+            console.error(`🟦 JS: ❌ Error message: ${networkError.message}`);
+            console.error(`🟦 JS: ❌ Error stack:`, networkError.stack);
+            
+            // Clear the timeout if it was set
+            if (typeof timeoutId !== 'undefined') {
+                clearTimeout(timeoutId);
+            }
+            
+            // Check if it's a specific type of error
+            let errorMessage = 'Unexpected error during research';
+            
+            if (networkError.name === 'AbortError') {
+                console.error(`🟦 JS: ❌ Request was aborted (timeout or manual cancellation)`);
+                errorMessage = 'Research request timed out after 30 seconds';
+            } else if (networkError instanceof TypeError) {
+                console.error(`🟦 JS: ❌ This is a TypeError - likely network issue`);
+                errorMessage = 'Network error during research - check connection';
+            } else if (networkError instanceof SyntaxError) {
+                console.error(`🟦 JS: ❌ This is a SyntaxError - likely JSON parsing issue`);
+                errorMessage = 'Error parsing server response';
+            } else if (networkError.message.includes('fetch')) {
+                console.error(`🟦 JS: ❌ Fetch-related error`);
+                errorMessage = 'Network error during research - check connection';
+            } else {
+                console.error(`🟦 JS: ❌ Unknown error type: ${typeof networkError}`);
+                errorMessage = `Research failed: ${networkError.message}`;
+            }
+                
+            console.log(`🟦 JS: Showing error message: ${errorMessage}`);
+            this.showError(errorMessage);
+            
+            // Reset button on error  
+            console.log(`🟦 JS: Resetting research button due to exception...`);
+            this.updateResearchButton(companyName, 'unknown');
+            
+            // Hide progress container and cleanup
+            console.log(`🟦 JS: Cleaning up after exception...`);
+            this.hideResearchProgressContainer(companyName);
+            this.cleanupResearchJob(companyName);
+            console.log(`🟦 JS: ✅ Exception cleanup completed`);
+            
+            console.log(`🟦 JS: ===== RESEARCH FLOW FAILED WITH EXCEPTION =====`);
+        }
+    }
+
+    getProgressContainer(companyName) {
+        const progressId = `progress-${companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}`;
+        return document.getElementById(progressId);
+    }
+
+    showResearchProgressContainer(companyName) {
+        // Create or show progress container for this company
+        const progressId = `progress-${companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}`;
+        let progressContainer = document.getElementById(progressId);
+        
+        console.log(`🔍 PROGRESS CONTAINER: Looking for container with ID: ${progressId}`);
+        console.log(`🔍 PROGRESS CONTAINER: Container exists: ${!!progressContainer}`);
+        
+        if (!progressContainer) {
+            console.log(`🔍 PROGRESS CONTAINER: Creating new container for ${companyName}`);
+            
+            // Create progress container
+            progressContainer = document.createElement('div');
+            progressContainer.id = progressId;
+            progressContainer.className = 'research-progress-container';
+            progressContainer.style.display = 'block';  // Force visible immediately
+            progressContainer.style.marginTop = '20px';
+            progressContainer.style.padding = '20px';
+            progressContainer.style.background = 'rgba(255, 255, 255, 0.05)';
+            progressContainer.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+            progressContainer.style.borderRadius = '12px';
+            progressContainer.style.backdropFilter = 'blur(20px)';
+            progressContainer.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.15)';
+            
+            progressContainer.innerHTML = `
+                <div class="progress-header">
+                    <h4 style="margin: 0 0 15px 0; color: #ffffff; font-size: 1.1rem; font-weight: 600;">🔬 Researching ${companyName}</h4>
+                </div>
+                <div class="progress-bar" style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 12px;">
+                    <div class="progress-fill" style="width: 0%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: width 0.3s ease;"></div>
+                </div>
+                <div class="progress-text" style="color: #a0a0b2; font-size: 0.9rem; margin-bottom: 8px;">Initializing research...</div>
+                <div class="progress-details" style="display: none; margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; font-size: 0.8rem; color: #a0a0b2; white-space: pre-line; font-family: 'JetBrains Mono', monospace;"></div>
+            `;
+            
+            // Insert after the results container - try multiple insertion points
+            const resultsContainer = document.getElementById('results');
+            const resultsSection = document.getElementById('resultsSection');
+            const mainContent = document.querySelector('.main-content');
+            
+            console.log(`🔍 PROGRESS CONTAINER: Results container found: ${!!resultsContainer}`);
+            console.log(`🔍 PROGRESS CONTAINER: Results section found: ${!!resultsSection}`);
+            console.log(`🔍 PROGRESS CONTAINER: Main content found: ${!!mainContent}`);
+            
+            if (resultsContainer) {
+                resultsContainer.appendChild(progressContainer);
+                console.log(`🔍 PROGRESS CONTAINER: ✅ Appended to results container`);
+            } else if (resultsSection) {
+                resultsSection.appendChild(progressContainer);
+                console.log(`🔍 PROGRESS CONTAINER: ✅ Appended to results section`);
+            } else if (mainContent) {
+                mainContent.appendChild(progressContainer);
+                console.log(`🔍 PROGRESS CONTAINER: ✅ Appended to main content`);
+            } else {
+                document.body.appendChild(progressContainer);
+                console.log(`🔍 PROGRESS CONTAINER: ✅ Appended to body as fallback`);
+            }
+        } else {
+            console.log(`🔍 PROGRESS CONTAINER: Using existing container`);
+        }
+        
+        // Ensure it's visible and scroll to it
+        progressContainer.style.display = 'block';
+        progressContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        console.log(`🔍 PROGRESS CONTAINER: ✅ Container is now visible and scrolled into view`);
+        
+        return progressContainer;
+    }
+
+    hideResearchProgressContainer(companyName) {
+        const progressId = `progress-${companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}`;
+        const progressContainer = document.getElementById(progressId);
+        
+        if (progressContainer) {
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+            }, 2000); // Hide after 2 seconds
+        }
+    }
+
+    async pollCurrentJobProgress(progressContainer, companyName) {
+        try {
+            console.log(`🔄 PROGRESS POLL: Checking progress for ${companyName}`);
+            console.log(`🔄 PROGRESS POLL: Progress container exists: ${!!progressContainer}`);
+            console.log(`🔄 PROGRESS POLL: Progress container visible: ${progressContainer ? progressContainer.style.display !== 'none' : false}`);
+            
+            const response = await fetch('/api/progress/current');
+            const data = await response.json();
+            console.log(`📊 PROGRESS POLL: Server response:`, data);
+            
+            // FORCE SHOW the progress container in case it's hidden
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+                console.log(`🔄 PROGRESS POLL: ✅ Forced progress container to be visible`);
+            }
+
+            // Handle different response statuses
+            if (response.ok && data.status === 'recent_completion') {
+                console.log(`🔄 POLLING: Detected recent completion for ${companyName}`);
+                console.log(`🔄 POLLING: Completion message: ${data.message}`);
+                
+                // Show completion in progress container
+                const progressFill = progressContainer.querySelector('.progress-fill');
+                const progressText = progressContainer.querySelector('.progress-text');
+                const progressDetails = progressContainer.querySelector('.progress-details');
+                
+                if (progressFill) {
+                    progressFill.style.width = '100%';
+                    progressFill.style.backgroundColor = '#43e97b'; // Green for success
+                }
+                
+                if (progressText) {
+                    progressText.textContent = '✅ Research Completed Successfully';
+                }
+                
+                if (progressDetails) {
+                    progressDetails.textContent = `Research completed for ${companyName}`;
+                    progressDetails.style.display = 'block';
+                    progressDetails.style.color = '#43e97b'; // Green text
+                }
+                
+                // Show success message
+                console.log(`🔄 POLLING: Showing success message`);
+                this.showSuccess(`Research completed successfully for ${companyName}!`);
+                
+                // Stop polling and update button
+                this.updateResearchButton(companyName, 'researched');
+                
+                // Hide progress container after showing success
+                setTimeout(() => {
+                    this.hideResearchProgressContainer(companyName);
+                    this.cleanupResearchJob(companyName);
+                }, 3000); // Show success for 3 seconds
+                
+                return; // Stop polling
+            } else if (response.ok && data.status === 'recent_failure') {
+                console.log(`🔄 POLLING: Detected recent failure for ${companyName}`);
+                console.log(`🔄 POLLING: Failure reason: ${data.message}`);
+                
+                // Show failure in progress container
+                const progressFill = progressContainer.querySelector('.progress-fill');
+                const progressText = progressContainer.querySelector('.progress-text');
+                const progressDetails = progressContainer.querySelector('.progress-details');
+                
+                if (progressFill) {
+                    progressFill.style.width = '100%';
+                    progressFill.style.backgroundColor = '#ef4444'; // Red for failure
+                }
+                
+                if (progressText) {
+                    progressText.textContent = '❌ Research Failed';
+                }
+                
+                if (progressDetails) {
+                    progressDetails.textContent = data.message;
+                    progressDetails.style.display = 'block';
+                    progressDetails.style.color = '#ef4444'; // Red text
+                }
+                
+                // Stop polling and show error
+                console.log(`🔄 POLLING: Stopping polling due to failure`);
+                this.showError(data.message);
+                this.updateResearchButton(companyName, 'unknown');
+                
+                // Hide progress container after showing error
+                setTimeout(() => {
+                    this.hideResearchProgressContainer(companyName);
+                    this.cleanupResearchJob(companyName);
+                }, 5000); // Show error for 5 seconds
+                
+                return; // Stop polling
+            }
+            
+            // Check for any progress data that matches our company (running OR recently completed)
+            let relevantProgress = null;
+            if (response.ok && data.progress && data.progress.company_name === companyName) {
+                relevantProgress = data.progress;
+            } else if (response.ok && data.status === 'recent_failure' && data.progress && data.progress.company_name === companyName) {
+                relevantProgress = data.progress;
+            }
+            
+            if (relevantProgress) {
+                const progress = relevantProgress;
+                console.log(`📊 Processing progress data:`, progress);
+                
+                // Check if job has failed
+                if (progress.status === 'failed') {
+                    console.log(`🔄 POLLING: Job failed - ${progress.error}`);
+                    
+                    const progressFill = progressContainer.querySelector('.progress-fill');
+                    const progressText = progressContainer.querySelector('.progress-text');
+                    const progressDetails = progressContainer.querySelector('.progress-details');
+                    
+                    if (progressFill) {
+                        progressFill.style.width = '100%';
+                        progressFill.style.backgroundColor = '#ef4444'; // Red for failure
+                    }
+                    
+                    if (progressText) {
+                        progressText.textContent = '❌ Research Failed';
+                    }
+                    
+                    if (progressDetails) {
+                        progressDetails.textContent = progress.error || 'Unknown error';
+                        progressDetails.style.display = 'block';
+                        progressDetails.style.color = '#ef4444'; // Red text
+                    }
+                    
+                    // Stop polling and show error
+                    this.showError(progress.error || 'Research failed');
+                    this.updateResearchButton(companyName, 'unknown');
+                    
+                    // Hide progress container after showing error
+                    setTimeout(() => {
+                        this.hideResearchProgressContainer(companyName);
+                        this.cleanupResearchJob(companyName);
+                    }, 5000);
+                    
+                    return; // Stop polling
+                }
+                
+                // Update progress bar for running/completed jobs
+                const progressFill = progressContainer.querySelector('.progress-fill');
+                const progressText = progressContainer.querySelector('.progress-text');
+                const progressDetails = progressContainer.querySelector('.progress-details');
+                
+                // Calculate overall progress percentage
+                const totalPhases = progress.total_phases || 4;
+                const currentPhase = progress.current_phase || 0;
+                let progressPercent = Math.round((currentPhase / totalPhases) * 100);
+                
+                // Get current phase details - check all phases for the running one
+                let currentPhaseData = null;
+                if (progress.phases && progress.phases.length > 0) {
+                    // Find the currently running phase
+                    currentPhaseData = progress.phases.find(phase => phase.status === 'running');
+                    // If no running phase, get the last completed phase
+                    if (!currentPhaseData) {
+                        currentPhaseData = progress.phases[progress.phases.length - 1];
+                    }
+                }
+                
+                console.log(`🎯 Current phase data:`, currentPhaseData);
+                
+                if (progressFill) {
+                    progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
+                }
+                
+                let statusText = `Researching ${companyName}`;
+                let detailsText = '';
+                
+                if (currentPhaseData) {
+                    statusText = `${currentPhaseData.name} (${currentPhase}/${totalPhases})`;
+                    console.log(`📝 Updated status text: ${statusText}`);
+                    
+                    // Add page-specific details for Content Extraction phase
+                    if (currentPhaseData.name === 'Content Extraction') {
+                        if (currentPhaseData.current_page) {
+                            const pageName = currentPhaseData.current_page.split('/').pop() || currentPhaseData.current_page;
+                            const pagesInfo = currentPhaseData.pages_completed && currentPhaseData.total_pages 
+                                ? ` (${currentPhaseData.pages_completed}/${currentPhaseData.total_pages})` 
+                                : '';
+                            
+                            detailsText = `📄 Scraping: ${pageName}${pagesInfo}`;
+                            
+                            // Show content preview if available
+                            if (currentPhaseData.scraped_content_preview) {
+                                const preview = currentPhaseData.scraped_content_preview.substring(0, 200);
+                                detailsText += `\n📝 Content: ${preview}...`;
+                            }
+                            
+                            // ENHANCED CONSOLE LOGGING - Show exactly what's being scraped
+                            console.log(`🔍 SCRAPING: Currently scraping page ${currentPhaseData.pages_completed}/${currentPhaseData.total_pages}`);
+                            console.log(`🔍 SCRAPING: Page URL: ${currentPhaseData.current_page}`);
+                            if (currentPhaseData.scraped_content_preview) {
+                                console.log(`📄 SCRAPED CONTENT PREVIEW:`);
+                                console.log(`📄 ${currentPhaseData.scraped_content_preview.substring(0, 500)}...`);
+                                console.log(`📄 END OF CONTENT PREVIEW`);
+                            }
+                        }
+                    }
+                    
+                    // Add details for other phases too
+                    if (currentPhaseData.status === 'running') {
+                        const phaseDetails = [];
+                        if (currentPhaseData.details) {
+                            Object.entries(currentPhaseData.details).forEach(([key, value]) => {
+                                if (key !== 'current_page' && key !== 'scraped_content_preview') {
+                                    phaseDetails.push(`${key}: ${value}`);
+                                }
+                            });
+                        }
+                        if (phaseDetails.length > 0 && !detailsText) {
+                            detailsText = phaseDetails.join(', ');
+                        }
+                    }
+                }
+                
+                if (progressText) {
+                    progressText.textContent = statusText;
+                    console.log(`✅ Updated progress text to: "${statusText}"`);
+                }
+                
+                if (progressDetails) {
+                    progressDetails.textContent = detailsText;
+                    progressDetails.style.display = detailsText ? 'block' : 'none';
+                    if (detailsText) {
+                        console.log(`✅ Updated progress details to: "${detailsText}"`);
+                    }
+                }
+
+                // Continue polling if job is still running
+                if (progress.status === 'running') {
+                    const timeoutId = setTimeout(() => {
+                        this.pollCurrentJobProgress(progressContainer, companyName);
+                    }, 2000); // Poll every 2 seconds
+                    this.pollingIntervals.set(companyName, timeoutId);
+                }
+            } else {
+                console.log(`🔄 PROGRESS POLL: No matching job found, will retry in 1 second...`);
+                console.log(`🔄 PROGRESS POLL: Available jobs in response:`, data);
+                // No matching job found, poll again more frequently in case it hasn't started yet
+                const timeoutId = setTimeout(() => {
+                    this.pollCurrentJobProgress(progressContainer, companyName);
+                }, 1000); // Poll every 1 second when waiting for job to start
+                this.pollingIntervals.set(companyName, timeoutId);
             }
         } catch (error) {
-            console.error('Research error:', error);
-            this.showError('Network error during research');
-            // Reset button on error  
-            this.updateResearchButton(companyName, 'unknown');
+            console.error('Progress polling error:', error);
+            // Continue polling despite errors
+            const timeoutId = setTimeout(() => {
+                this.pollCurrentJobProgress(progressContainer, companyName);
+            }, 5000); // Poll less frequently on error
+            this.pollingIntervals.set(companyName, timeoutId);
         }
+    }
+
+    cancelResearch(companyName) {
+        console.log(`🛑 Canceling research for: ${companyName}`);
+        
+        // Cleanup the research job
+        this.cleanupResearchJob(companyName);
+        
+        // Hide progress container
+        this.hideResearchProgressContainer(companyName);
+        
+        // Reset button
+        this.updateResearchButton(companyName, 'unknown');
+        
+        // Show user feedback
+        this.showError(`Research canceled for ${companyName}`);
+    }
+
+    cleanupResearchJob(companyName) {
+        // Remove from active jobs
+        this.activeResearchJobs.delete(companyName);
+        
+        // Clear any polling intervals
+        const intervalId = this.pollingIntervals.get(companyName);
+        if (intervalId) {
+            clearTimeout(intervalId);
+            this.pollingIntervals.delete(companyName);
+        }
+        
+        console.log(`🧹 Cleaned up research job for: ${companyName}`);
     }
 
     updateResultCardWithResearch(companyName, researchedCompany) {
@@ -1039,6 +1661,8 @@ class TheodoreUI {
             console.log(`📋 Company Size: "${researchedCompany.company_size}"`);
             console.log(`📋 Value Proposition: "${researchedCompany.value_proposition}"`);
             console.log(`📋 Pain Points:`, researchedCompany.pain_points);
+            console.log(`📋 Job Listings: "${researchedCompany.job_listings}"`);
+            console.log(`📋 Job Listings Details:`, researchedCompany.job_listings_details);
             console.log(`📋 Crawl Depth:`, researchedCompany.crawl_depth);
             console.log(`📋 Pages Crawled:`, researchedCompany.pages_crawled);
             console.log(`📋 Pages Crawled Type:`, typeof researchedCompany.pages_crawled);
@@ -1098,6 +1722,12 @@ class TheodoreUI {
                     ${researchedCompany.pain_points && researchedCompany.pain_points.length > 0 ? `
                         <div class="research-section">
                             <strong>Pain Points:</strong> ${researchedCompany.pain_points.map(p => this.escapeHtml(p)).join(', ')}
+                        </div>
+                    ` : ''}
+                    ${researchedCompany.job_listings && researchedCompany.job_listings !== 'Job data unavailable' ? `
+                        <div class="research-section job-listings-section">
+                            <strong>Job Listings:</strong> ${this.escapeHtml(researchedCompany.job_listings)}
+                            ${this.renderJobListingsDetails(researchedCompany.job_listings_details)}
                         </div>
                     ` : ''}
                     <div class="research-section research-meta-info">
@@ -1208,7 +1838,7 @@ class TheodoreUI {
 
     async pollResearchProgress(jobId, progressContainer) {
         try {
-            const response = await fetch(`/api/research/progress/${jobId}`);
+            const response = await fetch(`/api/progress/current?job_id=${jobId}`);
             const data = await response.json();
 
             if (response.ok && data.progress) {
@@ -1217,17 +1847,66 @@ class TheodoreUI {
                 // Update progress bar
                 const progressFill = progressContainer.querySelector('.progress-fill');
                 const progressText = progressContainer.querySelector('.progress-text');
+                const progressDetails = progressContainer.querySelector('.progress-details');
+                
+                // Calculate overall progress percentage
+                const totalPhases = progress.total_phases || 4;
+                const currentPhase = progress.current_phase || 0;
+                let progressPercent = Math.round((currentPhase / totalPhases) * 100);
+                
+                // Get current phase details
+                const currentPhaseData = progress.phases && progress.phases.length > 0 
+                    ? progress.phases[progress.phases.length - 1] 
+                    : null;
                 
                 if (progressFill) {
-                    progressFill.style.width = `${progress.progress_percent}%`;
+                    progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
+                }
+                
+                let statusText = progress.company_name ? `Researching ${progress.company_name}` : 'Processing...';
+                let detailsText = '';
+                
+                if (currentPhaseData) {
+                    statusText = `${currentPhaseData.name} (${currentPhase}/${totalPhases})`;
+                    
+                    // Add page-specific details for Content Extraction phase
+                    if (currentPhaseData.name === 'Content Extraction' && currentPhaseData.status === 'running') {
+                        if (currentPhaseData.current_page) {
+                            const pageName = currentPhaseData.current_page.split('/').pop() || 'page';
+                            const pagesInfo = currentPhaseData.pages_completed && currentPhaseData.total_pages 
+                                ? `${currentPhaseData.pages_completed}/${currentPhaseData.total_pages}` 
+                                : '';
+                            
+                            detailsText = `📄 Scraping: ${pageName} ${pagesInfo}`;
+                            
+                            // Show content preview if available
+                            if (currentPhaseData.scraped_content_preview) {
+                                const preview = currentPhaseData.scraped_content_preview.substring(0, 100);
+                                detailsText += `\n📝 Content: ${preview}...`;
+                            }
+                        }
+                    }
                 }
                 
                 if (progressText) {
-                    progressText.textContent = progress.current_phase || 'Processing...';
+                    progressText.textContent = statusText;
+                }
+                
+                if (progressDetails) {
+                    progressDetails.textContent = detailsText;
+                    progressDetails.style.display = detailsText ? 'block' : 'none';
+                }
+
+                // Console logging for developer visibility
+                if (currentPhaseData && currentPhaseData.current_page) {
+                    console.log(`🔍 Scraping: ${currentPhaseData.current_page}`);
+                    if (currentPhaseData.scraped_content_preview) {
+                        console.log(`📄 Content preview: ${currentPhaseData.scraped_content_preview.substring(0, 200)}...`);
+                    }
                 }
 
                 // Continue polling if not complete
-                if (progress.status === 'researching' || progress.status === 'queued') {
+                if (progress.status === 'running' || progress.status === 'researching' || progress.status === 'queued') {
                     setTimeout(() => {
                         this.pollResearchProgress(jobId, progressContainer);
                     }, 2000); // Poll every 2 seconds
@@ -1386,7 +2065,7 @@ class TheodoreUI {
                 </div>
                 
                 <div class="preview-actions">
-                    <button class="btn btn-primary" onclick="window.theodoreUI.startResearch('${this.escapeHtml(companyName)}', '${this.escapeHtml(website)}'); this.closest('.modal-overlay').remove();">
+                    <button class="btn btn-primary" onclick="window.theodoreUI.startResearch('${this.escapeJs(companyName)}', '${this.escapeJs(website)}'); this.closest('.modal-overlay').remove();">
                         🔬 Start Research Now
                     </button>
                 </div>
@@ -1451,6 +2130,8 @@ class TheodoreUI {
         console.log(`📋 Extracted Pain Points: "${painPoints}"`);
         const researchInfo = this.extractResearchField(researchData, 'Research Info') || 'Research metadata unavailable';
         console.log(`📋 Extracted Research Info: "${researchInfo}"`);
+        const jobListings = this.extractResearchField(researchData, 'Job Listings') || 'Not available';
+        console.log(`📋 Extracted Job Listings: "${jobListings}"`);
         
         const modalContent = `
             <div class="research-details">
@@ -1488,6 +2169,12 @@ class TheodoreUI {
                     ${painPoints !== 'Not available' ? `
                         <div class="detail-item">
                             <strong>Pain Points:</strong> ${this.escapeHtml(painPoints)}
+                        </div>
+                    ` : ''}
+                    ${jobListings !== 'Not available' ? `
+                        <div class="detail-item job-listings-modal-section">
+                            <strong>Job Listings:</strong> ${this.escapeHtml(jobListings)}
+                            ${this.extractJobListingsDetailsFromHTML(researchData)}
                         </div>
                     ` : ''}
                 </div>

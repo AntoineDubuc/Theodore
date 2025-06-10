@@ -16,6 +16,7 @@ from src.models import (
 from src.crawl4ai_scraper import CompanyWebScraper
 from src.intelligent_company_scraper import IntelligentCompanyScraperSync
 from src.bedrock_client import BedrockClient
+from src.gemini_client import GeminiClient
 from src.pinecone_client import PineconeClient
 from src.clustering import SectorClusteringEngine
 from src.similarity_pipeline import SimilarityDiscoveryPipeline
@@ -38,7 +39,8 @@ class TheodoreIntelligencePipeline:
         self.config = config
         
         # Initialize components
-        self.bedrock_client = BedrockClient(config)
+        self.bedrock_client = BedrockClient(config)  # Keep for embeddings
+        self.gemini_client = GeminiClient(config)    # Use for analysis and similarity
         # Use intelligent scraper for comprehensive sales intelligence
         self.scraper = IntelligentCompanyScraperSync(config, self.bedrock_client)
         # Keep legacy scraper as fallback
@@ -49,11 +51,11 @@ class TheodoreIntelligencePipeline:
         self.clustering_engine = SectorClusteringEngine(config, self.pinecone_client)
         self.similarity_pipeline = SimilarityDiscoveryPipeline(config)
         
-        # Initialize similarity pipeline clients
-        self.similarity_pipeline.bedrock_client = self.bedrock_client
+        # Initialize similarity pipeline clients (use Gemini for analysis)
+        self.similarity_pipeline.bedrock_client = self.gemini_client  # Use Gemini instead of Bedrock
         self.similarity_pipeline.pinecone_client = self.pinecone_client
-        self.similarity_pipeline.discovery_service = CompanyDiscoveryService(self.bedrock_client)
-        self.similarity_pipeline.similarity_validator = SimilarityValidator(self.bedrock_client)
+        self.similarity_pipeline.discovery_service = CompanyDiscoveryService(self.gemini_client)
+        self.similarity_pipeline.similarity_validator = SimilarityValidator(self.gemini_client)
         
         logger.info("Theodore Intelligence Pipeline initialized")
     

@@ -20,10 +20,10 @@ graph TB
     K --> L[Modern Web Interface]
     
     subgraph "AI Services"
-        AI1[AWS Bedrock Nova Pro]
+        AI1[Gemini 2.5 Flash Preview]
         AI2[Amazon Titan Embeddings]
-        AI3[Crawl4AI LLM Extraction]
-        AI4[Structured Research Prompts]
+        AI3[OpenAI Job Analysis]
+        AI4[Google Custom Search API]
     end
     
     subgraph "Storage & Discovery"
@@ -372,7 +372,7 @@ class SimpleEnhancedDiscovery:
 ## 🔬 Research Manager System (`src/research_manager.py`)
 
 ### Purpose
-Orchestrates multithreaded company research with real-time progress tracking and intelligent industry classification.
+Orchestrates multithreaded company research with real-time progress tracking, intelligent industry classification, and comprehensive job listings analysis.
 
 ### Core Components
 
@@ -396,9 +396,42 @@ class ResearchStatus(str, Enum):
 #### Research Pipeline
 1. **Company Profile Creation**: Initialize research target
 2. **Intelligent Web Scraping**: Multi-page content extraction using Crawl4AI
-3. **Industry Classification**: LLM-based categorization using comprehensive research data
-4. **Embedding Generation**: Create vector representations for similarity search
-5. **Database Storage**: Persist enriched company data in Pinecone
+3. **Job Listings Analysis**: Intelligent career page discovery and hiring insights
+4. **Industry Classification**: LLM-based categorization using comprehensive research data
+5. **Embedding Generation**: Create vector representations for similarity search
+6. **Database Storage**: Persist enriched company data in Pinecone
+
+### Job Listings Analysis System (`src/job_listings_crawler.py`)
+
+**Purpose**: Intelligent career page discovery and hiring insights extraction using multi-step analysis and LLM guidance.
+
+#### Core Features
+- **Smart Homepage Analysis**: Automatically detects career-related links on company homepages
+- **LLM-Guided Navigation**: Uses AI to identify the most likely career page from available links
+- **Multi-Step Fallback**: Progressive approach with Google search fallback when direct crawling fails
+- **Dual AI Provider Support**: Works with both OpenAI and AWS Bedrock for maximum flexibility
+
+#### Crawling Process
+```python
+class JobListingsCrawler:
+    """
+    6-Step intelligent job listings discovery:
+    1. Crawl main page for all links
+    2. LLM selects most likely career page link
+    3. Crawl career page for job listings
+    4. If no listings found, LLM identifies job listing links
+    5. Crawl specific job listing pages
+    6. Google search fallback with actionable guidance
+    """
+```
+
+#### Enhanced Fallback System
+When direct career page crawling fails, the system provides actionable guidance:
+- **Direct Career URLs**: AI-identified direct links to company career pages
+- **Job Site Recommendations**: Platform-specific suggestions (LinkedIn, AngelList, etc.)
+- **Search Tips**: Company-specific search strategies
+- **Typical Roles**: Common positions the company hires for
+- **Hiring Status Assessment**: Current hiring activity analysis
 
 ### Industry Classification System
 ```python

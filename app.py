@@ -187,7 +187,7 @@ def discover_similar_companies():
             from src.simple_enhanced_discovery import SimpleEnhancedDiscovery
             
             enhanced_discovery = SimpleEnhancedDiscovery(
-                bedrock_client=pipeline.bedrock_client,
+                ai_client=pipeline.bedrock_client,
                 pinecone_client=pipeline.pinecone_client,
                 scraper=pipeline.scraper
             )
@@ -211,7 +211,7 @@ def discover_similar_companies():
                 pipeline.research_manager = ResearchManager(
                     intelligent_scraper=pipeline.scraper,
                     pinecone_client=pipeline.pinecone_client,
-                    bedrock_client=pipeline.bedrock_client
+                    bedrock_client=pipeline.gemini_client
                 )
             
             # Enhance results with research status
@@ -296,55 +296,123 @@ def discover_similar_companies():
 @app.route('/api/research', methods=['POST'])
 def research_company():
     """Research a specific company suggestion on-demand"""
+    print(f"🐍 FLASK: ===== RESEARCH ENDPOINT CALLED =====")
+    print(f"🐍 FLASK: Request method: {request.method}")
+    print(f"🐍 FLASK: Request content type: {request.content_type}")
+    
     try:
+        print(f"🐍 FLASK: Attempting to parse JSON request data...")
         data = request.get_json()
+        print(f"🐍 FLASK: JSON parsed successfully")
+        print(f"🐍 FLASK: Request data keys: {list(data.keys()) if data else 'None'}")
+        print(f"🐍 FLASK: Full request data: {data}")
+        
         company_data = data.get('company', {})
+        print(f"🐍 FLASK: Company data extracted: {company_data}")
+        print(f"🐍 FLASK: Company name: {company_data.get('name', 'MISSING')}")
+        print(f"🐍 FLASK: Company website: {company_data.get('website', 'MISSING')}")
         
         if not company_data or not company_data.get('name'):
-            return jsonify({
+            print(f"🐍 FLASK: ❌ VALIDATION FAILED - Missing company data")
+            error_response = {
                 "error": "Company data is required",
                 "company": {}
-            }), 400
+            }
+            print(f"🐍 FLASK: Returning 400 error: {error_response}")
+            return jsonify(error_response), 400
         
         # Check if pipeline is available
+        print(f"🐍 FLASK: Checking pipeline availability...")
         if not pipeline:
-            return jsonify({
+            print(f"🐍 FLASK: ❌ CRITICAL ERROR - Pipeline not available")
+            error_response = {
                 "error": "Theodore pipeline not available",
                 "company": {}
-            }), 500
+            }
+            print(f"🐍 FLASK: Returning 500 error: {error_response}")
+            return jsonify(error_response), 500
+        
+        print(f"🐍 FLASK: ✅ Pipeline available, proceeding with research")
+        print(f"🐍 FLASK: Pipeline components: scraper={bool(pipeline.scraper)}, bedrock={bool(pipeline.bedrock_client)}, pinecone={bool(pipeline.pinecone_client)}")
+        
+        print(f"🐍 FLASK: ===== STARTING RESEARCH PROCESS =====")
+        company_name = company_data.get('name')
+        print(f"🐍 FLASK: Research target: {company_name}")
+        
         
         try:
-            # Initialize enhanced discovery with scraper
+            print(f"🐍 FLASK: Step 1 - Importing SimpleEnhancedDiscovery...")
             from src.simple_enhanced_discovery import SimpleEnhancedDiscovery
+            print(f"🐍 FLASK: ✅ Import successful!")
             
+            print(f"🐍 FLASK: Step 2 - Initializing discovery system...")
             enhanced_discovery = SimpleEnhancedDiscovery(
-                bedrock_client=pipeline.bedrock_client,
+                ai_client=pipeline.bedrock_client,
                 pinecone_client=pipeline.pinecone_client,
                 scraper=pipeline.scraper
             )
+            print(f"🐍 FLASK: ✅ Discovery system initialized!")
             
-            # Research the company on-demand
+            print(f"🐍 FLASK: Step 3 - Calling research_company_on_demand...")
+            print(f"🐍 FLASK: This will trigger the full research pipeline...")
+            
+            import time
+            start_time = time.time()
+            
             researched_company = enhanced_discovery.research_company_on_demand(company_data)
             
-            return jsonify({
+            end_time = time.time()
+            duration = end_time - start_time
+            
+            print(f"🐍 FLASK: ===== RESEARCH COMPLETED =====")
+            print(f"🐍 FLASK: Total duration: {duration:.2f} seconds")
+            print(f"🐍 FLASK: Research status: {researched_company.get('research_status', 'unknown')}")
+            print(f"🐍 FLASK: Research error: {researched_company.get('research_error', 'none')}")
+            print(f"🐍 FLASK: Result keys: {list(researched_company.keys()) if isinstance(researched_company, dict) else 'Not a dict'}")
+            
+            success_response = {
                 "success": True,
                 "company": researched_company,
-                "timestamp": datetime.utcnow().isoformat()
-            })
+                "timestamp": datetime.utcnow().isoformat(),
+                "processing_time": duration
+            }
             
-        except Exception as e:
-            print(f"Research error: {e}")
-            return jsonify({
-                "error": f"Research failed: {str(e)}",
-                "company": company_data
-            }), 500
+            print(f"🐍 FLASK: Returning success response")
+            return jsonify(success_response)
             
-    except Exception as e:
-        print(f"Research endpoint error: {e}")
-        return jsonify({
-            "error": f"Internal server error: {str(e)}",
-            "company": {}
-        }), 500
+        except Exception as research_error:
+            print(f"🐍 FLASK: ❌ RESEARCH EXCEPTION: {research_error}")
+            print(f"🐍 FLASK: ❌ Exception type: {type(research_error).__name__}")
+            
+            import traceback
+            traceback_str = traceback.format_exc()
+            print(f"🐍 FLASK: ❌ Full traceback:\n{traceback_str}")
+            
+            error_response = {
+                "error": f"Research failed: {str(research_error)}",
+                "company": company_data,
+                "exception_type": type(research_error).__name__
+            }
+            print(f"🐍 FLASK: Returning 500 error response: {error_response}")
+            return jsonify(error_response), 500
+            
+    except Exception as endpoint_error:
+        print(f"🐍 FLASK: ❌ CRITICAL ENDPOINT ERROR: {endpoint_error}")
+        print(f"🐍 FLASK: ❌ Exception type: {type(endpoint_error).__name__}")
+        
+        import traceback
+        traceback_str = traceback.format_exc()
+        print(f"🐍 FLASK: ❌ Full endpoint traceback:\n{traceback_str}")
+        
+        critical_error_response = {
+            "error": f"Internal server error: {str(endpoint_error)}",
+            "company": {},
+            "exception_type": type(endpoint_error).__name__
+        }
+        
+        print(f"🐍 FLASK: ===== CRITICAL ENDPOINT FAILURE =====")
+        print(f"🐍 FLASK: Returning 500 critical error: {critical_error_response}")
+        return jsonify(critical_error_response), 500
 
 @app.route('/api/save-researched-company', methods=['POST'])
 def save_researched_company():
@@ -676,7 +744,7 @@ def search_companies():
         return jsonify({'results': []})
 
 @app.route('/api/progress/<job_id>')
-def get_progress(job_id):
+def get_job_progress(job_id):
     """Get real-time progress for a processing job"""
     try:
         progress = progress_logger.get_progress(job_id)
@@ -693,14 +761,127 @@ def get_progress(job_id):
 @app.route('/api/progress/current')
 def get_current_progress():
     """Get progress for currently running job"""
+    print(f"🔧 PROGRESS: Current progress endpoint called")
+    
     try:
-        progress = progress_logger.get_current_job_progress()
+        job_id = request.args.get('job_id')
+        print(f"🔧 PROGRESS: Requested job_id: {job_id}")
+        
+        if job_id:
+            # Get specific job progress
+            print(f"🔧 PROGRESS: Getting progress for specific job: {job_id}")
+            progress_data = progress_logger.get_progress(job_id)
+        else:
+            # Get current job progress
+            print(f"🔧 PROGRESS: Getting current job progress")
+            progress_data = progress_logger.get_current_job_progress()
+            
+            # If no current job, check for recently failed jobs
+            if not progress_data:
+                print(f"🔧 PROGRESS: No current job, checking for recent failed jobs...")
+                all_progress = progress_logger.get_progress()
+                recent_failed_jobs = []
+                
+                # Look for jobs that failed in the last 5 minutes
+                import time
+                current_time = time.time()
+                
+                for job_id_key, job_data in all_progress.get("jobs", {}).items():
+                    if job_data.get("status") == "failed" and job_data.get("end_time"):
+                        try:
+                            end_time = datetime.fromisoformat(job_data["end_time"]).timestamp()
+                            if current_time - end_time < 300:  # 5 minutes
+                                recent_failed_jobs.append((job_id_key, job_data))
+                        except:
+                            pass
+                
+                if recent_failed_jobs:
+                    # Return the most recent failed job
+                    recent_failed_jobs.sort(key=lambda x: x[1].get("end_time", ""), reverse=True)
+                    most_recent_failed = recent_failed_jobs[0][1]
+                    print(f"🔧 PROGRESS: Found recent failed job: {most_recent_failed.get('company_name')}")
+                    print(f"🔧 PROGRESS: Failed job error: {most_recent_failed.get('error')}")
+                    
+                    return jsonify({
+                        "status": "recent_failure",
+                        "progress": most_recent_failed,
+                        "message": f"Recent job failed: {most_recent_failed.get('error', 'Unknown error')}",
+                        "timestamp": datetime.utcnow().isoformat()
+                    })
+        
+        if not progress_data:
+            print(f"🔧 PROGRESS: No progress data found")
+            
+            # Check for recently completed jobs in the last 30 seconds
+            print(f"🔧 PROGRESS: Checking for recently completed jobs...")
+            all_progress = progress_logger.get_progress()
+            recent_completed_jobs = []
+            
+            import time
+            current_time = time.time()
+            
+            for job_id_key, job_data in all_progress.get("jobs", {}).items():
+                if job_data.get("status") in ["completed", "failed"] and job_data.get("end_time"):
+                    try:
+                        end_time = datetime.fromisoformat(job_data["end_time"]).timestamp()
+                        if current_time - end_time < 30:  # Within last 30 seconds
+                            recent_completed_jobs.append((job_id_key, job_data))
+                            print(f"🔧 PROGRESS: Found recent job: {job_data.get('company_name')} - {job_data.get('status')}")
+                    except Exception as e:
+                        print(f"🔧 PROGRESS: Error parsing job time: {e}")
+                        pass
+            
+            if recent_completed_jobs:
+                # Return the most recent completed job
+                recent_completed_jobs.sort(key=lambda x: x[1].get("end_time", ""), reverse=True)
+                most_recent_completed = recent_completed_jobs[0][1]
+                print(f"🔧 PROGRESS: Returning most recent completed job: {most_recent_completed.get('company_name')}")
+                
+                return jsonify({
+                    "status": "recent_completion",
+                    "progress": most_recent_completed,
+                    "message": f"Recent job completed: {most_recent_completed.get('company_name')}",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+            
+            print(f"🔧 PROGRESS: No recent jobs found either")
+            return jsonify({
+                "status": "no_active_job", 
+                "message": "No active processing job found"
+            })
+        
+        print(f"🔧 PROGRESS: Returning progress data for job: {progress_data.get('company_name')}")
+        print(f"🔧 PROGRESS: Job status: {progress_data.get('status')}")
+        print(f"🔧 PROGRESS: Job error: {progress_data.get('error')}")
+        
         return jsonify({
-            'success': True,
-            'progress': progress
+            "status": "success",
+            "progress": progress_data,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"🔧 PROGRESS: ❌ Error getting progress: {e}")
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
+@app.route('/api/progress/all', methods=['GET'])
+def get_all_progress_data():
+    """Get all progress data"""
+    try:
+        all_progress = progress_logger.get_progress()
+        return jsonify({
+            "status": "success",
+            "data": all_progress,
+            "timestamp": datetime.utcnow().isoformat()
         })
     except Exception as e:
-        return jsonify({'error': f'Failed to get current progress: {str(e)}'}), 500
+        return jsonify({
+            "status": "error", 
+            "error": str(e)
+        }), 500
 
 @app.route('/api/companies')
 def list_companies():
@@ -1306,6 +1487,7 @@ def classify_unknown_industries():
     except Exception as e:
         return jsonify({'error': f'Failed to classify industries: {str(e)}'}), 500
 
+
 @app.route('/favicon.ico')
 def favicon():
     """Serve favicon"""
@@ -1314,4 +1496,5 @@ def favicon():
 if __name__ == '__main__':
     print("🚀 Starting Theodore Web UI...")
     print("🌐 Access at: http://localhost:5002")
+    print("🔧 Google Search domain discovery enabled")
     app.run(debug=True, host='0.0.0.0', port=5002)

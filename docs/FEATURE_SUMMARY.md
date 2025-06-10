@@ -25,8 +25,32 @@
 - **ThreadPoolExecutor**: Up to 3 concurrent research operations
 - **Research Status Tracking**: 6-state system (unknown, not_researched, researching, completed, failed, queued)
 - **Industry Classification**: Uses ALL research data (not just company name) for accurate categorization
+- **Job Listings Integration**: Intelligent career page discovery with actionable fallback guidance
 - **Embedding Generation**: Automatic vector creation for similarity search
 - **Database Integration**: Seamless storage in Pinecone with full metadata
+
+### 👥 Intelligent Job Listings Analysis
+**Location**: `src/job_listings_crawler.py`
+
+**Innovation**: 6-step intelligent career page discovery with **REAL Google search** that transforms "not found" into actionable guidance:
+
+- **Smart Homepage Analysis**: Detects career-related links before expensive LLM processing
+- **LLM-Guided Navigation**: AI selects most likely career page from available links
+- **Multi-Provider Support**: OpenAI (primary) + Gemini (fallback) for maximum reliability
+- **Real Google Search**: Performs actual Google searches to discover career pages when crawling fails
+- **Progressive Processing**: Common URL patterns → LLM guidance → REAL Google search fallback
+
+**Google Search Integration**:
+- **Google Custom Search API**: Searches "MSI careers", "MSI jobs", "MSI hiring"
+- **Career Page Discovery**: Automatically finds URLs like `https://ca.msi.com/about/careers`
+- **Live Job Extraction**: Crawls discovered pages for actual job listings
+- **Fallback Methods**: Google Custom Search → SerpAPI → Direct search
+
+**Key Outputs**:
+- Direct career page URLs discovered via Google (e.g., `https://us.msi.com/about/career/`)
+- Real job listings from discovered career pages
+- Company-specific search strategies and typical roles
+- Current hiring status assessment
 
 **Key Features**:
 - Real-time progress updates with phase-based tracking

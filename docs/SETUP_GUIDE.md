@@ -74,6 +74,8 @@ DEFAULT_BATCH_SIZE=10
 3. Add it to your `.env` file
 4. **Recommended**: Set up usage limits and monitoring
 
+**Note**: OpenAI is used for intelligent job listings analysis and career page discovery. The system will automatically use OpenAI for job listings research and fall back to AWS Bedrock for other analysis tasks.
+
 #### 3.2 AWS Bedrock Setup (Optional)
 ```bash
 # Install AWS CLI

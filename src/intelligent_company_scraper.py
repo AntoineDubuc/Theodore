@@ -29,7 +29,7 @@ except ImportError:
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig
 from crawl4ai.async_configs import CacheMode
 from src.models import CompanyData, CompanyIntelligenceConfig
-from src.progress_logger import log_processing_phase, start_company_processing, complete_company_processing
+from src.progress_logger import log_processing_phase, start_company_processing, complete_company_processing, progress_logger
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class IntelligentCompanyScraper:
         self.max_depth = 3  # Recursive crawl depth
         self.max_pages = 100  # Maximum pages to process
         self.concurrent_limit = 10  # Concurrent requests limit
-        self.session_timeout = aiohttp.ClientTimeout(total=30)
+        self.session_timeout = aiohttp.ClientTimeout(total=10)  # Reduced for fast research
         
         # Initialize Gemini client if available
         self.gemini_client = None
@@ -54,8 +54,8 @@ class IntelligentCompanyScraper:
             if gemini_api_key and gemini_api_key.startswith("AIza"):
                 try:
                     genai.configure(api_key=gemini_api_key)
-                    self.gemini_client = genai.GenerativeModel('gemini-2.0-flash-exp')
-                    logger.info("Gemini 2.0 Flash client initialized successfully")
+                    self.gemini_client = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
+                    logger.info("Gemini 2.5 Flash Preview client initialized successfully")
                 except Exception as e:
                     logger.warning(f"Failed to initialize Gemini client: {e}")
             else:
@@ -73,6 +73,7 @@ class IntelligentCompanyScraper:
             job_id = start_company_processing(company_data.name)
         
         logger.info(f"Starting intelligent scraping for {company_data.name} (job: {job_id})")
+        
         
         try:
             # Phase 1: Comprehensive Link Discovery
@@ -102,7 +103,7 @@ class IntelligentCompanyScraper:
                                pages_to_extract=len(selected_urls),
                                concurrent_limit=self.concurrent_limit)
             
-            page_contents = await self._parallel_extract_content(selected_urls)
+            page_contents = await self._parallel_extract_content(selected_urls, job_id)
             
             total_content_chars = sum(len(page['content']) for page in page_contents)
             log_processing_phase(job_id, "Content Extraction", "completed",
@@ -386,8 +387,8 @@ class IntelligentCompanyScraper:
             # Fallback: Use heuristic selection
             return self._heuristic_page_selection(all_links)
         
-        # Prepare links for LLM analysis
-        links_text = "\n".join([f"- {link}" for link in all_links[:500]])  # Limit for token management
+        # Prepare links for LLM analysis (reduced for faster processing)
+        links_text = "\n".join([f"- {link}" for link in all_links[:100]])  # Reduced from 500 to 100 for speed
         
         prompt = f"""You are a sales intelligence analyst. Your goal is to help a salesperson understand everything they need to know about {company_name} to have an effective sales conversation.
 
@@ -474,15 +475,24 @@ Focus on quality over quantity. Better to select 50 highly relevant pages than 1
         scored_links.sort(key=lambda x: x[1], reverse=True)
         return [link for link, score in scored_links[:self.max_pages]]
     
-    async def _parallel_extract_content(self, urls: List[str]) -> List[Dict[str, str]]:
+    async def _parallel_extract_content(self, urls: List[str], job_id: str = None) -> List[Dict[str, str]]:
         """
         Phase 3: Extract content from selected pages in parallel
         """
         semaphore = asyncio.Semaphore(self.concurrent_limit)
+        page_counter = {"count": 0}  # Mutable counter for async functions
+        total_pages = len(urls)
         
         async def extract_single_page(url: str) -> Optional[Dict[str, str]]:
             async with semaphore:
                 try:
+                    # Update progress counter
+                    page_counter["count"] += 1
+                    current_page = page_counter["count"]
+                    
+                    # Log current page being scraped
+                    print(f"🔍 [{current_page}/{total_pages}] Starting: {url}")
+                    
                     async with AsyncWebCrawler(
                         headless=True,
                         browser_type="chromium",
@@ -507,20 +517,37 @@ Focus on quality over quantity. Better to select 50 highly relevant pages than 1
                         result = await crawler.arun(url=url, config=config)
                         
                         if result.success and result.cleaned_html:
+                            content = result.cleaned_html[:10000]  # Limit content length
+                            
+                            # Log successful extraction with content preview
+                            content_preview = content[:200] + "..." if len(content) > 200 else content
+                            print(f"✅ [{current_page}/{total_pages}] Success: {url}")
+                            print(f"📄 Content preview: {content_preview}")
+                            
+                            # Update progress logger if job_id provided
+                            if job_id:
+                                progress_logger.log_page_scraping(
+                                    job_id, url, content, current_page, total_pages
+                                )
+                            
                             return {
                                 'url': url,
-                                'content': result.cleaned_html[:10000]  # Limit content length
+                                'content': content
                             }
                         else:
+                            print(f"❌ [{current_page}/{total_pages}] Failed: {url} - No content extracted")
                             logger.warning(f"Failed to extract content from {url}")
                             return None
                             
                 except Exception as e:
+                    print(f"❌ [{page_counter['count']}/{total_pages}] Error: {url} - {str(e)}")
                     logger.warning(f"Error extracting from {url}: {e}")
                     return None
         
         # Execute parallel extraction
         logger.info(f"Starting parallel extraction of {len(urls)} pages...")
+        print(f"🚀 Starting parallel extraction of {total_pages} pages...")
+        
         tasks = [extract_single_page(url) for url in urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
@@ -532,7 +559,9 @@ Focus on quality over quantity. Better to select 50 highly relevant pages than 1
             elif isinstance(result, Exception):
                 logger.warning(f"Extraction task failed: {result}")
         
-        logger.info(f"Successfully extracted content from {len(successful_extractions)} pages")
+        success_count = len(successful_extractions)
+        print(f"🎉 Extraction complete: {success_count}/{total_pages} pages successful")
+        logger.info(f"Successfully extracted content from {success_count} pages")
         return successful_extractions
     
     async def _llm_aggregate_sales_intelligence(
@@ -637,16 +666,257 @@ class IntelligentCompanyScraperSync:
     
     def scrape_company(self, company_data: CompanyData, job_id: str = None) -> CompanyData:
         """Synchronous wrapper for intelligent company scraping"""
+        print(f"🔬 SCRAPER: Starting scrape for company '{company_data.name}' with website '{company_data.website}'")
+        print(f"🔬 SCRAPER: Job ID: {job_id}")
+        
         try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            import subprocess
+            import json
+            import tempfile
+            import os
+            import sys
             
-            result = loop.run_until_complete(
-                self.scraper.scrape_company_intelligent(company_data, job_id)
-            )
+            print(f"🔬 SCRAPER: All imports successful")
+            print(f"🔬 SCRAPER: Working directory: {os.getcwd()}")
+            print(f"🔬 SCRAPER: Python executable: {sys.executable}")
             
-            loop.close()
-            return result
+            # Ensure job_id is properly formatted for script
+            safe_job_id = job_id if job_id else 'subprocess'
+            print(f"🔬 SCRAPER: Using job_id: {safe_job_id}")
+            
+            # Use the working test script instead of generating inline
+            script_content = f'''#!/usr/bin/env python3
+import asyncio
+import json
+import sys
+import os
+sys.path.append("{os.getcwd()}")
+
+from src.intelligent_company_scraper import IntelligentCompanyScraper
+from src.models import CompanyData, CompanyIntelligenceConfig
+from src.bedrock_client import BedrockClient
+
+async def run_scraping():
+    try:
+        import logging
+        # Suppress debug output to keep stdout clean for JSON
+        logging.getLogger().setLevel(logging.CRITICAL)
+        
+        # Load environment variables from .env file
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        config = CompanyIntelligenceConfig()
+        bedrock_client = BedrockClient(config)
+        
+        company_data = CompanyData(
+            name="{company_data.name}",
+            website="{company_data.website}"
+        )
+        
+        scraper = IntelligentCompanyScraper(config, bedrock_client)
+        
+        # Capture the original print function and redirect to stderr
+        import builtins
+        original_print = builtins.print
+        def debug_print(*args, **kwargs):
+            kwargs['file'] = sys.stderr
+            original_print(*args, **kwargs)
+        builtins.print = debug_print
+        
+        try:
+            result = await scraper.scrape_company_intelligent(company_data, "{safe_job_id}")
+        finally:
+            # Restore original print
+            builtins.print = original_print
+        
+        result_dict = {{
+            "success": True,
+            "name": result.name,
+            "website": result.website,
+            "scrape_status": result.scrape_status,
+            "scrape_error": result.scrape_error,
+            "company_description": result.company_description,
+            "ai_summary": result.ai_summary,
+            "industry": result.industry,
+            "business_model": result.business_model,
+            "target_market": result.target_market,
+            "key_services": result.key_services or [],
+            "company_size": result.company_size,
+            "location": result.location,
+            "tech_stack": result.tech_stack or [],
+            "value_proposition": result.value_proposition,
+            "pain_points": result.pain_points or [],
+            "pages_crawled": result.pages_crawled or [],
+            "crawl_duration": result.crawl_duration,
+            "crawl_depth": result.crawl_depth
+        }}
+        
+        return result_dict
+        
+    except Exception as e:
+        import traceback
+        return {{
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "scrape_status": "failed",
+            "scrape_error": str(e)
+        }}
+
+if __name__ == "__main__":
+    result = asyncio.run(run_scraping())
+    print(json.dumps(result, default=str))
+'''
+            
+            # Write script to temporary file
+            print(f"🔬 SCRAPER: Creating temporary script file...")
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+                f.write(script_content)
+                script_path = f.name
+            print(f"🔬 SCRAPER: Temporary script created at: {script_path}")
+            
+            try:
+                print(f"🔬 SCRAPER: Starting subprocess for scraping...")
+                print(f"🔬 SCRAPER: Command: {sys.executable} {script_path}")
+                print(f"🔬 SCRAPER: Timeout: 25 seconds (aligns with UI timeout)")
+                
+                # Update progress in main process before starting subprocess
+                if job_id:
+                    print(f"🔬 SCRAPER: Updating progress - starting intelligent scraping...")
+                    from src.progress_logger import progress_logger
+                    progress_logger.update_phase(job_id, "Intelligent Web Scraping", "running", {
+                        "status": "Running intelligent web scraper in subprocess...",
+                        "subprocess_started": True,
+                        "timeout_seconds": 25
+                    })
+                
+                import time
+                start_time = time.time()
+                
+                # Run the script in a subprocess with timeout
+                result = subprocess.run(
+                    [sys.executable, script_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,  # 60 second timeout to test if subprocess actually completes
+                    cwd=os.getcwd()
+                )
+                
+                end_time = time.time()
+                duration = end_time - start_time
+                print(f"🔬 SCRAPER: Subprocess completed in {duration:.2f} seconds")
+                
+                print(f"🔬 SCRAPER: Subprocess completed in {duration:.2f} seconds")
+                print(f"🔬 SCRAPER: Return code: {result.returncode}")
+                print(f"🔬 SCRAPER: Stdout length: {len(result.stdout)} characters")
+                print(f"🔬 SCRAPER: Stderr length: {len(result.stderr)} characters")
+                if result.stdout:
+                    print(f"🔬 SCRAPER: Stdout preview: {result.stdout[:500]}...")
+                if result.stderr:
+                    print(f"🔬 SCRAPER: Stderr preview: {result.stderr[:500]}...")
+                
+                if result.returncode == 0:
+                    # Parse JSON result - extract from end of stdout since debug prints contaminate it
+                    try:
+                        # Find the last valid JSON in stdout
+                        stdout_lines = result.stdout.strip().split('\n')
+                        json_line = None
+                        
+                        # Look for JSON starting from the end
+                        for line in reversed(stdout_lines):
+                            line = line.strip()
+                            if line.startswith('{') and line.endswith('}'):
+                                try:
+                                    json.loads(line)  # Test if it's valid JSON
+                                    json_line = line
+                                    break
+                                except:
+                                    continue
+                        
+                        if json_line:
+                            result_data = json.loads(json_line)
+                            print(f"🔧 DEBUG: Parsed result data successfully from JSON line")
+                            print(f"🔧 DEBUG: Success flag: {result_data.get('success')}")
+                            print(f"🔧 DEBUG: Scrape status: {result_data.get('scrape_status')}")
+                        else:
+                            raise json.JSONDecodeError("No valid JSON found in subprocess output", result.stdout, 0)
+                        
+                        if result_data.get("success"):
+                            print(f"🔬 SCRAPER: Subprocess returned success! Applying results...")
+                            
+                            # Update progress - scraping phase completed
+                            if job_id:
+                                from src.progress_logger import progress_logger
+                                progress_logger.update_phase(job_id, "Intelligent Web Scraping", "completed", {
+                                    "subprocess_duration": duration,
+                                    "pages_extracted": result_data.get("crawl_depth", 0),
+                                    "content_length": len(result_data.get("company_description", "")),
+                                    "status": "Intelligent scraping completed successfully"
+                                })
+                            
+                            # Apply results to company_data
+                            company_data.scrape_status = result_data.get("scrape_status", "success")
+                            company_data.scrape_error = result_data.get("scrape_error")
+                            company_data.company_description = result_data.get("company_description")
+                            company_data.ai_summary = result_data.get("ai_summary")
+                            company_data.industry = result_data.get("industry")
+                            company_data.business_model = result_data.get("business_model") 
+                            company_data.target_market = result_data.get("target_market")
+                            company_data.key_services = result_data.get("key_services", [])
+                            company_data.company_size = result_data.get("company_size")
+                            company_data.location = result_data.get("location")
+                            company_data.tech_stack = result_data.get("tech_stack", [])
+                            company_data.value_proposition = result_data.get("value_proposition")
+                            company_data.pain_points = result_data.get("pain_points", [])
+                            company_data.pages_crawled = result_data.get("pages_crawled", [])
+                            company_data.crawl_duration = result_data.get("crawl_duration", 0)
+                            company_data.crawl_depth = result_data.get("crawl_depth", 0)
+                            
+                            print(f"🔬 SCRAPER: Successfully applied all scraping results")
+                            print(f"🔬 SCRAPER: Pages crawled: {len(company_data.pages_crawled or [])}")
+                            print(f"🔬 SCRAPER: Crawl duration: {company_data.crawl_duration}")
+                            print(f"🔬 SCRAPER: Industry: {company_data.industry}")
+                            print(f"🔬 SCRAPER: AI Summary available: {bool(company_data.ai_summary)}")
+                        else:
+                            company_data.scrape_status = "failed" 
+                            company_data.scrape_error = result_data.get("error", "Unknown subprocess error")
+                            print(f"🔬 SCRAPER: ❌ Subprocess reported failure: {company_data.scrape_error}")
+                            if result_data.get("traceback"):
+                                print(f"🔬 SCRAPER: ❌ Traceback: {result_data.get('traceback')}")
+                                
+                        print(f"🔬 SCRAPER: Final status: {company_data.scrape_status}")
+                            
+                    except json.JSONDecodeError as e:
+                        print(f"🔬 SCRAPER: ❌ JSON parsing failed: {e}")
+                        print(f"🔬 SCRAPER: ❌ Raw stdout length: {len(result.stdout)}")
+                        print(f"🔬 SCRAPER: ❌ Raw stderr length: {len(result.stderr)}")
+                        print(f"🔬 SCRAPER: ❌ Subprocess stdout first 1000 chars: {result.stdout[:1000]}")
+                        print(f"🔬 SCRAPER: ❌ Subprocess stderr: {result.stderr}")
+                        company_data.scrape_status = "failed"
+                        company_data.scrape_error = f"Failed to parse scraper results: {e}"
+                else:
+                    print(f"🔬 SCRAPER: ❌ Subprocess failed with return code: {result.returncode}")
+                    print(f"🔬 SCRAPER: ❌ Subprocess stderr: {result.stderr}")
+                    print(f"🔬 SCRAPER: ❌ Subprocess stdout: {result.stdout}")
+                    company_data.scrape_status = "failed"
+                    company_data.scrape_error = f"Scraper subprocess failed (code {result.returncode}): {result.stderr}"
+                    
+            except subprocess.TimeoutExpired as e:
+                print(f"🔬 SCRAPER: ❌ TIMEOUT after 25 seconds for {company_data.name}")
+                print(f"🔬 SCRAPER: ❌ This indicates website complexity or network issues")
+                print(f"🔬 SCRAPER: ❌ Timeout details: {e}")
+                company_data.scrape_status = "failed"
+                company_data.scrape_error = "Scraping timed out after 25 seconds - this may indicate a complex website or network issues"
+                
+            finally:
+                # Clean up temporary file
+                try:
+                    os.unlink(script_path)
+                except:
+                    pass
+            
+            return company_data
             
         except Exception as e:
             logger.error(f"Intelligent scraping error for {company_data.name}: {e}")

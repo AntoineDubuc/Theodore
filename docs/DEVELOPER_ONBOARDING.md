@@ -25,9 +25,10 @@ Theodore is an AI-powered company intelligence system designed to extract and an
 Theodore transforms company research through intelligent AI-powered processing. It features:
 
 - **Intelligent Company Scraping**: 4-phase processing with dynamic link discovery, LLM page selection, parallel extraction, and AI aggregation
+- **Job Listings Analysis**: 6-step intelligent career page discovery with LLM guidance and actionable fallback recommendations
 - **Sales Intelligence Generation**: AI-generated 2-3 paragraph summaries optimized for sales teams
 - **Real-time Progress Tracking**: Live phase-by-phase status updates with detailed logging
-- **Complete Research Data Display**: Shows all 13+ extracted data points including tech stack, company size, value proposition, and pain points
+- **Complete Research Data Display**: Shows all 13+ extracted data points including tech stack, company size, value proposition, pain points, and hiring insights
 - **Research Metadata Tracking**: Shows pages crawled, crawl depth, processing time, and research timestamps
 - **Multi-Source Discovery**: Combines Pinecone similarity search with AI-powered recommendations
 - **Modern Web Interface**: Beautiful gradient UI with organized data sections and comprehensive company profiles

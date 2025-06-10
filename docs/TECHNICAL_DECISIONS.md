@@ -699,6 +699,87 @@ class PartialSuccessProcessor:
 4. **Scalability**: Growth handling capabilities
 5. **Vendor Lock-in**: Migration difficulty and risk
 
+### Challenge 6: Job Listings Discovery & AI Provider Flexibility
+
+**Problem**: Initial job listings implementation was limited by AWS Bedrock availability and provided poor results when career pages weren't directly discoverable.
+
+**Original Implementation**:
+```python
+# AWS Bedrock only, limited fallback
+class JobListingsCrawler:
+    def __init__(self, bedrock_client):
+        self.bedrock_client = bedrock_client  # Single provider dependency
+    
+    def crawl_job_listings(self, company, website):
+        if not find_career_page(website):
+            return {"error": "No career page found"}  # Poor user experience
+```
+
+**Issues Identified**:
+1. **AWS Credential Dependencies**: System failed when Bedrock credentials unavailable
+2. **Poor Fallback Logic**: Just returned errors instead of actionable guidance
+3. **Limited Career Page Discovery**: Only looked at first 50 links from homepage
+4. **No Alternative AI Providers**: Locked into single LLM provider
+
+**Enhanced Solution**:
+```python
+# Multi-provider support with intelligent fallback
+class JobListingsCrawler:
+    def __init__(self, bedrock_client=None, openai_client=None):
+        # Flexible AI provider selection
+        if openai_client:
+            self.llm_client = openai_client
+        elif bedrock_client:
+            self.llm_client = bedrock_client
+        else:
+            raise ValueError("Either OpenAI or Bedrock client required")
+    
+    def crawl_job_listings(self, company, website):
+        # Smart homepage analysis first
+        obvious_career_links = self._find_obvious_career_links(all_links)
+        
+        if not obvious_career_links:
+            # Immediate Google search fallback with actionable guidance
+            return self._google_search_fallback(company)
+        
+        # Continue with LLM-guided navigation...
+```
+
+**Key Improvements**:
+1. **Dual AI Provider Support**: OpenAI (primary) + Bedrock (fallback)
+2. **Intelligent Early Fallback**: Skip to Google search when no career links found
+3. **Actionable Guidance**: Provide job search recommendations instead of errors
+4. **Enhanced Results**: Career page URLs, job sites, search tips, typical roles
+
+**Results**:
+```python
+# Before: Error message
+{"error": "LLM could not identify career page link"}
+
+# After: Actionable guidance
+{
+    "job_listings": "Try: LinkedIn, their careers page, AngelList | Direct link: https://stripe.com/jobs",
+    "details": {
+        "typical_roles": ["Software Engineer", "Product Manager", "Sales"],
+        "career_page_url": "https://stripe.com/jobs",
+        "search_tips": "Use keywords like 'Stripe' and 'payments'...",
+        "hiring_status": "Likely active"
+    }
+}
+```
+
+**Technical Decisions Made**:
+- **OpenAI as Primary**: More reliable for job listings analysis than Bedrock
+- **Progressive Fallback**: 6-step process with early Google search when appropriate  
+- **Rich Fallback Data**: Transform "failure" into actionable user guidance
+- **AI Provider Abstraction**: Clean interface supporting multiple LLM providers
+
+**Impact**:
+- ✅ **User Experience**: Actionable guidance instead of error messages
+- ✅ **Reliability**: Multiple AI provider support prevents single points of failure
+- ✅ **Data Quality**: Specific job search recommendations for each company
+- ✅ **Development Velocity**: Easier testing with OpenAI vs Bedrock setup
+
 ---
 
 ## 📈 Impact Summary

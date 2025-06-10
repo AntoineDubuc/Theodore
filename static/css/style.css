@@ -1192,6 +1192,18 @@ html {
     background: rgba(255, 255, 255, 0.2);
 }
 
+.btn-mini.btn-danger {
+    background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+    color: white;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.btn-mini.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ff3742 0%, #ff2d37 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+}
+
 /* Research Progress */
 .research-progress {
     margin-top: 12px;
@@ -1221,6 +1233,34 @@ html {
     font-size: 0.875rem;
     color: var(--text-muted);
     text-align: center;
+}
+
+.research-progress-container {
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    backdrop-filter: var(--glass-backdrop);
+    box-shadow: var(--shadow-soft);
+}
+
+.progress-header h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.progress-details {
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    white-space: pre-line;
+    font-family: 'JetBrains Mono', monospace;
 }
 
 /* Result Card Enhancements */
@@ -1627,5 +1667,97 @@ html {
 .status-failed {
   background: var(--warning-gradient);
   color: white;
+}
+
+/* Enhanced Job Listings Styling */
+.job-listings-section {
+  background: rgba(76, 175, 80, 0.05);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.job-listings-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.job-detail-item {
+  margin-bottom: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.job-detail-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.job-detail-item strong {
+  color: #4caf50;
+  display: inline-block;
+  min-width: 120px;
+  margin-right: 8px;
+}
+
+.career-link {
+  color: #60a5fa !important;
+  text-decoration: none;
+  border-bottom: 1px dotted #60a5fa;
+  transition: all 0.2s ease;
+}
+
+.career-link:hover {
+  color: #93c5fd !important;
+  border-bottom-style: solid;
+}
+
+.career-link:visited {
+  color: #a78bfa !important;
+}
+
+.role-badges {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.role-badge {
+  background: rgba(96, 165, 250, 0.15);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  color: #60a5fa;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.job-detail-item[data-status="active"] strong {
+  color: #43e97b;
+}
+
+.job-detail-item[data-status="likely"] strong {
+  color: #fbbf24;
+}
+
+/* Responsive adjustments for job listings */
+@media (max-width: 768px) {
+  .job-detail-item strong {
+    min-width: auto;
+    display: block;
+    margin-bottom: 4px;
+  }
+  
+  .role-badges {
+    justify-content: flex-start;
+  }
+  
+  .career-link {
+    word-break: break-all;
+  }
 }
 

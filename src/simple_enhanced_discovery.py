@@ -10,6 +10,7 @@ from datetime import datetime
 
 from src.models import CompanyData
 from src.bedrock_client import BedrockClient
+from src.gemini_client import GeminiClient
 from src.pinecone_client import PineconeClient
 
 logger = logging.getLogger(__name__)
@@ -17,8 +18,9 @@ logger = logging.getLogger(__name__)
 class SimpleEnhancedDiscovery:
     """Simplified enhanced similarity discovery using LLM + Vector search"""
     
-    def __init__(self, bedrock_client: BedrockClient, pinecone_client: PineconeClient, scraper=None):
-        self.bedrock_client = bedrock_client
+    def __init__(self, ai_client, pinecone_client: PineconeClient, scraper=None):
+        # Accept either Bedrock or Gemini client
+        self.ai_client = ai_client
         self.pinecone_client = pinecone_client
         self.scraper = scraper  # Add scraper for temporary company research
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -92,7 +94,7 @@ Respond in JSON format:
   ]
 }}"""
             
-            response = self.bedrock_client.analyze_content(prompt)
+            response = self.ai_client.analyze_content(prompt)
             
             if response:
                 self.logger.info(f"LLM Response: {response[:200]}...")  # Debug log
@@ -270,7 +272,7 @@ Find {limit} real, similar companies and respond in JSON format:
 
 Make sure to suggest REAL companies with actual websites, not fictional ones."""
             
-            response = self.bedrock_client.analyze_content(prompt)
+            response = self.ai_client.analyze_content(prompt)
             
             if response:
                 self.logger.info(f"LLM Response: {response[:200]}...")
@@ -424,43 +426,86 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
     
     def research_company_on_demand(self, company_suggestion: Dict[str, Any]) -> Dict[str, Any]:
         """Research a specific company suggestion on-demand via web scraping"""
+        print(f"🧬 RESEARCH: Starting on-demand research process")
+        print(f"🧬 RESEARCH: Input company suggestion: {company_suggestion}")
+        
         self.logger.info(f"On-demand research for: {company_suggestion.get('name', 'unknown')}")
         
         if not self.scraper:
+            print(f"🧬 RESEARCH: ❌ No scraper available - returning original suggestion")
             self.logger.warning("No scraper available for on-demand research")
             return company_suggestion
         
         try:
+            print(f"🧬 RESEARCH: Extracting company details from suggestion...")
             company_name = company_suggestion.get('company_name', company_suggestion.get('name', '')).strip()
             company_website = company_suggestion.get('website', '').strip()
+            print(f"🧬 RESEARCH: Extracted name='{company_name}', website='{company_website}'")
             
             if not company_name or not company_website:
+                print(f"🧬 RESEARCH: ❌ Missing required data - name or website empty")
+                print(f"🧬 RESEARCH: ❌ Returning original suggestion unchanged")
                 self.logger.warning(f"Missing name or website for research: {company_suggestion}")
                 return company_suggestion
             
-            self.logger.info(f"Researching company: {company_name}")
-            
+            print(f"🧬 RESEARCH: Creating CompanyData object for scraping...")
             # Create temporary CompanyData object for scraping
             from src.models import CompanyData
             temp_company = CompanyData(
                 name=company_name,
                 website=company_website
             )
+            print(f"🧬 RESEARCH: CompanyData object created successfully")
             
-            # Scrape company WITHOUT storing in database
-            scraped_company = self.scraper.scrape_company(temp_company)
+            print(f"🧬 RESEARCH: Initializing progress tracking system...")
+            # Start progress tracking for research
+            from src.progress_logger import start_company_processing
+            job_id = start_company_processing(company_name)
+            print(f"🧬 RESEARCH: Progress tracking started with job_id: {job_id}")
+            
+            print(f"🧬 RESEARCH: ===== STARTING SCRAPER =====")
+            print(f"🧬 RESEARCH: Calling scraper.scrape_company for '{company_name}'")
+            print(f"🧬 RESEARCH: Target website: {company_website}")
+            
+            # This should now work with the subprocess-based scraper
+            scraped_company = self.scraper.scrape_company(temp_company, job_id)
+            
+            print(f"🧬 RESEARCH: ===== SCRAPER COMPLETED =====")
+            print(f"🧬 RESEARCH: Final scrape status: {scraped_company.scrape_status}")
+            print(f"🧬 RESEARCH: Scrape error (if any): {scraped_company.scrape_error}")
+            print(f"🧬 RESEARCH: Pages crawled: {len(scraped_company.pages_crawled or [])}")
+            print(f"🧬 RESEARCH: Crawl duration: {scraped_company.crawl_duration}")
             
             if scraped_company.scrape_status == "success":
+                print(f"🧬 RESEARCH: ✅ Scraping successful! Starting LLM analysis...")
                 # Run scraped content through LLM analysis for intelligent extraction
                 self.logger.info(f"Analyzing scraped content with LLM for {company_name}")
-                analysis_result = self.bedrock_client.analyze_company_content(scraped_company)
+                print(f"🧬 RESEARCH: Calling AI client for content analysis...")
+                
+                analysis_result = self.ai_client.analyze_company_content(scraped_company)
+                print(f"🧬 RESEARCH: AI analysis completed")
+                print(f"🧬 RESEARCH: Analysis result keys: {list(analysis_result.keys()) if isinstance(analysis_result, dict) else 'Not a dict'}")
                 
                 # Apply LLM analysis to the scraped company data
                 if "error" not in analysis_result:
+                    print(f"🧬 RESEARCH: ✅ Applying AI analysis to company data...")
                     self._apply_analysis_to_company(scraped_company, analysis_result)
+                    print(f"🧬 RESEARCH: ✅ AI analysis applied successfully")
                     self.logger.info(f"LLM analysis completed for {company_name}")
                 else:
+                    print(f"🧬 RESEARCH: ❌ AI analysis failed: {analysis_result.get('error')}")
                     self.logger.warning(f"LLM analysis failed for {company_name}: {analysis_result.get('error')}")
+                
+                print(f"🧬 RESEARCH: Starting job listings research...")
+                # Execute job listings research
+                job_listings_data = self._execute_job_listings_research(company_name, company_website)
+                print(f"🧬 RESEARCH: Job listings research completed")
+                
+                print(f"🧬 RESEARCH: Marking job as completed in progress tracker...")
+                # Complete the job tracking
+                from src.progress_logger import complete_company_processing
+                complete_company_processing(job_id, True, summary=f"Research completed for {company_name}")
+                print(f"🧬 RESEARCH: Progress tracking completed")
                 
                 # Enhance the suggestion with analyzed scraped data
                 enhanced_suggestion = {
@@ -486,6 +531,10 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
                     'value_proposition': scraped_company.value_proposition or '',
                     'pain_points': scraped_company.pain_points[:3] if scraped_company.pain_points else [],
                     
+                    # Add job listings research data
+                    'job_listings': job_listings_data.get('job_listings', 'Job data unavailable'),
+                    'job_listings_details': job_listings_data.get('details', {}),
+                    
                     # Add research metadata
                     'pages_crawled': scraped_company.pages_crawled or [],
                     'processing_time': scraped_company.crawl_duration,
@@ -498,10 +547,20 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
                     'analysis_applied': "error" not in analysis_result
                 }
                 
+                print(f"🧬 RESEARCH: ===== RESEARCH COMPLETED SUCCESSFULLY =====")
+                print(f"🧬 RESEARCH: Enhanced suggestion created with comprehensive data")
                 self.logger.info(f"Successfully researched {company_name}")
                 return enhanced_suggestion
                 
             else:
+                print(f"🧬 RESEARCH: ❌ Scraping failed - status: {scraped_company.scrape_status}")
+                print(f"🧬 RESEARCH: ❌ Error: {scraped_company.scrape_error}")
+                
+                # Complete the job tracking with failure
+                print(f"🧬 RESEARCH: Marking job as failed in progress tracker...")
+                from src.progress_logger import complete_company_processing
+                complete_company_processing(job_id, False, error=scraped_company.scrape_error or 'Research failed')
+                
                 # Research failed, return original with error info
                 enhanced_suggestion = company_suggestion.copy()
                 enhanced_suggestion.update({
@@ -513,11 +572,33 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
                     'research_timestamp': self._get_timestamp()
                 })
                 
+                print(f"🧬 RESEARCH: ===== RESEARCH FAILED =====")
+                print(f"🧬 RESEARCH: Returning failed result with error info")
                 self.logger.warning(f"Research failed for {company_name}: {scraped_company.scrape_error}")
                 return enhanced_suggestion
             
         except Exception as e:
+            print(f"🧬 RESEARCH: ❌ CRITICAL ERROR during research: {e}")
+            print(f"🧬 RESEARCH: ❌ Exception type: {type(e).__name__}")
+            
+            import traceback
+            traceback_str = traceback.format_exc()
+            print(f"🧬 RESEARCH: ❌ Full traceback:\n{traceback_str}")
+            
             self.logger.error(f"Error in on-demand research for {company_suggestion.get('name', 'unknown')}: {e}")
+            
+            # Complete the job tracking with error (if job_id exists)
+            print(f"🧬 RESEARCH: Attempting to mark job as failed due to exception...")
+            try:
+                if 'job_id' in locals():
+                    from src.progress_logger import complete_company_processing
+                    complete_company_processing(job_id, False, error=str(e))
+                    print(f"🧬 RESEARCH: Job marked as failed successfully")
+                else:
+                    print(f"🧬 RESEARCH: No job_id available for cleanup")
+            except Exception as cleanup_error:
+                print(f"🧬 RESEARCH: ❌ Cleanup error: {cleanup_error}")
+            
             # Return original suggestion with error info
             error_suggestion = company_suggestion.copy()
             error_suggestion.update({
@@ -528,6 +609,8 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
                 'research_error': str(e),
                 'research_timestamp': self._get_timestamp()
             })
+            print(f"🧬 RESEARCH: ===== RESEARCH ERROR =====")
+            print(f"🧬 RESEARCH: Returning error result with exception details")
             return error_suggestion
     
     def _get_timestamp(self) -> str:
@@ -563,3 +646,130 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
             existing_pains = set(company.pain_points or [])
             new_pains = set(analysis_result["pain_points"])
             company.pain_points = list(existing_pains.union(new_pains))
+    
+    def _execute_job_listings_research(self, company_name: str, company_website: str) -> Dict[str, Any]:
+        """Execute job listings research using intelligent crawling"""
+        try:
+            self.logger.info(f"Executing intelligent job listings crawl for {company_name}")
+            
+            # Import the OpenAI client and job listings crawler
+            from src.job_listings_crawler import JobListingsCrawler
+            
+            # Try to use OpenAI client first, fallback to Bedrock
+            llm_client = None
+            try:
+                from src.openai_client import SimpleOpenAIClient
+                llm_client = SimpleOpenAIClient()
+                self.logger.info("✅ Using OpenAI for job listings analysis")
+            except Exception as e:
+                self.logger.warning(f"OpenAI not available, trying Bedrock: {e}")
+                if self.bedrock_client:
+                    llm_client = self.bedrock_client
+                    self.logger.info("✅ Using Bedrock for job listings analysis")
+                else:
+                    self.logger.warning("No AI client available for job listings research")
+                    return {'job_listings': 'AI client not available', 'details': {}}
+            
+            # Create crawler instance with appropriate client
+            if hasattr(llm_client, 'analyze_content') and 'SimpleOpenAIClient' in str(type(llm_client)):
+                crawler = JobListingsCrawler(openai_client=llm_client)
+            else:
+                crawler = JobListingsCrawler(bedrock_client=llm_client)
+            
+            # Execute intelligent crawling
+            self.logger.info(f"Starting intelligent job listings crawl for {company_name}")
+            result = crawler.crawl_job_listings(company_name, company_website)
+            
+            self.logger.info(f"Job listings crawl completed for {company_name}: {result.get('job_listings', 'Unknown')}")
+            return result
+                
+        except Exception as e:
+            self.logger.error(f"Job listings research failed for {company_name}: {e}")
+            return {'job_listings': f'Research failed: {str(e)}', 'details': {}}
+    
+    def _parse_job_listings_response(self, response: str) -> Dict[str, Any]:
+        """Parse the AI response for job listings data"""
+        try:
+            import json
+            
+            # Try to extract JSON from response
+            json_start = response.find('{')
+            json_end = response.rfind('}') + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_text = response[json_start:json_end]
+                data = json.loads(json_text)
+                
+                # Extract key information
+                job_listings = "No job listings found"
+                details = {}
+                
+                # Check for various indicators of active hiring
+                if data.get('current_positions') or data.get('open_positions'):
+                    positions = data.get('current_positions', data.get('open_positions', []))
+                    if isinstance(positions, list) and len(positions) > 0:
+                        job_listings = f"Yes - {len(positions)} open positions"
+                        details['positions'] = positions[:5]  # Limit to first 5
+                    elif isinstance(positions, str) and positions.lower() not in ['none', 'no', '']:
+                        job_listings = "Yes - Multiple positions available"
+                        details['description'] = positions
+                
+                # Check for hiring indicators
+                if data.get('active_hiring') or data.get('hiring_status'):
+                    hiring_status = data.get('active_hiring', data.get('hiring_status'))
+                    if str(hiring_status).lower() in ['true', 'yes', 'active']:
+                        if job_listings == "No job listings found":
+                            job_listings = "Yes - Actively hiring"
+                
+                # Extract additional details
+                if data.get('frequent_roles'):
+                    details['frequent_roles'] = data['frequent_roles']
+                if data.get('required_skills'):
+                    details['required_skills'] = data['required_skills']
+                if data.get('remote_work'):
+                    details['remote_work'] = data['remote_work']
+                
+                return {
+                    'job_listings': job_listings,
+                    'details': details,
+                    'raw_data': data
+                }
+            else:
+                # Fallback: analyze text for hiring indicators
+                response_lower = response.lower()
+                if any(indicator in response_lower for indicator in ['hiring', 'open position', 'job opening', 'career', 'apply now']):
+                    return {
+                        'job_listings': 'Yes - Hiring activity detected',
+                        'details': {'analysis': 'Text analysis indicates hiring activity'},
+                        'raw_response': response[:200]
+                    }
+                else:
+                    return {
+                        'job_listings': 'No clear hiring indicators found',
+                        'details': {'analysis': 'No obvious hiring signals detected'},
+                        'raw_response': response[:200]
+                    }
+                    
+        except json.JSONDecodeError as e:
+            self.logger.warning(f"Failed to parse JSON response: {e}")
+            # Fallback to text analysis
+            response_lower = response.lower()
+            if any(indicator in response_lower for indicator in ['hiring', 'open position', 'job opening', 'career']):
+                return {
+                    'job_listings': 'Yes - Hiring activity detected (text analysis)',
+                    'details': {'note': 'JSON parsing failed, used text analysis'},
+                    'raw_response': response[:200]
+                }
+            else:
+                return {
+                    'job_listings': 'No hiring indicators found',
+                    'details': {'note': 'JSON parsing failed, no clear signals'},
+                    'raw_response': response[:200]
+                }
+        except Exception as e:
+            self.logger.error(f"Error parsing job listings response: {e}")
+            return {
+                'job_listings': f'Parsing error: {str(e)}',
+                'details': {},
+                'raw_response': response[:200] if response else 'No response'
+            }

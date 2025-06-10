@@ -102,7 +102,17 @@ class ResearchManager:
                  token_price_per_1k: float = 0.011):  # Nova Pro pricing
         self.intelligent_scraper = intelligent_scraper
         self.pinecone_client = pinecone_client
-        self.bedrock_client = bedrock_client
+        # bedrock_client can now be Gemini or Bedrock client for analysis
+        self.ai_client = bedrock_client
+        # Keep separate Bedrock client for embeddings
+        self.bedrock_client = None
+        try:
+            from src.bedrock_client import BedrockClient
+            from src.models import CompanyIntelligenceConfig
+            config = CompanyIntelligenceConfig()
+            self.bedrock_client = BedrockClient(config)
+        except Exception as e:
+            logger.warning(f"Could not initialize Bedrock client for embeddings: {e}")
         self.prompt_library = research_prompt_library
         self.token_price_per_1k = token_price_per_1k
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -245,7 +255,7 @@ class ResearchManager:
                     self._update_progress(job_id, ResearchStatus.RESEARCHING, 80, "Classifying industry")
                     
                     # Classify industry if we have research data
-                    if self.bedrock_client:
+                    if self.ai_client:
                         try:
                             industry = self._classify_industry(enriched_company)
                             if industry and industry.lower() != 'unknown':
@@ -383,8 +393,8 @@ class ResearchManager:
         This leverages the LLM's training data knowledge about well-known companies.
         """
         try:
-            if not self.bedrock_client:
-                return {'success': False, 'error': 'No Bedrock client available'}
+            if not self.ai_client:
+                return {'success': False, 'error': 'No AI client available'}
             
             fallback_prompt = f"""
             The website {website} for company "{company_name}" is blocking automated scraping. 
@@ -419,7 +429,7 @@ class ResearchManager:
             """
             
             self.logger.info(f"Requesting LLM fallback research for {company_name}")
-            response = self.bedrock_client.analyze_content(fallback_prompt)
+            response = self.ai_client.analyze_content(fallback_prompt)
             
             if not response or "INSUFFICIENT_KNOWLEDGE" in response:
                 self.logger.info(f"LLM has insufficient knowledge about {company_name}")
@@ -531,8 +541,8 @@ class ResearchManager:
         This searches for public information about the company.
         """
         try:
-            if not self.bedrock_client:
-                return {'success': False, 'error': 'No Bedrock client available for search analysis'}
+            if not self.ai_client:
+                return {'success': False, 'error': 'No AI client available for search analysis'}
             
             # First, let's try a simulated web search using LLM with search-like prompting
             search_prompt = f"""
@@ -564,7 +574,7 @@ class ResearchManager:
             """
             
             self.logger.info(f"Requesting web search-style research for {company_name}")
-            response = self.bedrock_client.analyze_content(search_prompt)
+            response = self.ai_client.analyze_content(search_prompt)
             
             if not response or "LIMITED_PUBLIC_INFO_AVAILABLE" in response:
                 self.logger.info(f"Limited public information available for {company_name}")
@@ -690,7 +700,7 @@ class ResearchManager:
             )
             
             # Get industry classification from LLM
-            response = self.bedrock_client.analyze_content(prompt)
+            response = self.ai_client.analyze_content(prompt)
             
             # Extract industry from response
             industry = None
@@ -846,10 +856,10 @@ class ResearchManager:
             # Execute prompt using Bedrock
             self.logger.info(f"Executing prompt '{prompt.name}' for {session.company_name}")
             
-            if not self.bedrock_client:
-                raise ValueError("No Bedrock client available for prompt execution")
+            if not self.ai_client:
+                raise ValueError("No AI client available for prompt execution")
             
-            response = self.bedrock_client.analyze_content(formatted_prompt)
+            response = self.ai_client.analyze_content(formatted_prompt)
             
             # Parse response based on expected format
             parsed_result = self._parse_prompt_response(response, prompt)

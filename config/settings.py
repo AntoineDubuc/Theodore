@@ -41,6 +41,9 @@ class TheodoreSettings(BaseSettings):
     # OpenAI Configuration (for Crawl4AI)
     openai_api_key: Optional[str] = Field(None, env="OPENAI_API_KEY")
     
+    # Gemini Configuration (for similarity analysis)
+    gemini_api_key: Optional[str] = Field(None, env="GEMINI_API_KEY")
+    
     # Processing Configuration
     max_content_length: int = 10000
     rate_limit_delay: float = 1.0
