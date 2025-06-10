@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theodore V2 - AI Company Intelligence</title>
+    <meta name="description" content="Fast company discovery with URL detection and focused research">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        /* V2 specific styles */
+        .v2-badge {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 12px;
+        }
+        
+        .discovery-results {
+            margin-top: 24px;
+        }
+        
+        .company-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .company-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        
+        .company-info h3 {
+            color: var(--text-primary);
+            margin: 0 0 8px 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .company-info .website {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+        
+        .company-info .website:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        
+        .similarity-score {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .company-details {
+            margin-bottom: 16px;
+        }
+        
+        .detail-item {
+            margin-bottom: 12px;
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .detail-value {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .company-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn-research {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-research:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+        
+        .btn-research:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .research-progress {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            border-radius: 8px;
+        }
+        
+        .research-results {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            border-radius: 8px;
+        }
+        
+        .research-content {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .input-type-indicator {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(102, 126, 234, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .discovery-metadata {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .metadata-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .metadata-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .metadata-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    Theodore
+                    <span class="v2-badge">V2</span>
+                </h1>
+                <p class="tagline">Fast Company Discovery & Focused Research</p>
+                <p class="subtitle">URL detection • LLM-guided page discovery • Consolidated analysis</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Messages Container -->
+            <div id="messages"></div>
+
+            <!-- Discovery Section -->
+            <div class="search-card">
+                <h3 style="margin-bottom: 24px; color: var(--text-primary);">🔍 Company Discovery</h3>
+                
+                <form id="discoveryForm">
+                    <div class="form-group">
+                        <label for="companyInput" class="form-label">
+                            Company Name or Website URL
+                        </label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="companyInput" 
+                                name="input_text" 
+                                class="form-input" 
+                                placeholder="Enter company name or website URL (e.g., Stripe, https://linear.app)"
+                                required
+                                autocomplete="off"
+                                spellcheck="false"
+                            >
+                            <div id="inputTypeIndicator" class="input-type-indicator" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="similarLimit" class="form-label">
+                            Number of Similar Companies
+                        </label>
+                        <div class="input-wrapper">
+                            <select id="similarLimit" name="limit" class="form-input">
+                                <option value="3">3 companies</option>
+                                <option value="5" selected>5 companies</option>
+                                <option value="7">7 companies</option>
+                                <option value="10">10 companies</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="discoverButton">
+                            <span>🚀</span>
+                            <span id="discoverButtonText">Discover Similar Companies</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="clearDiscovery()">
+                            <span>🔄</span>
+                            Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Discovery Results -->
+            <div id="discoveryResults" class="discovery-results" style="display: none;">
+                <div class="card">
+                    <div class="results-header">
+                        <h2 class="results-title">Discovery Results</h2>
+                    </div>
+                    
+                    <!-- Discovery Metadata -->
+                    <div id="discoveryMetadata" class="discovery-metadata">
+                        <!-- Metadata will be populated by JavaScript -->
+                    </div>
+                    
+                    <!-- Company Cards -->
+                    <div id="companyCards">
+                        <!-- Company cards will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="card">
+                <h3 style="margin-bottom: 24px; color: var(--text-primary); text-align: center;">
+                    ✨ Theodore V2 Features
+                </h3>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">🎯</div>
+                        <h4>Smart Input Detection</h4>
+                        <p>Automatically detects company names vs URLs and adapts discovery strategy accordingly</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <h4>Fast Discovery</h4>
+                        <p>Quick LLM-based similar company discovery without heavy web scraping upfront</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔍</div>
+                        <h4>LLM-Guided Research</h4>
+                        <p>AI selects the most important pages for deep business intelligence extraction</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📋</div>
+                        <h4>Consolidated Analysis</h4>
+                        <p>Combines content from multiple pages into comprehensive business intelligence</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="padding: 40px 0; text-align: center; color: var(--text-muted); border-top: 1px solid var(--border-subtle); margin-top: 60px;">
+        <div class="container">
+            <p>&copy; 2024 Theodore V2. Fast discovery, focused research.</p>
+            <p style="font-size: 0.875rem; margin-top: 8px;">
+                Powered by LLM intelligence and focused crawling
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/v2_app.js') }}"></script>
+</body>
+</html>

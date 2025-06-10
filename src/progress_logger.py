@@ -36,6 +36,7 @@ class ProgressLogger:
     
     def start_job(self, job_id: str, company_name: str, total_phases: int = 4) -> None:
         """Start tracking a new processing job"""
+        print(f"🔧 PROGRESS_LOGGER: Starting job {job_id} for {company_name}")
         with self.lock:
             job_data = {
                 "job_id": job_id,
@@ -50,23 +51,37 @@ class ProgressLogger:
                 "result_summary": None
             }
             
+            print(f"🔧 PROGRESS_LOGGER: Created job data: {job_data}")
+            print(f"🔧 PROGRESS_LOGGER: Setting current_job to: {job_id}")
+            
             self.progress_data["current_job"] = job_id
             self.progress_data["jobs"][job_id] = job_data
             self.progress_data["last_updated"] = datetime.now().isoformat()
             
+            print(f"🔧 PROGRESS_LOGGER: Jobs in memory after adding: {len(self.progress_data['jobs'])}")
+            print(f"🔧 PROGRESS_LOGGER: Current job set to: {self.progress_data['current_job']}")
+            
             self._save_progress()
             
+            print(f"🔧 PROGRESS_LOGGER: Job {job_id} saved successfully")
             logger.info(f"Started processing job {job_id} for {company_name}")
     
     def update_phase(self, job_id: str, phase_name: str, status: str = "running", 
                     details: Optional[Dict] = None) -> None:
         """Update current phase progress"""
+        print(f"🔧 DEBUG: update_phase called - job_id: {job_id}, phase: {phase_name}, status: {status}")
         with self.lock:
             if job_id not in self.progress_data["jobs"]:
+                print(f"❌ DEBUG: Job {job_id} not found in jobs: {list(self.progress_data['jobs'].keys())}")
                 logger.warning(f"Job {job_id} not found for phase update")
                 return
             
             job = self.progress_data["jobs"][job_id]
+            
+            # Extract new details from parameters
+            current_url = details.get("current_url") if details else None
+            progress_step = details.get("progress_step") if details else None
+            status_message = details.get("status_message") if details else None
             
             phase_data = {
                 "name": phase_name,
@@ -74,13 +89,24 @@ class ProgressLogger:
                 "start_time": datetime.now().isoformat(),
                 "end_time": None if status == "running" else datetime.now().isoformat(),
                 "details": details or {},
-                "duration": None
+                "duration": None,
+                "current_url": current_url,
+                "progress_step": progress_step,
+                "status_message": status_message,
+                "current_page": details.get("current_page") if details else None,
+                "pages_completed": details.get("pages_completed", 0) if details else 0,
+                "total_pages": details.get("total_pages", 0) if details else 0,
+                "scraped_content_preview": details.get("content_preview") if details else None
             }
             
             # Update or add phase
             phase_found = False
             for i, existing_phase in enumerate(job["phases"]):
                 if existing_phase["name"] == phase_name:
+                    # Keep start_time from existing phase if updating
+                    if status == "running" and existing_phase.get("start_time"):
+                        phase_data["start_time"] = existing_phase["start_time"]
+                    
                     # Calculate duration if completing
                     if status != "running" and existing_phase.get("start_time"):
                         start = datetime.fromisoformat(existing_phase["start_time"])
@@ -94,14 +120,19 @@ class ProgressLogger:
             if not phase_found:
                 job["phases"].append(phase_data)
                 job["current_phase"] = len(job["phases"])
+                print(f"✅ DEBUG: Added new phase '{phase_name}' to job {job_id}. Total phases: {len(job['phases'])}")
+            else:
+                print(f"🔄 DEBUG: Updated existing phase '{phase_name}' for job {job_id}")
             
             self.progress_data["last_updated"] = datetime.now().isoformat()
             self._save_progress()
             
+            print(f"💾 DEBUG: Saved progress data for job {job_id}. Current phases: {[p['name'] for p in job['phases']]}")
             logger.info(f"Job {job_id}: {phase_name} - {status}")
     
     def complete_job(self, job_id: str, success: bool = True, 
-                    error: Optional[str] = None, result_summary: Optional[str] = None) -> None:
+                    error: Optional[str] = None, result_summary: Optional[str] = None,
+                    results: Optional[Dict] = None) -> None:
         """Mark job as completed"""
         with self.lock:
             if job_id not in self.progress_data["jobs"]:
@@ -113,6 +144,7 @@ class ProgressLogger:
             job["end_time"] = datetime.now().isoformat()
             job["error"] = error
             job["result_summary"] = result_summary
+            job["results"] = results  # Store full research results
             
             # Calculate total duration
             if job.get("start_time"):
@@ -134,16 +166,97 @@ class ProgressLogger:
         """Get current progress data"""
         with self.lock:
             if job_id:
-                return self.progress_data["jobs"].get(job_id, {})
+                job_data = self.progress_data["jobs"].get(job_id, {})
+                if job_data:
+                    return self._build_phase_structure(job_data)
+                return {}
             return self.progress_data.copy()
     
     def get_current_job_progress(self) -> Optional[Dict]:
         """Get progress for currently running job"""
         with self.lock:
+            print(f"🔧 PROGRESS_LOGGER: Getting current job progress...")
             current_job_id = self.progress_data.get("current_job")
-            if current_job_id and current_job_id in self.progress_data["jobs"]:
-                return self.progress_data["jobs"][current_job_id].copy()
+            print(f"🔧 PROGRESS_LOGGER: Current job ID: {current_job_id}")
+            
+            all_jobs = self.progress_data.get("jobs", {})
+            print(f"🔧 PROGRESS_LOGGER: Total jobs in memory: {len(all_jobs)}")
+            print(f"🔧 PROGRESS_LOGGER: All job IDs: {list(all_jobs.keys())}")
+            
+            if current_job_id:
+                print(f"🔧 PROGRESS_LOGGER: Looking for job {current_job_id} in jobs...")
+                if current_job_id in all_jobs:
+                    job_data = all_jobs[current_job_id]
+                    print(f"🔧 PROGRESS_LOGGER: Found current job: {job_data.get('company_name')}")
+                    print(f"🔧 PROGRESS_LOGGER: Job status: {job_data.get('status')}")
+                    print(f"🔧 PROGRESS_LOGGER: Job phases: {len(job_data.get('phases', []))}")
+                    return self._build_phase_structure(job_data)
+                else:
+                    print(f"🔧 PROGRESS_LOGGER: ❌ Current job {current_job_id} not found in jobs!")
+            else:
+                print(f"🔧 PROGRESS_LOGGER: No current job set")
+                
+            # If no current job, look for any running jobs
+            running_jobs = []
+            for job_id, job_data in all_jobs.items():
+                if job_data.get("status") == "running":
+                    running_jobs.append((job_id, job_data))
+                    
+            print(f"🔧 PROGRESS_LOGGER: Found {len(running_jobs)} running jobs")
+            if running_jobs:
+                # Return the most recent running job
+                most_recent = max(running_jobs, key=lambda x: x[1].get("start_time", ""))
+                print(f"🔧 PROGRESS_LOGGER: Returning most recent running job: {most_recent[1].get('company_name')}")
+                return self._build_phase_structure(most_recent[1])
+                
+            print(f"🔧 PROGRESS_LOGGER: No active jobs found")
             return None
+    
+    def _build_phase_structure(self, job_data: Dict) -> Dict:
+        """Build phase structure for frontend consumption"""
+        phases = {}
+        for phase in job_data.get("phases", []):
+            phases[phase["name"]] = phase
+        
+        result = job_data.copy()
+        result["phases"] = phases
+        return result
+    
+    def log_page_scraping(self, job_id: str, page_url: str, content_preview: str, 
+                         page_number: int, total_pages: int) -> None:
+        """Log individual page scraping progress"""
+        print(f"🔧 DEBUG: log_page_scraping called - job_id: {job_id}, page: {page_url}, page_num: {page_number}/{total_pages}")
+        with self.lock:
+            if job_id not in self.progress_data["jobs"]:
+                print(f"❌ DEBUG: Job {job_id} not found for page scraping update")
+                return
+            
+            # Update the current Content Extraction phase with page details
+            job = self.progress_data["jobs"][job_id]
+            phase_updated = False
+            for phase in job["phases"]:
+                if phase["name"] == "Content Extraction" and phase["status"] == "running":
+                    phase["current_page"] = page_url
+                    phase["pages_completed"] = page_number
+                    phase["total_pages"] = total_pages
+                    phase["scraped_content_preview"] = content_preview[:500] + "..." if len(content_preview) > 500 else content_preview
+                    phase_updated = True
+                    print(f"✅ DEBUG: Updated Content Extraction phase with page {page_url}")
+                    break
+            
+            if not phase_updated:
+                print(f"⚠️ DEBUG: No running Content Extraction phase found to update")
+            
+            self.progress_data["last_updated"] = datetime.now().isoformat()
+            self._save_progress()
+            
+            # Console logging for immediate feedback
+            print(f"🔍 [{page_number}/{total_pages}] Scraping: {page_url}")
+            if content_preview:
+                preview = content_preview[:200] + "..." if len(content_preview) > 200 else content_preview
+                print(f"📄 Content preview: {preview}")
+            
+            logger.info(f"Job {job_id}: Scraped page {page_number}/{total_pages} - {page_url}")
     
     def _save_progress(self) -> None:
         """Save progress data to file (thread-safe)"""
@@ -185,6 +298,7 @@ progress_logger = ProgressLogger()
 
 def log_processing_phase(job_id: str, phase_name: str, status: str = "running", **details):
     """Convenience function for logging processing phases"""
+    print(f"🔧 DEBUG: log_processing_phase called - job_id: {job_id}, phase: {phase_name}, status: {status}, details: {details}")
     progress_logger.update_phase(job_id, phase_name, status, details)
 
 
@@ -195,6 +309,6 @@ def start_company_processing(company_name: str) -> str:
     return job_id
 
 
-def complete_company_processing(job_id: str, success: bool, error: str = None, summary: str = None):
+def complete_company_processing(job_id: str, success: bool, error: str = None, summary: str = None, results: dict = None):
     """Complete company processing tracking"""
-    progress_logger.complete_job(job_id, success, error, summary)
+    progress_logger.complete_job(job_id, success, error, summary, results)
