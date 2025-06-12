@@ -625,8 +625,8 @@ ${this.escapeHtml(result.analysis)}
                     <button class="btn-cancel" onclick="theodoreV2.closeResearchModal()">
                         Cancel
                     </button>
-                    <button class="btn-save" onclick="theodoreV2.saveToIndex('${this.escapeJs(companyName)}')">
-                        💾 Save to Index
+                    <button class="btn-save" onclick="theodoreV2.saveToIndex('${this.escapeJs(companyName)}', this)">
+                        💾 Add to Index
                     </button>
                 </div>
             </div>
@@ -634,7 +634,7 @@ ${this.escapeHtml(result.analysis)}
     }
     
     calculateCompletionStats(researchData) {
-        // Complete CompanyData model fields from models.py
+        // Complete CompanyData model fields from models.py including batch research fields
         const allFields = [
             'company_name', 'website', 'industry', 'business_model', 'company_size',
             'tech_stack', 'has_chat_widget', 'has_forms', 'pain_points', 'key_services',
@@ -643,7 +643,11 @@ ${this.escapeHtml(result.analysis)}
             'funding_status', 'social_media', 'contact_info', 'leadership_team',
             'recent_news', 'certifications', 'partnerships', 'awards', 'company_stage',
             'tech_sophistication', 'geographic_scope', 'business_model_type',
-            'decision_maker_type', 'sales_complexity', 'ai_summary'
+            'decision_maker_type', 'sales_complexity', 'ai_summary',
+            // Batch Research Intelligence fields
+            'has_job_listings', 'job_listings_count', 'job_listings_details',
+            'products_services_offered', 'key_decision_makers', 'funding_stage_detailed',
+            'sales_marketing_tools', 'recent_news_events'
         ];
         
         let completed = 0;
@@ -706,6 +710,16 @@ ${this.escapeHtml(result.analysis)}
                 { key: 'contact_info', label: 'Contact Information', isObject: true },
                 { key: 'social_media', label: 'Social Media', isObject: true }
             ],
+            'Batch Research Intelligence': [
+                { key: 'has_job_listings', label: 'Has Job Listings' },
+                { key: 'job_listings_count', label: 'Job Openings Count' },
+                { key: 'job_listings_details', label: 'Job Listings Details', isSpecial: true },
+                { key: 'products_services_offered', label: 'Products & Services Offered' },
+                { key: 'key_decision_makers', label: 'Key Decision Makers', isObject: true },
+                { key: 'funding_stage_detailed', label: 'Detailed Funding Stage' },
+                { key: 'sales_marketing_tools', label: 'Sales & Marketing Tools' },
+                { key: 'recent_news_events', label: 'Recent News & Events', isSpecial: true }
+            ],
             'Additional Intelligence': [
                 { key: 'recent_news', label: 'Recent News' },
                 { key: 'certifications', label: 'Certifications' },
@@ -743,6 +757,32 @@ ${this.escapeHtml(result.analysis)}
                         ).join('');
                     } else {
                         displayValue = 'No page data available';
+                    }
+                } else if (field.isSpecial && field.key === 'job_listings_details') {
+                    // Special formatting for job listings details
+                    if (Array.isArray(value) && value.length > 0) {
+                        displayValue = value.map(job => 
+                            `<div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                                <strong>${job.title || 'Job Title'}</strong>
+                                <br><small style="color: var(--text-muted);">Department: ${job.department || 'N/A'}</small>
+                                <br><small style="color: var(--text-muted);">Location: ${job.location || 'N/A'}</small>
+                            </div>`
+                        ).join('');
+                    } else {
+                        displayValue = 'No job listings available';
+                    }
+                } else if (field.isSpecial && field.key === 'recent_news_events') {
+                    // Special formatting for recent news/events
+                    if (Array.isArray(value) && value.length > 0) {
+                        displayValue = value.map(news => 
+                            `<div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                                <strong>${news.title || news.description || 'News Item'}</strong>
+                                <br><small style="color: var(--text-muted);">Date: ${news.date || 'N/A'}</small>
+                                ${news.description && news.title ? `<br><span style="font-size: 0.9em;">${news.description}</span>` : ''}
+                            </div>`
+                        ).join('');
+                    } else {
+                        displayValue = 'No recent news available';
                     }
                 } else if (field.isLongText) {
                     // Special formatting for long analysis text
@@ -834,42 +874,79 @@ ${this.escapeHtml(result.analysis)}
         }
     }
     
-    async saveToIndex(companyName) {
+    async saveToIndex(companyName, buttonElement) {
         // Show saving state
-        const saveBtn = document.querySelector('.btn-save');
+        const saveBtn = buttonElement || document.querySelector('.btn-save');
         const originalText = saveBtn.innerHTML;
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<div class="loading-spinner"></div> Saving...';
+        saveBtn.innerHTML = '<div class="loading-spinner"></div> Adding to Index...';
         
         try {
+            // Get the research data for this company
+            let researchData = null;
+            
+            // Find the research data in our stored data
+            if (this.researchDataStore) {
+                for (const [companyId, data] of this.researchDataStore.entries()) {
+                    if (data.company_name === companyName || data.name === companyName) {
+                        researchData = data;
+                        console.log('📋 Found research data for indexing:', researchData);
+                        break;
+                    }
+                }
+            }
+            
             // Call backend to save to Pinecone
+            const requestBody = {
+                company_name: companyName
+            };
+            
+            // Include research data if we have it
+            if (researchData) {
+                requestBody.research_data = researchData;
+                console.log('📤 Sending research data to backend for indexing');
+            } else {
+                console.log('⚠️ No research data found in store, backend will try to find it');
+            }
+            
             const response = await fetch('/api/v2/save-to-index', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    company_name: companyName,
-                    // Additional data can be sent here
-                })
+                body: JSON.stringify(requestBody)
             });
             
             const result = await response.json();
             
             if (result.success) {
-                this.showMessage(`${companyName} saved to index successfully!`, 'success');
+                console.log('✅ Successfully added to index:', result);
+                this.showMessage(
+                    `${companyName} added to index! (${result.fields_saved || 'Multiple'} fields saved)`, 
+                    'success'
+                );
                 this.closeResearchModal();
+                
+                // Update button text to show it's been added
+                if (saveBtn.parentNode) {
+                    saveBtn.innerHTML = '✅ Added to Index';
+                    saveBtn.disabled = true;
+                    saveBtn.style.background = 'rgba(40, 167, 69, 0.8)';
+                }
             } else {
-                this.showMessage(`Failed to save ${companyName}: ${result.error}`, 'error');
+                console.error('❌ Failed to add to index:', result.error);
+                this.showMessage(`Failed to add ${companyName} to index: ${result.error}`, 'error');
             }
             
         } catch (error) {
             console.error('Save to index error:', error);
-            this.showMessage(`Failed to save ${companyName} to index`, 'error');
+            this.showMessage(`Failed to add ${companyName} to index: ${error.message}`, 'error');
         } finally {
-            // Reset button
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = originalText;
+            // Reset button state if there was an error
+            if (!saveBtn.innerHTML.includes('✅')) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
         }
     }
 }
@@ -880,6 +957,11 @@ function clearDiscovery() {
     document.getElementById('inputTypeIndicator').style.display = 'none';
     document.getElementById('discoveryResults').style.display = 'none';
     document.getElementById('messages').innerHTML = '';
+}
+
+function startBatchProcessing() {
+    // Placeholder function for batch processing
+    alert('Batch Processing feature coming soon!\n\nThis will allow you to:\n• Upload CSV or connect Google Sheets\n• Enrich up to 1,000 companies\n• Extract job listings, funding stage, key personnel\n• Get cost estimates before running');
 }
 
 // Initialize V2 UI

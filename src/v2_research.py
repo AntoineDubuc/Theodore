@@ -502,8 +502,8 @@ Focus on the most valuable pages for understanding the business."""
     ) -> Dict[str, Any]:
         """Use LLM to analyze consolidated content and extract structured business intelligence"""
         
-        # Enhanced prompt for complete CompanyData model extraction
-        prompt = f"""Analyze the following comprehensive content from {company_name}'s website and extract ALL possible business intelligence data.
+        # Enhanced prompt for complete CompanyData model extraction including batch research intelligence
+        prompt = f"""Analyze the following comprehensive content from {company_name}'s website and extract ALL possible business intelligence data, with special focus on batch research requirements (job listings, products/services, decision makers, funding, tools, and recent news).
 
 Company: {company_name}
 Website: {website_url}
@@ -511,7 +511,7 @@ Website: {website_url}
 Website Content:
 {consolidated_content}
 
-Extract the following information and return it as a complete JSON object. For missing information, use null for strings/numbers, [] for arrays, and {{}} for objects. Be thorough and extract as much as possible:
+Extract the following information and return it as a complete JSON object. For missing information, use null for strings/numbers, [] for arrays, and {{}} for objects. Be thorough and extract as much as possible, especially for the batch research intelligence fields:
 
 {{
   "company_name": "{company_name}",
@@ -555,7 +555,34 @@ Extract the following information and return it as a complete JSON object. For m
   "sales_complexity": "simple, moderate, complex",
   "has_chat_widget": true_or_false,
   "has_forms": true_or_false,
-  "ai_summary": "Comprehensive 2-3 paragraph business intelligence summary covering what the company does, who they serve, their market position, and key insights for business development"
+  "ai_summary": "Comprehensive 2-3 paragraph business intelligence summary covering what the company does, who they serve, their market position, and key insights for business development",
+  
+  "has_job_listings": true_or_false,
+  "job_listings_count": number_of_job_openings_or_null,
+  "job_listings_details": [
+    {{
+      "title": "job title",
+      "department": "department name",
+      "location": "job location"
+    }}
+  ],
+  "products_services_offered": ["detailed product 1", "detailed service 2", "detailed offering 3"],
+  "key_decision_makers": {{
+    "CEO": "CEO Name",
+    "CMO": "CMO Name", 
+    "CTO": "CTO Name",
+    "Head of Product": "Head of Product Name",
+    "VP Sales": "VP Sales Name"
+  }},
+  "funding_stage_detailed": "detailed funding stage (bootstrap, pre-seed, seed, series_a, series_b, series_c, ipo, acquired, etc.)",
+  "sales_marketing_tools": ["tool 1", "tool 2", "tool 3"],
+  "recent_news_events": [
+    {{
+      "title": "news headline",
+      "date": "YYYY-MM-DD or relative date",
+      "description": "brief description of the news"
+    }}
+  ]
 }}
 
 IMPORTANT: 

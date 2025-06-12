@@ -40,7 +40,7 @@ class V2DiscoveryEngine:
             
             # Use urlparse to validate
             parsed = urlparse(text)
-            
+             
             # Must have scheme and netloc
             if not parsed.scheme or not parsed.netloc:
                 return False

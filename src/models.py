@@ -65,6 +65,16 @@ class CompanyData(BaseModel):
     tech_confidence: Optional[float] = Field(None, description="Confidence in tech sophistication (0-1)")
     industry_confidence: Optional[float] = Field(None, description="Confidence in industry classification (0-1)")
     
+    # Batch Research Intelligence (from BATCH_RESEARCH.md requirements)
+    has_job_listings: Optional[bool] = Field(None, description="Does this company have open job listings?")
+    job_listings_count: Optional[int] = Field(None, description="Number of current job openings")
+    job_listings_details: List[Dict[str, str]] = Field(default_factory=list, description="Detailed job listings with title, department, location")
+    products_services_offered: List[str] = Field(default_factory=list, description="What products/services does this company offer?")
+    key_decision_makers: Dict[str, str] = Field(default_factory=dict, description="Key decision makers (CEO, CMO, Head of Product, etc.)")
+    funding_stage_detailed: Optional[str] = Field(None, description="Detailed funding stage (bootstrap, seed, series_a, etc.)")
+    sales_marketing_tools: List[str] = Field(default_factory=list, description="What sales/marketing tools does the company use?")
+    recent_news_events: List[Dict[str, str]] = Field(default_factory=list, description="Recent news/events with date and description")
+    
     # AI analysis
     raw_content: Optional[str] = Field(None, description="Scraped website content")
     ai_summary: Optional[str] = Field(None, description="Bedrock-generated summary")

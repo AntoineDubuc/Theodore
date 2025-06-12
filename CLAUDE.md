@@ -45,13 +45,13 @@ Theodore is designed to help David with his survey response analysis by providin
 
 ### Running the Application
 ```bash
-# Start web application
+# Start main web application (current production interface)
 python app.py
 # Access at: http://localhost:5002
 
-# Alternative entry points
-python v2_app.py     # V2 interface (if available)
-python -m src.main_pipeline  # Direct pipeline execution
+# Alternative interfaces
+python v2_app.py     # V2 interface with enhanced features
+python -m src.main_pipeline  # Direct pipeline execution (CLI mode)
 ```
 
 ### Testing & Debugging
@@ -70,6 +70,14 @@ python test_credentials.py
 
 # Test similarity engine
 python tests/test_similarity_engine.py
+
+# Additional test files in testing_sandbox/
+python testing_sandbox/test_v2_research.py
+python testing_sandbox/test_v2_discovery.py
+python testing_sandbox/minimal_test.py
+
+# Note: Many legacy test files have been cleaned up from root directory
+# Active tests are now in tests/ directory and testing_sandbox/
 ```
 
 ### Database Operations
@@ -94,6 +102,13 @@ pip install -r requirements.txt
 
 # Environment setup
 cp .env.example .env  # Then configure API keys
+
+# Code quality (check if available first)
+# Note: Add these commands to requirements.txt and run if linting is needed
+# pip install flake8 black mypy
+# flake8 src/ tests/
+# black src/ tests/
+# mypy src/
 
 # Debug specific issues
 python debug_research_pipeline.py
@@ -165,9 +180,12 @@ Company Name → Database Check → Research Status Assessment → Real-time Res
 - `src/progress_logger.py` - Thread-safe real-time progress tracking
 
 **Web Interface:**
-- `app.py` - Flask application with comprehensive API endpoints
-- `templates/index.html` - Modern dark-themed UI
+- `app.py` - Flask application with comprehensive API endpoints (primary interface)
+- `v2_app.py` - V2 Flask application with enhanced research features
+- `templates/index.html` - Modern dark-themed UI (primary)
+- `templates/v2_index.html` - Enhanced V2 UI
 - `static/js/app.js` - Frontend logic with real-time updates
+- `static/js/v2_app.js` - V2 frontend enhancements
 
 ### Configuration Management
 

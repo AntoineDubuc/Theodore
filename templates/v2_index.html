@@ -377,6 +377,86 @@
             background: rgba(255, 255, 255, 0.2);
             color: var(--text-primary);
         }
+        
+        /* Batch Processing Styles */
+        .batch-processing-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+        }
+        
+        .batch-processing-card:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-medium);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .batch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+        }
+        
+        .batch-info h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .batch-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .btn-batch {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .btn-batch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #5a73e7, #6b42a1);
+        }
+        
+        .btn-batch:active {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 768px) {
+            .batch-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+            
+            .batch-info {
+                text-align: center;
+            }
+            
+            .btn-batch {
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -399,6 +479,20 @@
         <div class="container">
             <!-- Messages Container -->
             <div id="messages"></div>
+
+            <!-- Batch Processing Section -->
+            <div class="batch-processing-card">
+                <div class="batch-header">
+                    <div class="batch-info">
+                        <h3>📊 Batch Company Research</h3>
+                        <p>Enrich up to 1,000 companies with AI-powered business intelligence</p>
+                    </div>
+                    <button class="btn-batch" onclick="startBatchProcessing()">
+                        <span>⚡</span>
+                        Start Batch Processing
+                    </button>
+                </div>
+            </div>
 
             <!-- Discovery Section -->
             <div class="search-card">
