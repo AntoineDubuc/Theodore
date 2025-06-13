@@ -406,6 +406,14 @@ class PineconeClient:
             """Safely get value with default"""
             return value if value and value.strip() else default
         
+        def safe_join(items, separator=", "):
+            """Safely join list items"""
+            if not items:
+                return ""
+            if isinstance(items, str):
+                return items
+            return separator.join(str(item) for item in items if item)
+        
         # Enhanced metadata with similarity metrics and sales intelligence
         metadata = {
             # Core identification
@@ -415,6 +423,14 @@ class PineconeClient:
             # Sales intelligence (key addition for new scraper)
             "company_description": safe_get(company.company_description, ""),
             "has_description": bool(company.company_description and company.company_description.strip()),
+            
+            # Rich data fields (THE FIX: Add missing fields that were being lost)
+            "ai_summary": safe_get(company.ai_summary, ""),
+            "value_proposition": safe_get(company.value_proposition, ""),
+            "key_services": safe_join(company.key_services),
+            "competitive_advantages": safe_join(company.competitive_advantages),
+            "tech_stack": safe_join(company.tech_stack),
+            "pain_points": safe_join(company.pain_points),
             
             # Processing metadata
             "pages_crawled": company.pages_crawled if company.pages_crawled else [],

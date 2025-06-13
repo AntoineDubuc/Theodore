@@ -6,6 +6,7 @@ Fast discovery with URL detection and focused research
 import os
 import logging
 from flask import Flask, request, jsonify, render_template, Response
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -270,6 +271,11 @@ def save_to_index():
         
         logger.info(f"💾 Saving {company_name} to Pinecone index")
         
+        # Debug: Log what we receive
+        logger.info(f"🔍 DEBUG: Received research_data keys: {list(research_data.keys()) if research_data else 'None'}")
+        if research_data and 'ai_summary' in research_data:
+            logger.info(f"🔍 DEBUG: ai_summary length: {len(research_data['ai_summary'])}")
+        
         # Get research data - try multiple sources
         company_data = None
         
@@ -317,12 +323,23 @@ def save_to_index():
                     "error": f"No research data available for {company_name} and fresh research failed: {str(e)}"
                 }), 400
         
+        # Verify we have company_data before proceeding
+        if not company_data:
+            logger.error(f"❌ No company data available for {company_name}")
+            return jsonify({
+                "success": False,
+                "error": f"No research data found for {company_name}"
+            }), 400
+        
         # Now we have company_data, let's save it to Pinecone
         try:
             from src.models import CompanyData
             from src.pinecone_client import PineconeClient
             import os
             import uuid
+            
+            logger.info(f"🔧 Starting save process for {company_name}")
+            logger.info(f"🔧 Research data keys: {list(company_data.keys())}")
             
             # Initialize Pinecone client
             pinecone_client = PineconeClient(
@@ -332,81 +349,97 @@ def save_to_index():
                 index_name=os.getenv('PINECONE_INDEX_NAME', 'theodore-companies')
             )
             
-            # Convert research data to CompanyData model
+            # Simple approach: Find existing company and use existing ID if found
+            try:
+                # Query for existing company (simple text search in metadata)
+                query_response = pinecone_client.index.query(
+                    vector=[0.0] * 1536,
+                    top_k=50,
+                    include_metadata=True,
+                    include_values=False
+                )
+                
+                existing_record = None
+                for match in query_response.matches:
+                    metadata = match.metadata or {}
+                    stored_name = metadata.get('company_name', '').lower()
+                    if stored_name == company_name.lower():
+                        existing_record = {'id': match.id, 'metadata': metadata}
+                        break
+                
+                record_id = existing_record['id'] if existing_record else str(uuid.uuid4())
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Company lookup failed: {e}, creating new record")
+                existing_record = None
+                record_id = str(uuid.uuid4())
+            
+            logger.info(f"📝 {'Updating existing' if existing_record else 'Creating new'} company record for {company_name} (ID: {record_id})")
+            
+            # Convert research data to CompanyData model with all required fields
             company_obj = CompanyData(
-                id=company_data.get('id') or str(uuid.uuid4()),
+                id=record_id,
                 name=company_data.get('company_name', company_name),
                 website=company_data.get('website', ''),
                 industry=company_data.get('industry', ''),
                 business_model=company_data.get('business_model', ''),
                 target_market=company_data.get('target_market', ''),
                 company_size=company_data.get('company_size', ''),
-                funding_status=company_data.get('funding_status', '')
+                funding_status=company_data.get('funding_status', ''),
+                # Add required fields for _prepare_optimized_metadata
+                company_description=company_data.get('company_description', ''),
+                scrape_status=company_data.get('scrape_status', 'completed'),
+                pages_crawled=company_data.get('pages_crawled', []),
+                crawl_duration=company_data.get('crawl_duration', 0),
+                # Similarity dimension fields
+                company_stage=company_data.get('company_stage', 'Unknown'),
+                tech_sophistication=company_data.get('tech_sophistication', 'Unknown'),
+                business_model_type=company_data.get('business_model_type', company_data.get('business_model', 'Unknown')),
+                geographic_scope=company_data.get('geographic_scope', 'Unknown'),
+                decision_maker_type=company_data.get('decision_maker_type', 'Unknown'),
+                employee_count_range=company_data.get('employee_count_range', company_data.get('company_size', ''))
             )
             
-            # Add all the detailed research fields
-            if 'ai_summary' in company_data:
-                company_obj.ai_summary = company_data['ai_summary']
-            if 'key_services' in company_data:
-                company_obj.key_services = company_data['key_services']
-            if 'tech_stack' in company_data:
-                company_obj.tech_stack = company_data['tech_stack']
-            if 'leadership_team' in company_data:
-                company_obj.leadership_team = company_data['leadership_team']
-            if 'competitive_advantages' in company_data:
-                company_obj.competitive_advantages = company_data['competitive_advantages']
-            if 'pain_points' in company_data:
-                company_obj.pain_points = company_data['pain_points']
-            if 'value_proposition' in company_data:
-                company_obj.value_proposition = company_data['value_proposition']
-            if 'company_description' in company_data:
-                company_obj.company_description = company_data['company_description']
-            if 'founding_year' in company_data:
-                company_obj.founding_year = company_data['founding_year']
-            if 'location' in company_data:
-                company_obj.location = company_data['location']
-            if 'employee_count_range' in company_data:
-                company_obj.employee_count_range = company_data['employee_count_range']
-            if 'company_culture' in company_data:
-                company_obj.company_culture = company_data['company_culture']
-            if 'social_media' in company_data:
-                company_obj.social_media = company_data['social_media']
-            if 'contact_info' in company_data:
-                company_obj.contact_info = company_data['contact_info']
-            if 'recent_news' in company_data:
-                company_obj.recent_news = company_data['recent_news']
-            if 'certifications' in company_data:
-                company_obj.certifications = company_data['certifications']
-            if 'partnerships' in company_data:
-                company_obj.partnerships = company_data['partnerships']
-            if 'awards' in company_data:
-                company_obj.awards = company_data['awards']
+            # DYNAMIC FIELD TRANSFER: Transfer ALL research data fields to company object
+            logger.info(f"🔧 Dynamically transferring {len(company_data)} research data fields")
             
-            # Add enhanced similarity fields
-            if 'company_stage' in company_data:
-                company_obj.company_stage = company_data['company_stage']
-            if 'tech_sophistication' in company_data:
-                company_obj.tech_sophistication = company_data['tech_sophistication']
-            if 'business_model_type' in company_data:
-                company_obj.business_model_type = company_data['business_model_type']
-            if 'geographic_scope' in company_data:
-                company_obj.geographic_scope = company_data['geographic_scope']
-            if 'decision_maker_type' in company_data:
-                company_obj.decision_maker_type = company_data['decision_maker_type']
-            if 'sales_complexity' in company_data:
-                company_obj.sales_complexity = company_data['sales_complexity']
+            # Get all valid CompanyData field names from the model
+            from src.models import CompanyData
+            import inspect
+            company_data_fields = set()
             
-            # Add job listings data
-            if 'has_job_listings' in company_data:
-                company_obj.has_job_listings = company_data['has_job_listings']
-            if 'job_listings_count' in company_data:
-                company_obj.job_listings_count = company_data['job_listings_count']
-            if 'job_listings_details' in company_data:
-                company_obj.job_listings_details = company_data['job_listings_details']
+            # Get fields from CompanyData class annotations and attributes
+            if hasattr(CompanyData, '__annotations__'):
+                company_data_fields.update(CompanyData.__annotations__.keys())
             
-            # Add key decision makers
-            if 'key_decision_makers' in company_data:
-                company_obj.key_decision_makers = company_data['key_decision_makers']
+            # Also check for common research fields that should be transferred
+            common_research_fields = {
+                'ai_summary', 'key_services', 'tech_stack', 'leadership_team', 
+                'competitive_advantages', 'pain_points', 'value_proposition',
+                'company_description', 'founding_year', 'location', 'employee_count_range',
+                'company_culture', 'social_media', 'contact_info', 'recent_news',
+                'certifications', 'partnerships', 'awards', 'company_stage',
+                'tech_sophistication', 'business_model_type', 'geographic_scope',
+                'decision_maker_type', 'sales_complexity', 'has_job_listings',
+                'job_listings_count', 'job_listings_details', 'key_decision_makers',
+                'products_services_offered', 'funding_stage_detailed', 
+                'sales_marketing_tools', 'recent_news_events', 'sales_intelligence'
+            }
+            
+            # Combine both sets
+            valid_fields = company_data_fields.union(common_research_fields)
+            
+            # Transfer all matching fields from research_data to company_obj
+            transferred_fields = 0
+            for field_name, field_value in company_data.items():
+                if field_name in valid_fields and hasattr(company_obj, field_name):
+                    # Only transfer non-empty values
+                    if field_value is not None and field_value != '' and field_value != []:
+                        setattr(company_obj, field_name, field_value)
+                        transferred_fields += 1
+                        logger.debug(f"🔧 Transferred {field_name}: {type(field_value).__name__}")
+            
+            logger.info(f"🔧 Successfully transferred {transferred_fields} fields to CompanyData object")
             
             # Generate embedding from comprehensive company content
             embedding_text = f"""
@@ -432,8 +465,49 @@ def save_to_index():
                 logger.warning(f"⚠️ Embedding generation failed: {e}, proceeding without embedding")
                 company_obj.embedding = None
             
-            # Store in Pinecone
-            success = pinecone_client.upsert_company(company_obj)
+            # Add timestamp for duplicate tracking
+            company_obj.last_updated = datetime.utcnow()
+            
+            logger.info(f"🔧 About to upsert company {company_name} with ID {company_obj.id}")
+            logger.info(f"🔧 Company object has embedding: {company_obj.embedding is not None}")
+            logger.info(f"🔧 Company object fields populated: {len([k for k, v in vars(company_obj).items() if v is not None])}")
+            
+            # HYBRID STORAGE APPROACH: Essential data in Pinecone + Full data in JSON file
+            logger.info(f"🔧 Using hybrid storage approach for {company_name}")
+            
+            # Step 1: Save full research data to JSON file for complete retrieval
+            import json
+            import os
+            
+            # Create data directory if it doesn't exist
+            data_dir = "data/company_details"
+            os.makedirs(data_dir, exist_ok=True)
+            
+            # Prepare full company data for JSON storage using Pydantic serialization
+            full_company_data = company_obj.model_dump(mode='json', exclude_none=True)
+            
+            # Save to JSON file
+            json_file_path = f"{data_dir}/{record_id}.json"
+            with open(json_file_path, 'w', encoding='utf-8') as f:
+                json.dump(full_company_data, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"🔧 Saved full company data to {json_file_path}")
+            
+            # Step 2: Store complete data in Pinecone (now that metadata includes rich fields)
+            # Use the full company object since metadata preparation fix allows rich fields
+            essential_company = company_obj
+            
+            # JSON file path saved separately for hybrid storage
+            
+            # Store essential data in Pinecone
+            if existing_record:
+                logger.info(f"🔧 Updating Pinecone with essential metadata for {company_name}")
+                success = pinecone_client.upsert_company(essential_company)
+            else:
+                logger.info(f"🔧 Creating new Pinecone record with essential metadata for {company_name}")
+                success = pinecone_client.upsert_company(essential_company)
+            
+            logger.info(f"🔧 Upsert result: {success}")
             
             if success:
                 logger.info(f"✅ Successfully saved {company_name} to Pinecone index")
@@ -449,6 +523,8 @@ def save_to_index():
                 
         except Exception as e:
             logger.error(f"❌ Pinecone storage failed: {e}")
+            import traceback
+            logger.error(f"❌ Full traceback: {traceback.format_exc()}")
             return jsonify({
                 "success": False,
                 "error": f"Failed to save to Pinecone: {str(e)}"
@@ -535,6 +611,92 @@ def browse_database():
             "success": False,
             "error": f"Database browse failed: {str(e)}"
         }), 500
+
+@app.route('/api/company/<company_id>')
+def get_company_details(company_id):
+    """Get detailed information for a specific company"""
+    try:
+        from src.pinecone_client import PineconeClient
+        import os
+        import json
+        
+        # Initialize Pinecone client
+        pinecone_client = PineconeClient(
+            config=config,
+            api_key=os.getenv('PINECONE_API_KEY'),
+            environment=os.getenv('PINECONE_ENVIRONMENT', 'us-west1-gcp'),
+            index_name=os.getenv('PINECONE_INDEX_NAME', 'theodore-companies')
+        )
+        
+        # HYBRID RETRIEVAL: Get essential data from Pinecone + full data from JSON file
+        logger.info(f"🔧 Fetching company details for {company_id} using hybrid approach")
+        
+        # Step 1: Fetch essential data from Pinecone
+        result = pinecone_client.index.fetch(ids=[company_id])
+        
+        if company_id not in result.vectors:
+            return jsonify({'error': 'Company not found'}), 404
+        
+        vector_data = result.vectors[company_id]
+        metadata = vector_data.metadata or {}
+        
+        # Step 2: Try to load full data from JSON file
+        json_file_path = f"data/company_details/{company_id}.json"
+        full_data = {}
+        
+        try:
+            if os.path.exists(json_file_path):
+                logger.info(f"🔧 Loading full data from {json_file_path}")
+                with open(json_file_path, 'r', encoding='utf-8') as f:
+                    full_data = json.load(f)
+                logger.info(f"🔧 Loaded {len(full_data)} fields from JSON file")
+            else:
+                logger.warning(f"🔧 JSON file not found at {json_file_path}, using metadata only")
+        except Exception as e:
+            logger.error(f"🔧 Failed to load JSON file: {e}, using metadata only")
+        
+        # Step 3: Combine data - JSON file takes priority, metadata as fallback
+        company_details = {}
+        
+        # Start with metadata as base
+        for key, value in metadata.items():
+            company_details[key] = value
+        
+        # Override/add with full data from JSON file
+        for key, value in full_data.items():
+            company_details[key] = value
+        
+        # Ensure essential fields are present
+        essential_fields = {
+            'id': company_id,
+            'name': company_details.get('name', metadata.get('company_name', 'Unknown')),
+            'website': company_details.get('website', ''),
+            'industry': company_details.get('industry', ''),
+            'business_model': company_details.get('business_model', ''),
+            'company_size': company_details.get('company_size', ''),
+            'target_market': company_details.get('target_market', ''),
+            'company_stage': company_details.get('company_stage', ''),
+            'tech_sophistication': company_details.get('tech_sophistication', ''),
+            'geographic_scope': company_details.get('geographic_scope', ''),
+            'business_model_type': company_details.get('business_model_type', ''),
+            'decision_maker_type': company_details.get('decision_maker_type', ''),
+            'last_updated': company_details.get('last_updated', ''),
+            'scrape_status': company_details.get('scrape_status', 'unknown')
+        }
+        
+        # Merge essential fields
+        company_details.update(essential_fields)
+        
+        logger.info(f"🔧 Combined company details with {len(company_details)} total fields")
+        
+        return jsonify({
+            'success': True,
+            'company': company_details
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Get company details error: {e}")
+        return jsonify({'error': f'Failed to get company details: {str(e)}'}), 500
 
 if __name__ == '__main__':
     # Development server
