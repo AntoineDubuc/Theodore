@@ -78,4 +78,7 @@ tmp/
 # API keys and secrets
 *.key
 *.pem
-secrets/research/crawl4ai/
+secrets/
+config/credentials/
+theodore-service-account.json
+client_secret_*.json

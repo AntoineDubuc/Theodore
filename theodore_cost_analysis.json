@@ -1,0 +1,245 @@
+{
+  "timestamp": "2024-12-16",
+  "model_costs": {
+    "amazon.nova-pro-v1:0": {
+      "input": 0.8,
+      "output": 3.2
+    },
+    "gemini-2.5-flash-preview": {
+      "input": 0.075,
+      "output": 0.3
+    },
+    "gpt-4o-mini": {
+      "input": 0.15,
+      "output": 0.6
+    },
+    "gpt-4o": {
+      "input": 2.5,
+      "output": 10.0
+    }
+  },
+  "scenario_comparison": {
+    "minimal_content": {
+      "content_length": 50,
+      "extraction_success": "Low",
+      "approaches": {
+        "basic_extraction": {
+          "cost": 0.0036496000000000002,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.0036096,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.0,
+            "embedding_generation": 4e-05,
+            "total": 0.0036496000000000002
+          },
+          "description": "Nova Pro only, no enhancements"
+        },
+        "enhanced_extraction": {
+          "cost": 0.003823,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.0036096,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.00017339999999999999,
+            "embedding_generation": 4e-05,
+            "total": 0.003823
+          },
+          "description": "Nova Pro + Pattern + Gemini fallback"
+        },
+        "gpt4o_extraction": {
+          "cost": 0.01132,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.01128,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.0,
+            "embedding_generation": 4e-05,
+            "total": 0.01132
+          },
+          "description": "GPT-4o based (expensive baseline)"
+        }
+      }
+    },
+    "medium_content": {
+      "content_length": 3000,
+      "extraction_success": "Medium",
+      "approaches": {
+        "basic_extraction": {
+          "cost": 0.004240000000000001,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.004200000000000001,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.0,
+            "embedding_generation": 4e-05,
+            "total": 0.004240000000000001
+          },
+          "description": "Nova Pro only, no enhancements"
+        },
+        "enhanced_extraction": {
+          "cost": 0.0044687500000000005,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.004200000000000001,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.00022874999999999998,
+            "embedding_generation": 4e-05,
+            "total": 0.0044687500000000005
+          },
+          "description": "Nova Pro + Pattern + Gemini fallback"
+        },
+        "gpt4o_extraction": {
+          "cost": 0.013165000000000001,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.013125000000000001,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.0,
+            "embedding_generation": 4e-05,
+            "total": 0.013165000000000001
+          },
+          "description": "GPT-4o based (expensive baseline)"
+        }
+      }
+    },
+    "rich_content": {
+      "content_length": 15000,
+      "extraction_success": "High",
+      "approaches": {
+        "basic_extraction": {
+          "cost": 0.00664,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.0066,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.0,
+            "embedding_generation": 4e-05,
+            "total": 0.00664
+          },
+          "description": "Nova Pro only, no enhancements"
+        },
+        "enhanced_extraction": {
+          "cost": 0.00709375,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.0066,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.00045374999999999994,
+            "embedding_generation": 4e-05,
+            "total": 0.00709375
+          },
+          "description": "Nova Pro + Pattern + Gemini fallback"
+        },
+        "gpt4o_extraction": {
+          "cost": 0.020665,
+          "breakdown": {
+            "scraping": 0.0,
+            "primary_analysis": 0.020625,
+            "pattern_extraction": 0.0,
+            "enhanced_extraction": 0.0,
+            "embedding_generation": 4e-05,
+            "total": 0.020665
+          },
+          "description": "GPT-4o based (expensive baseline)"
+        }
+      }
+    }
+  },
+  "batch_estimates": {
+    "10": {
+      "total_companies": 10,
+      "total_cost": 0.0473545,
+      "avg_cost_per_company": 0.00473545,
+      "breakdown": {
+        "minimal": {
+          "companies": 4,
+          "cost_per_company": 0.003823,
+          "total_cost": 0.015292
+        },
+        "medium": {
+          "companies": 4,
+          "cost_per_company": 0.0044687500000000005,
+          "total_cost": 0.017875000000000002
+        },
+        "rich": {
+          "companies": 2,
+          "cost_per_company": 0.00709375,
+          "total_cost": 0.0141875
+        }
+      }
+    },
+    "50": {
+      "total_companies": 50,
+      "total_cost": 0.2367725,
+      "avg_cost_per_company": 0.0047354499999999996,
+      "breakdown": {
+        "minimal": {
+          "companies": 20,
+          "cost_per_company": 0.003823,
+          "total_cost": 0.07646
+        },
+        "medium": {
+          "companies": 20,
+          "cost_per_company": 0.0044687500000000005,
+          "total_cost": 0.08937500000000001
+        },
+        "rich": {
+          "companies": 10,
+          "cost_per_company": 0.00709375,
+          "total_cost": 0.0709375
+        }
+      }
+    },
+    "100": {
+      "total_companies": 100,
+      "total_cost": 0.473545,
+      "avg_cost_per_company": 0.0047354499999999996,
+      "breakdown": {
+        "minimal": {
+          "companies": 40,
+          "cost_per_company": 0.003823,
+          "total_cost": 0.15292
+        },
+        "medium": {
+          "companies": 40,
+          "cost_per_company": 0.0044687500000000005,
+          "total_cost": 0.17875000000000002
+        },
+        "rich": {
+          "companies": 20,
+          "cost_per_company": 0.00709375,
+          "total_cost": 0.141875
+        }
+      }
+    },
+    "400": {
+      "total_companies": 400,
+      "total_cost": 1.89418,
+      "avg_cost_per_company": 0.0047354499999999996,
+      "breakdown": {
+        "minimal": {
+          "companies": 160,
+          "cost_per_company": 0.003823,
+          "total_cost": 0.61168
+        },
+        "medium": {
+          "companies": 160,
+          "cost_per_company": 0.0044687500000000005,
+          "total_cost": 0.7150000000000001
+        },
+        "rich": {
+          "companies": 80,
+          "cost_per_company": 0.00709375,
+          "total_cost": 0.5675
+        }
+      }
+    }
+  },
+  "recommendations": [
+    "Continue using Nova Pro for primary analysis",
+    "Enhanced extraction provides excellent ROI",
+    "Focus optimization efforts on content scraping, not AI costs",
+    "Current cost structure supports processing thousands of companies"
+  ]
+}

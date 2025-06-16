@@ -44,14 +44,42 @@ Theodore is designed to help David with his survey response analysis by providin
 ## 🛠️ Development Commands
 
 ### Running the Application
-```bash
-# Start main web application (current production interface)
-python app.py
-# Access at: http://localhost:5002
 
-# Alternative interfaces
-python v2_app.py     # V2 interface with enhanced features
-python -m src.main_pipeline  # Direct pipeline execution (CLI mode)
+**✅ CORRECT STARTUP METHOD:**
+```bash
+# Start main web application (PROPER WAY - background with logging)
+nohup python3 app.py > app.log 2>&1 & echo $!
+# Verify startup: sleep 10 && tail -10 app.log
+# Access at: http://localhost:5002
+# Settings page: http://localhost:5002/settings
+
+# Alternative: Development mode (foreground)
+python3 app.py
+
+# Start V2 application (enhanced interface with advanced features)
+python3 v2_app.py &
+# Access at: http://localhost:5004
+
+# Direct pipeline execution (CLI mode)
+python -m src.main_pipeline
+
+# Stop the application
+pkill -f "python3 app.py"
+```
+
+**🔧 Troubleshooting Startup:**
+```bash
+# Check if app is running
+curl -I http://localhost:5002/
+
+# View startup logs
+tail -f app.log
+
+# Check port usage
+lsof -i :5002
+
+# Verify imports
+python3 -c "import app; print('Import successful')"
 ```
 
 ### Testing & Debugging

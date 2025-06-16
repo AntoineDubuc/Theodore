@@ -126,6 +126,7 @@ class IntelligentCompanyScraper:
             
             # Apply results to company data
             company_data.company_description = sales_intelligence
+            company_data.raw_content = sales_intelligence  # Store as raw_content for AI analysis
             company_data.pages_crawled = selected_urls
             company_data.crawl_depth = len(selected_urls)
             company_data.crawl_duration = time.time() - start_time
@@ -390,30 +391,49 @@ class IntelligentCompanyScraper:
         # Prepare links for LLM analysis (reduced for faster processing)
         links_text = "\n".join([f"- {link}" for link in all_links[:100]])  # Reduced from 500 to 100 for speed
         
-        prompt = f"""You are a sales intelligence analyst. Your goal is to help a salesperson understand everything they need to know about {company_name} to have an effective sales conversation.
+        prompt = f"""You are a data extraction specialist analyzing {company_name}'s website to find specific missing information.
 
 Given these discovered links for {company_name} (base URL: {base_url}):
 
 {links_text}
 
-Select up to 100 URLs that would provide the most valuable sales intelligence, focusing on:
+Select up to 50 pages that are MOST LIKELY to contain these CRITICAL missing data points:
 
-1. **Business Model & Value Proposition**: How they make money, what problems they solve
-2. **Target Customers**: Who they serve, customer segments, use cases
-3. **Product/Service Offerings**: What they sell, pricing models, features
-4. **Company Maturity**: Size indicators, funding, growth stage, team
-5. **Competitive Position**: Differentiators, market position, partnerships
-6. **Sales Process**: How they sell, pricing transparency, contact methods
+🔴 HIGHEST PRIORITY (Currently missing from our database):
+1. **Contact & Location**: Physical address, headquarters location
+   → Look for: /contact, /about, /offices, /locations
+2. **Founded Year**: When the company was established
+   → Look for: /about, /our-story, /history, /company
+3. **Employee Count**: Team size or number of employees  
+   → Look for: /about, /team, /careers, /jobs
+4. **Contact Details**: Email, phone, social media links
+   → Look for: /contact, /connect, footer pages
+5. **Products/Services**: Specific offerings (not categories)
+   → Look for: /products, /services, /solutions, /offerings
+6. **Leadership Team**: Names and titles of executives
+   → Look for: /team, /leadership, /about/team, /management
+7. **Partnerships**: Key partners and integrations
+   → Look for: /partners, /integrations, /ecosystem
+8. **Certifications**: Compliance and security certifications
+   → Look for: /security, /compliance, /trust, /certifications
 
-Prioritize pages that typically contain this information:
-- Homepage, About, Products/Services, Pricing, Customers, Case Studies
-- Team/Leadership, Careers, Press/News, Partnerships, Solutions
-- Industry-specific pages, Use Cases, Documentation
+🟡 ALSO VALUABLE:
+- Company stage/maturity (/about, /investors)
+- Recent news and funding (/news, /press, /media)
+- Company culture (/careers, /culture)
+- Awards and recognition (/awards, /about)
 
-Return ONLY a JSON array of the selected URLs (no explanations):
+PRIORITIZE pages with these URL patterns:
+- /contact* or /get-in-touch* (contact info + location)
+- /about* or /company* (founding year + size)  
+- /team* or /people* or /leadership* (decision makers)
+- /careers* or /jobs* (employee count + culture)
+- Footer pages often have social media links
+
+Return ONLY a JSON array of the most promising URLs for data extraction:
 ["url1", "url2", "url3", ...]
 
-Focus on quality over quantity. Better to select 50 highly relevant pages than 100 mediocre ones."""
+Select pages with STRUCTURED DATA we can extract, not blog posts or general content."""
 
         try:
             response = await self._call_llm_async(prompt)
@@ -441,10 +461,10 @@ Focus on quality over quantity. Better to select 50 highly relevant pages than 1
         """
         Fallback: Heuristic-based page selection when LLM is unavailable
         """
-        # Priority keywords for sales intelligence
-        high_priority = ['about', 'pricing', 'customers', 'products', 'services', 'solutions']
-        medium_priority = ['team', 'leadership', 'careers', 'news', 'press', 'case-studies', 'use-cases']
-        low_priority = ['contact', 'blog', 'resources', 'support', 'documentation', 'partners']
+        # Priority keywords for missing data extraction
+        high_priority = ['contact', 'about', 'team', 'leadership', 'careers', 'jobs']  # Pages with location, founding year, employee count
+        medium_priority = ['products', 'services', 'solutions', 'partners', 'integrations', 'security', 'compliance']
+        low_priority = ['pricing', 'customers', 'news', 'press', 'blog', 'resources']
         
         scored_links = []
         
@@ -662,10 +682,20 @@ class IntelligentCompanyScraperSync:
     """Synchronous wrapper for the intelligent scraper"""
     
     def __init__(self, config: CompanyIntelligenceConfig, bedrock_client=None):
+        self.config = config  # Store config for external access
         self.scraper = IntelligentCompanyScraper(config, bedrock_client)
     
-    def scrape_company(self, company_data: CompanyData, job_id: str = None) -> CompanyData:
-        """Synchronous wrapper for intelligent company scraping"""
+    def scrape_company(self, company_data: CompanyData, job_id: str = None, timeout: int = None) -> CompanyData:
+        """Synchronous wrapper for intelligent company scraping
+        
+        Args:
+            company_data: Company data to scrape
+            job_id: Optional job ID for progress tracking
+            timeout: Optional timeout in seconds (defaults to 25)
+        """
+        if timeout is None:
+            timeout = getattr(self.config, 'scraper_timeout', 25)
+            
         print(f"🔬 SCRAPER: Starting scrape for company '{company_data.name}' with website '{company_data.website}'")
         print(f"🔬 SCRAPER: Job ID: {job_id}")
         
@@ -737,6 +767,7 @@ async def run_scraping():
             "scrape_status": result.scrape_status,
             "scrape_error": result.scrape_error,
             "company_description": result.company_description,
+            "raw_content": result.raw_content,
             "ai_summary": result.ai_summary,
             "industry": result.industry,
             "business_model": result.business_model,
@@ -779,7 +810,7 @@ if __name__ == "__main__":
             try:
                 print(f"🔬 SCRAPER: Starting subprocess for scraping...")
                 print(f"🔬 SCRAPER: Command: {sys.executable} {script_path}")
-                print(f"🔬 SCRAPER: Timeout: 25 seconds (aligns with UI timeout)")
+                print(f"🔬 SCRAPER: Timeout: {timeout} seconds")
                 
                 # Update progress in main process before starting subprocess
                 if job_id:
@@ -788,18 +819,20 @@ if __name__ == "__main__":
                     progress_logger.update_phase(job_id, "Intelligent Web Scraping", "running", {
                         "status": "Running intelligent web scraper in subprocess...",
                         "subprocess_started": True,
-                        "timeout_seconds": 25
+                        "timeout_seconds": timeout
                     })
                 
                 import time
                 start_time = time.time()
                 
                 # Run the script in a subprocess with timeout
+                # Add extra buffer to subprocess timeout to allow for startup/shutdown
+                subprocess_timeout = timeout + 35  # Extra time for subprocess overhead
                 result = subprocess.run(
                     [sys.executable, script_path],
                     capture_output=True,
                     text=True,
-                    timeout=60,  # 60 second timeout to test if subprocess actually completes
+                    timeout=subprocess_timeout,
                     cwd=os.getcwd()
                 )
                 
@@ -873,6 +906,16 @@ if __name__ == "__main__":
                             company_data.crawl_duration = result_data.get("crawl_duration", 0)
                             company_data.crawl_depth = result_data.get("crawl_depth", 0)
                             
+                            # IMPORTANT: Store the extracted content as raw_content for AI analysis
+                            # This allows downstream AI analysis to extract all the detailed fields
+                            if result_data.get("raw_content"):
+                                company_data.raw_content = result_data.get("raw_content", "")
+                                print(f"🔬 SCRAPER: Populated raw_content with {len(company_data.raw_content)} chars")
+                            elif result_data.get("company_description"):
+                                # Fallback if raw_content not provided
+                                company_data.raw_content = result_data.get("company_description", "")
+                                print(f"🔬 SCRAPER: Populated raw_content from company_description with {len(company_data.raw_content)} chars")
+                            
                             print(f"🔬 SCRAPER: Successfully applied all scraping results")
                             print(f"🔬 SCRAPER: Pages crawled: {len(company_data.pages_crawled or [])}")
                             print(f"🔬 SCRAPER: Crawl duration: {company_data.crawl_duration}")
@@ -903,11 +946,11 @@ if __name__ == "__main__":
                     company_data.scrape_error = f"Scraper subprocess failed (code {result.returncode}): {result.stderr}"
                     
             except subprocess.TimeoutExpired as e:
-                print(f"🔬 SCRAPER: ❌ TIMEOUT after 25 seconds for {company_data.name}")
+                print(f"🔬 SCRAPER: ❌ TIMEOUT after {timeout} seconds for {company_data.name}")
                 print(f"🔬 SCRAPER: ❌ This indicates website complexity or network issues")
                 print(f"🔬 SCRAPER: ❌ Timeout details: {e}")
                 company_data.scrape_status = "failed"
-                company_data.scrape_error = "Scraping timed out after 25 seconds - this may indicate a complex website or network issues"
+                company_data.scrape_error = f"Scraping timed out after {timeout} seconds - this may indicate a complex website or network issues"
                 
             finally:
                 # Clean up temporary file

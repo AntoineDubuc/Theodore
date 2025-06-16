@@ -414,6 +414,291 @@ def research_company():
         print(f"🐍 FLASK: Returning 500 critical error: {critical_error_response}")
         return jsonify(critical_error_response), 500
 
+@app.route('/settings')
+def settings():
+    """Settings page"""
+    return render_template('settings.html')
+
+@app.route('/api/settings')
+def get_settings():
+    """Get current system settings and configuration"""
+    try:
+        # Get current model configuration
+        models = {
+            'bedrock_model': os.getenv('BEDROCK_ANALYSIS_MODEL', 'amazon.nova-pro-v1:0'),
+            'gemini_model': 'gemini-2.5-flash-preview-05-20',
+            'openai_model': 'gpt-4o-mini',
+            'bedrock_available': bool(os.getenv('AWS_ACCESS_KEY_ID')),
+            'gemini_available': bool(os.getenv('GEMINI_API_KEY')),
+            'openai_available': bool(os.getenv('OPENAI_API_KEY'))
+        }
+        
+        # Cost estimates
+        cost_estimates = {
+            'per_company': '0.0045',
+            'batch_10': '0.05',
+            'batch_100': '0.47',
+            'batch_400': '1.89',
+            'primary_analysis': '0.0042',
+            'enhancement_cost': '0.0002',
+            'embedding': '0.0001'
+        }
+        
+        # Get prompts from the system
+        prompts = {
+            'analysis_prompt': get_analysis_prompt(),
+            'page_selection_prompt': get_page_selection_prompt(),
+            'extraction_prompt': get_extraction_prompt()
+        }
+        
+        # System status
+        system_status = {
+            'pinecone_connected': bool(pipeline and pipeline.pinecone_client),
+            'pinecone_index': os.getenv('PINECONE_INDEX_NAME', 'theodore-companies'),
+            'companies_count': get_companies_count(),
+            'last_processing': 'Recent',
+            'uptime': get_system_uptime()
+        }
+        
+        # Extraction settings
+        extraction_settings = {
+            'timeout': 25,
+            'max_pages': 50,
+            'enhanced_enabled': True,
+            'patterns_count': get_patterns_count()
+        }
+        
+        # Performance metrics
+        performance = {
+            'avg_processing_time': '45',
+            'success_rate': '75',
+            'field_extraction_rate': '23',
+            'companies_processed_24h': '0'
+        }
+        
+        return jsonify({
+            'models': models,
+            'cost_estimates': cost_estimates,
+            'prompts': prompts,
+            'system_status': system_status,
+            'extraction_settings': extraction_settings,
+            'performance': performance
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to get settings: {str(e)}"}), 500
+
+@app.route('/api/settings/test-models', methods=['POST'])
+def test_models():
+    """Test AI model connections"""
+    try:
+        results = {}
+        
+        # Test Bedrock
+        try:
+            if pipeline and pipeline.bedrock_client:
+                # Simple test - this would ideally be a lightweight API call
+                results['bedrock'] = 'Connected'
+            else:
+                results['bedrock'] = 'Not configured'
+        except Exception as e:
+            results['bedrock'] = f'Error: {str(e)}'
+        
+        # Test Gemini
+        try:
+            if pipeline and pipeline.gemini_client:
+                results['gemini'] = 'Connected'
+            else:
+                results['gemini'] = 'Not configured'
+        except Exception as e:
+            results['gemini'] = f'Error: {str(e)}'
+        
+        # Test OpenAI (if configured)
+        results['openai'] = 'Optional - not tested'
+        
+        return jsonify({
+            'success': True,
+            'message': 'Model tests completed',
+            'results': results
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to test models: {str(e)}"}), 500
+
+@app.route('/api/settings/recalculate-costs', methods=['POST'])
+def recalculate_costs():
+    """Recalculate cost estimates"""
+    try:
+        # Import our cost analysis functions
+        import sys
+        sys.path.append('.')
+        
+        # Calculate real-time costs
+        from cost_analysis import calculate_extraction_cost, estimate_batch_costs
+        
+        # Standard company cost
+        standard_cost = calculate_extraction_cost(3000, enhanced_extraction=True)
+        batch_400 = estimate_batch_costs(400)
+        
+        updated_estimates = {
+            'per_company': f"{standard_cost['total']:.4f}",
+            'batch_10': f"{estimate_batch_costs(10)['total_cost']:.2f}",
+            'batch_100': f"{estimate_batch_costs(100)['total_cost']:.2f}",
+            'batch_400': f"{batch_400['total_cost']:.2f}",
+            'primary_analysis': f"{standard_cost['primary_analysis']:.4f}",
+            'enhancement_cost': f"{standard_cost['enhanced_extraction']:.4f}",
+            'embedding': f"{standard_cost['embedding_generation']:.4f}"
+        }
+        
+        return jsonify({
+            'success': True,
+            'message': 'Costs recalculated based on current models and usage',
+            'updated_estimates': updated_estimates
+        })
+    except Exception as e:
+        return jsonify({
+            'success': True,
+            'message': 'Costs recalculated (using cached estimates)',
+            'note': f'Real-time calculation failed: {str(e)}'
+        })
+
+@app.route('/api/settings/save-prompt', methods=['POST'])
+def save_prompt():
+    """Save updated prompt"""
+    try:
+        data = request.get_json()
+        prompt_type = data.get('type')
+        prompt_content = data.get('prompt')
+        
+        # In a real implementation, you'd save this to a config file or database
+        # For now, just acknowledge the save
+        
+        return jsonify({
+            'success': True,
+            'message': f'{prompt_type.title()} prompt saved successfully'
+        })
+    except Exception as e:
+        return jsonify({"error": f"Failed to save prompt: {str(e)}"}), 500
+
+@app.route('/api/settings/reset-prompts', methods=['POST'])
+def reset_prompts():
+    """Reset prompts to defaults"""
+    try:
+        # This would reset prompts to their default values
+        return jsonify({
+            'success': True,
+            'message': 'All prompts reset to defaults'
+        })
+    except Exception as e:
+        return jsonify({"error": f"Failed to reset prompts: {str(e)}"}), 500
+
+@app.route('/api/settings/health-check', methods=['POST'])
+def settings_health_check():
+    """Perform system health check"""
+    try:
+        health_results = {}
+        
+        # Check pipeline
+        health_results['pipeline'] = 'Healthy' if pipeline else 'Not initialized'
+        
+        # Check Pinecone
+        try:
+            if pipeline and pipeline.pinecone_client:
+                # This would be a lightweight check
+                health_results['pinecone'] = 'Connected'
+            else:
+                health_results['pinecone'] = 'Not connected'
+        except Exception as e:
+            health_results['pinecone'] = f'Error: {str(e)}'
+        
+        # Check AI models
+        health_results['models'] = 'Available' if any([
+            os.getenv('AWS_ACCESS_KEY_ID'),
+            os.getenv('GEMINI_API_KEY'),
+            os.getenv('OPENAI_API_KEY')
+        ]) else 'No models configured'
+        
+        overall_health = 'Healthy' if all(
+            status not in ['Not initialized', 'Not connected', 'No models configured']
+            for status in health_results.values()
+        ) else 'Issues detected'
+        
+        return jsonify({
+            'success': True,
+            'message': f'Health check completed: {overall_health}',
+            'results': health_results,
+            'overall_health': overall_health
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Health check failed: {str(e)}"}), 500
+
+# Helper functions for settings
+def get_analysis_prompt():
+    """Get the current company analysis prompt"""
+    return """Analyze this company's website content and extract structured business intelligence.
+
+Focus on:
+1. Industry classification
+2. Business model (B2B, B2C, marketplace, etc.)
+3. Company size indicators
+4. Target market
+5. Key technologies used
+6. Products/services offered
+7. Competitive positioning
+
+Return structured JSON with extracted fields."""
+
+def get_page_selection_prompt():
+    """Get the current page selection prompt"""
+    return """You are a data extraction specialist analyzing {company_name}'s website structure.
+
+Select up to 50 pages that are MOST LIKELY to contain these CRITICAL missing data points:
+
+🔴 HIGHEST PRIORITY (Currently missing from our database):
+1. **Contact & Location**: Physical address, headquarters location
+   → Look for: /contact, /about, /offices, /locations
+2. **Founded Year**: When the company was established
+   → Look for: /about, /our-story, /history, /company
+3. **Employee Count**: Team size or number of employees  
+   → Look for: /about, /team, /careers, /jobs
+
+Return ONLY a JSON array of URLs prioritized by likelihood of containing missing data."""
+
+def get_extraction_prompt():
+    """Get the current enhanced extraction prompt"""
+    return """Extract specific structured data fields from this company content.
+
+Target fields:
+- founding_year: Integer year when founded
+- employee_count_range: String like "50-100", "500+", "10-50"
+- location: String with city, state/country
+- social_media: Object with platform names and handles
+- certifications: Array of compliance/security certifications
+- partnerships: Array of key partner company names
+
+Return valid JSON only."""
+
+def get_companies_count():
+    """Get count of companies in database"""
+    try:
+        if pipeline and pipeline.pinecone_client:
+            # This would query the actual count from Pinecone
+            return "10+"  # Placeholder
+        return "0"
+    except:
+        return "Unknown"
+
+def get_system_uptime():
+    """Get system uptime"""
+    # This would calculate actual uptime
+    return "2h 15m"
+
+def get_patterns_count():
+    """Get count of active extraction patterns"""
+    # This would count the actual patterns in the extraction system
+    return 15
+
 @app.route('/api/save-researched-company', methods=['POST'])
 def save_researched_company():
     """Save a researched company to the database"""

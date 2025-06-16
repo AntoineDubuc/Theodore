@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theodore Settings - System Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .nav-bar {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-button:hover {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-button.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .settings-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .setting-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .setting-label {
+            font-weight: 500;
+            color: #cbd5e1;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .setting-value {
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .cost-estimate {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .model-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.active {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }
+
+        .status-dot.inactive {
+            background: #ef4444;
+        }
+
+        .prompt-preview {
+            max-height: 150px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(71, 85, 105, 0.5) transparent;
+        }
+
+        .prompt-preview::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .prompt-preview::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .prompt-preview::-webkit-scrollbar-thumb {
+            background: rgba(71, 85, 105, 0.5);
+            border-radius: 3px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .action-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .danger-button {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .danger-button:hover {
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #e2e8f0;
+            backdrop-filter: blur(10px);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .expandable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .expandable:hover {
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .expanded-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        .expanded-content.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Theodore Settings</h1>
+            <p>System Configuration & Performance Overview</p>
+        </div>
+
+        <div class="nav-bar">
+            <a href="/" class="nav-button">🏠 Dashboard</a>
+            <a href="#" class="nav-button active">⚙️ Settings</a>
+            <a href="#" class="nav-button" onclick="refreshSettings()">🔄 Refresh</a>
+            <a href="#" class="nav-button" onclick="exportSettings()">📥 Export Config</a>
+        </div>
+
+        <div id="settings-content">
+            <!-- Settings content will be loaded here -->
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Global settings data
+        let settingsData = {};
+
+        // Load settings on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+        });
+
+        async function loadSettings() {
+            try {
+                showLoading('Loading settings...');
+                const response = await fetch('/api/settings');
+                settingsData = await response.json();
+                renderSettings();
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showToast('Error loading settings: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        function renderSettings() {
+            const container = document.getElementById('settings-content');
+            container.innerHTML = `
+                <div class="settings-grid">
+                    ${renderModelConfiguration()}
+                    ${renderCostEstimates()}
+                    ${renderPromptConfiguration()}
+                    ${renderSystemStatus()}
+                    ${renderExtractionSettings()}
+                    ${renderPerformanceMetrics()}
+                </div>
+            `;
+        }
+
+        function renderModelConfiguration() {
+            const models = settingsData.models || {};
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">🤖</span>
+                        <h3 class="card-title">AI Model Configuration</h3>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Primary Analysis Model</label>
+                        <div class="model-status">
+                            <span class="status-dot ${models.bedrock_available ? 'active' : 'inactive'}"></span>
+                            <div class="setting-value">${models.bedrock_model || 'amazon.nova-pro-v1:0'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Enhanced Extraction Model</label>
+                        <div class="model-status">
+                            <span class="status-dot ${models.gemini_available ? 'active' : 'inactive'}"></span>
+                            <div class="setting-value">${models.gemini_model || 'gemini-2.5-flash-preview-05-20'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Fallback Model</label>
+                        <div class="model-status">
+                            <span class="status-dot ${models.openai_available ? 'active' : 'inactive'}"></span>
+                            <div class="setting-value">${models.openai_model || 'gpt-4o-mini'}</div>
+                        </div>
+                    </div>
+                    
+                    <button class="action-button" onclick="testModels()">Test Model Connections</button>
+                </div>
+            `;
+        }
+
+        function renderCostEstimates() {
+            const costs = settingsData.cost_estimates || {};
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">💰</span>
+                        <h3 class="card-title">Cost Estimates</h3>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Cost per Company (Enhanced)</label>
+                        <div class="cost-estimate">$${costs.per_company || '0.0045'}</div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">$${costs.batch_10 || '0.05'}</div>
+                            <div class="stat-label">10 Companies</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">$${costs.batch_100 || '0.47'}</div>
+                            <div class="stat-label">100 Companies</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">$${costs.batch_400 || '1.89'}</div>
+                            <div class="stat-label">400 Companies</div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Cost Breakdown</label>
+                        <div class="setting-value">
+Primary Analysis: $${costs.primary_analysis || '0.0042'}
+Enhanced Extraction: +$${costs.enhancement_cost || '0.0002'}
+Pattern Extraction: $0.0000 (free)
+Embedding: ~$${costs.embedding || '0.0001'}
+                        </div>
+                    </div>
+                    
+                    <button class="action-button" onclick="recalculateCosts()">Recalculate Costs</button>
+                </div>
+            `;
+        }
+
+        function renderPromptConfiguration() {
+            const prompts = settingsData.prompts || {};
+            return `
+                <div class="settings-card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">📝</span>
+                        <h3 class="card-title">AI Prompt Configuration</h3>
+                    </div>
+                    
+                    <div class="setting-item expandable" onclick="toggleExpand('analysis-prompt')">
+                        <label class="setting-label">Company Analysis Prompt ▼</label>
+                        <div class="setting-value prompt-preview">
+                            ${(prompts.analysis_prompt || 'Analyze the company...').substring(0, 150)}...
+                        </div>
+                        <div id="analysis-prompt" class="expanded-content">
+                            <textarea class="setting-value" rows="8" style="width: 100%; resize: vertical;">
+${prompts.analysis_prompt || 'Loading...'}
+                            </textarea>
+                            <button class="action-button" onclick="savePrompt('analysis')">Save Changes</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item expandable" onclick="toggleExpand('page-selection-prompt')">
+                        <label class="setting-label">Page Selection Prompt ▼</label>
+                        <div class="setting-value prompt-preview">
+                            ${(prompts.page_selection_prompt || 'Select pages that contain...').substring(0, 150)}...
+                        </div>
+                        <div id="page-selection-prompt" class="expanded-content">
+                            <textarea class="setting-value" rows="8" style="width: 100%; resize: vertical;">
+${prompts.page_selection_prompt || 'Loading...'}
+                            </textarea>
+                            <button class="action-button" onclick="savePrompt('page_selection')">Save Changes</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item expandable" onclick="toggleExpand('extraction-prompt')">
+                        <label class="setting-label">Enhanced Extraction Prompt ▼</label>
+                        <div class="setting-value prompt-preview">
+                            ${(prompts.extraction_prompt || 'Extract specific fields...').substring(0, 150)}...
+                        </div>
+                        <div id="extraction-prompt" class="expanded-content">
+                            <textarea class="setting-value" rows="8" style="width: 100%; resize: vertical;">
+${prompts.extraction_prompt || 'Loading...'}
+                            </textarea>
+                            <button class="action-button" onclick="savePrompt('extraction')">Save Changes</button>
+                        </div>
+                    </div>
+                    
+                    <button class="action-button" onclick="resetPrompts()">Reset to Defaults</button>
+                    <button class="action-button danger-button" onclick="exportPrompts()">Export Prompts</button>
+                </div>
+            `;
+        }
+
+        function renderSystemStatus() {
+            const status = settingsData.system_status || {};
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">📊</span>
+                        <h3 class="card-title">System Status</h3>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Pinecone Database</label>
+                        <div class="model-status">
+                            <span class="status-dot ${status.pinecone_connected ? 'active' : 'inactive'}"></span>
+                            <div class="setting-value">${status.pinecone_index || 'theodore-companies'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Companies in Database</label>
+                        <div class="setting-value">${status.companies_count || '0'} companies</div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Last Processing</label>
+                        <div class="setting-value">${status.last_processing || 'Never'}</div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">System Uptime</label>
+                        <div class="setting-value">${status.uptime || 'Unknown'}</div>
+                    </div>
+                    
+                    <button class="action-button" onclick="checkSystemHealth()">Health Check</button>
+                </div>
+            `;
+        }
+
+        function renderExtractionSettings() {
+            const extraction = settingsData.extraction_settings || {};
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">🔧</span>
+                        <h3 class="card-title">Extraction Settings</h3>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Scraping Timeout</label>
+                        <div class="setting-value">${extraction.timeout || '25'} seconds</div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Max Pages per Company</label>
+                        <div class="setting-value">${extraction.max_pages || '50'} pages</div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Enhanced Extraction</label>
+                        <div class="model-status">
+                            <span class="status-dot ${extraction.enhanced_enabled ? 'active' : 'inactive'}"></span>
+                            <div class="setting-value">${extraction.enhanced_enabled ? 'Enabled' : 'Disabled'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Pattern Extraction</label>
+                        <div class="setting-value">${extraction.patterns_count || '0'} patterns active</div>
+                    </div>
+                    
+                    <button class="action-button" onclick="configureExtraction()">Configure</button>
+                </div>
+            `;
+        }
+
+        function renderPerformanceMetrics() {
+            const performance = settingsData.performance || {};
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">⚡</span>
+                        <h3 class="card-title">Performance Metrics</h3>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">${performance.avg_processing_time || '45'}s</div>
+                            <div class="stat-label">Avg Processing</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${performance.success_rate || '75'}%</div>
+                            <div class="stat-label">Success Rate</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${performance.field_extraction_rate || '23'}%</div>
+                            <div class="stat-label">Field Extraction</div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Last 24h Processing</label>
+                        <div class="setting-value">${performance.companies_processed_24h || '0'} companies</div>
+                    </div>
+                    
+                    <button class="action-button" onclick="viewDetailedMetrics()">View Details</button>
+                </div>
+            `;
+        }
+
+        // Utility functions
+        function toggleExpand(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('show');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function showLoading(message) {
+            const container = document.getElementById('settings-content');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem;">
+                    <div class="loading"></div>
+                    <p style="margin-top: 1rem; color: #94a3b8;">${message}</p>
+                </div>
+            `;
+        }
+
+        function hideLoading() {
+            // Loading will be hidden when renderSettings() is called
+        }
+
+        // Action handlers
+        async function refreshSettings() {
+            await loadSettings();
+            showToast('Settings refreshed');
+        }
+
+        async function testModels() {
+            try {
+                showToast('Testing model connections...');
+                const response = await fetch('/api/settings/test-models', { method: 'POST' });
+                const result = await response.json();
+                showToast(result.message);
+                await loadSettings(); // Refresh to show updated status
+            } catch (error) {
+                showToast('Error testing models: ' + error.message, 'error');
+            }
+        }
+
+        async function recalculateCosts() {
+            try {
+                showToast('Recalculating costs...');
+                const response = await fetch('/api/settings/recalculate-costs', { method: 'POST' });
+                const result = await response.json();
+                showToast('Costs updated');
+                await loadSettings();
+            } catch (error) {
+                showToast('Error recalculating costs: ' + error.message, 'error');
+            }
+        }
+
+        async function savePrompt(promptType) {
+            try {
+                const textarea = document.querySelector(`#${promptType}-prompt textarea`);
+                const newPrompt = textarea.value;
+                
+                const response = await fetch('/api/settings/save-prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: promptType, prompt: newPrompt })
+                });
+                
+                const result = await response.json();
+                showToast(result.message);
+            } catch (error) {
+                showToast('Error saving prompt: ' + error.message, 'error');
+            }
+        }
+
+        function resetPrompts() {
+            if (confirm('Reset all prompts to defaults? This cannot be undone.')) {
+                fetch('/api/settings/reset-prompts', { method: 'POST' })
+                    .then(() => {
+                        showToast('Prompts reset to defaults');
+                        loadSettings();
+                    })
+                    .catch(error => showToast('Error resetting prompts: ' + error.message, 'error'));
+            }
+        }
+
+        function exportSettings() {
+            const blob = new Blob([JSON.stringify(settingsData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `theodore-settings-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Settings exported');
+        }
+
+        function exportPrompts() {
+            const prompts = settingsData.prompts || {};
+            const blob = new Blob([JSON.stringify(prompts, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `theodore-prompts-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Prompts exported');
+        }
+
+        function checkSystemHealth() {
+            fetch('/api/settings/health-check', { method: 'POST' })
+                .then(response => response.json())
+                .then(result => {
+                    showToast(result.message);
+                    loadSettings();
+                })
+                .catch(error => showToast('Error checking health: ' + error.message, 'error'));
+        }
+
+        function configureExtraction() {
+            showToast('Extraction configuration panel coming soon...');
+        }
+
+        function viewDetailedMetrics() {
+            showToast('Detailed metrics panel coming soon...');
+        }
+    </script>
+</body>
+</html>

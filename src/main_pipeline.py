@@ -22,6 +22,7 @@ from src.clustering import SectorClusteringEngine
 from src.similarity_pipeline import SimilarityDiscoveryPipeline
 from src.company_discovery import CompanyDiscoveryService
 from src.similarity_validator import SimilarityValidator
+from src.extraction_improvements import enhance_company_extraction, ENHANCED_EXTRACTION_PROMPTS
 
 # Set up logging
 logging.basicConfig(
@@ -122,9 +123,35 @@ class TheodoreIntelligencePipeline:
         analysis_result = self.bedrock_client.analyze_company_content(company)
         self._apply_analysis_to_company(company, analysis_result)
         
-        # NEW: Extract similarity metrics
-        logger.info(f"Extracting similarity metrics for {company_name}")
-        company = self.scraper.extract_similarity_metrics(company)
+        # Apply enhanced extraction for missing fields
+        if company.raw_content:
+            logger.info(f"Applying enhanced extraction for {company_name}")
+            company = enhance_company_extraction(company, company.raw_content)
+            
+            # Use Gemini for detailed extraction if still missing key fields
+            if not company.founding_year or not company.employee_count_range or not company.social_media:
+                try:
+                    detailed_result = self.gemini_client.analyze_content(
+                        ENHANCED_EXTRACTION_PROMPTS['detailed_extraction'] + f"\n\nContent:\n{company.raw_content[:5000]}"
+                    )
+                    # Parse and apply results
+                    import json
+                    import re
+                    json_match = re.search(r'\{.*\}', detailed_result, re.DOTALL)
+                    if json_match:
+                        extra_data = json.loads(json_match.group())
+                        if extra_data.get('founding_year') and not company.founding_year:
+                            company.founding_year = extra_data['founding_year']
+                        if extra_data.get('employee_count_range') and not company.employee_count_range:
+                            company.employee_count_range = extra_data['employee_count_range']
+                        if extra_data.get('social_media') and not company.social_media:
+                            company.social_media = extra_data['social_media']
+                        if extra_data.get('certifications'):
+                            company.certifications = extra_data['certifications']
+                        if extra_data.get('partnerships'):
+                            company.partnerships = extra_data['partnerships']
+                except Exception as e:
+                    logger.warning(f"Enhanced extraction failed: {e}")
         
         # Generate embedding
         embedding_text = self._prepare_embedding_text(company)

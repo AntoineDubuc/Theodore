@@ -1,0 +1,23 @@
+{
+  "company": "Connatix",
+  "website": "https://www.connatix.com",
+  "extraction_results": {
+    "location": null,
+    "founding_year": null,
+    "employee_count_range": null,
+    "contact_info": null,
+    "social_media": "{'twitter': None, 'linkedin': None, 'facebook': None, 'instagram': None, 'youtube': None}",
+    "products_services_offered": null,
+    "leadership_team": null,
+    "partnerships": null,
+    "certifications": null,
+    "company_stage": null,
+    "target_market": "unknown",
+    "value_proposition": null,
+    "company_size": "unknown",
+    "key_decision_makers": null
+  },
+  "ai_summary": "No content could be extracted for Connatix, hence no actionable sales intelligence could be derived.",
+  "scrape_status": "success",
+  "extraction_rate": "21.4%"
+}
