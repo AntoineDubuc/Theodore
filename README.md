@@ -339,6 +339,162 @@ flowchart TD
     class Response,UI outputStyle
 ```
 
+### Google Sheets Batch Processing Workflow
+
+**🔄 Processing Model: Sequential Companies, Parallel Pages**
+- Companies are processed **one at a time** (sequential)
+- Within each company, pages are scraped **10 at a time** (parallel)
+- 2-second delay between companies for rate limiting and respectful crawling
+
+```mermaid
+%%{init: {
+  'theme': 'dark',
+  'themeVariables': {
+    'primaryColor': '#ff6b6b',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ff4757',
+    'lineColor': '#ffa502',
+    'secondaryColor': '#2ed573',
+    'tertiaryColor': '#5352ed',
+    'background': '#2f3542',
+    'mainBkg': '#2f3542',
+    'secondBkg': '#57606f',
+    'tertiaryBkg': '#3742fa'
+  }
+}}%%
+
+flowchart TD
+    Start["🚀 Batch Processing Start<br/>CLI Command or API"] --> Initialize
+    
+    subgraph Initialize["⚙️ INITIALIZATION PHASE"]
+        ServiceAuth["🔐 Service Account Auth<br/>theodore-service-account.json<br/>No browser required"]
+        SheetsClient["📊 Google Sheets Client<br/>Validate spreadsheet access<br/>Setup dual-sheet structure"]
+        Pipeline["🔧 Theodore Pipeline<br/>Initialize AI models<br/>Pinecone connection"]
+        
+        ServiceAuth --> SheetsClient
+        SheetsClient --> Pipeline
+    end
+    
+    Initialize --> ReadSheet
+    
+    subgraph ReadSheet["📋 SHEET READING PHASE"]
+        ReadCompanies["📖 Read Companies Sheet<br/>Extract company names<br/>Website URLs<br/>Row numbers"]
+        FilterStatus["🔍 Filter by Status<br/>Skip 'completed' companies<br/>Process 'pending' only<br/>Resume 'failed' companies"]
+        BatchLimit["📊 Apply Batch Limits<br/>Limit: 10 companies<br/>Rate limiting: 2s delay<br/>Cost estimation"]
+        
+        ReadCompanies --> FilterStatus
+        FilterStatus --> BatchLimit
+    end
+    
+    ReadSheet --> ProcessLoop
+    
+    subgraph ProcessLoop["🔄 SEQUENTIAL COMPANY PROCESSING"]
+        UpdateStatus1["📝 Update Status: 'processing'<br/>Real-time sheet update<br/>Progress tracking<br/>Timestamp logging"]
+        ProcessSingle["🕷️ Single Company Processing<br/>⚠️ ONE COMPANY AT A TIME<br/>Full 4-phase pipeline<br/>25-60 second processing"]
+        
+        subgraph InternalParallel["⚡ INTERNAL PARALLEL PROCESSING"]
+            Phase1["🔍 Phase 1: Link Discovery<br/>Sequential discovery"]
+            Phase2["🎯 Phase 2: Page Selection<br/>LLM analysis"]
+            Phase3["📄 Phase 3: Content Extraction<br/>🔀 10 CONCURRENT PAGES<br/>Parallel web scraping"]
+            Phase4["🧠 Phase 4: AI Aggregation<br/>1M token context"]
+            
+            Phase1 --> Phase2
+            Phase2 --> Phase3
+            Phase3 --> Phase4
+        end
+        
+        CheckResult["❓ Check Processing Result<br/>Validate scrape_status<br/>Verify extracted data<br/>Quality assessment"]
+        
+        UpdateStatus1 --> ProcessSingle
+        ProcessSingle --> InternalParallel
+        InternalParallel --> CheckResult
+    end
+    
+    ProcessLoop --> ResultHandling
+    
+    subgraph ResultHandling["📊 RESULT HANDLING"]
+        SuccessPath["✅ SUCCESS PATH"]
+        FailurePath["❌ FAILURE PATH"]
+        
+        CheckResult -->|Success| SuccessPath
+        CheckResult -->|Failed| FailurePath
+        
+        subgraph SuccessPath["✅ SUCCESS OPERATIONS"]
+            UpdateSuccess["📝 Update Status: 'completed'<br/>Companies sheet status<br/>Success timestamp"]
+            WriteDetails["📋 Write Complete Data<br/>Details sheet update<br/>All extracted fields<br/>Metadata preservation"]
+            
+            UpdateSuccess --> WriteDetails
+        end
+        
+        subgraph FailurePath["❌ FAILURE OPERATIONS"]
+            UpdateFailed["📝 Update Status: 'failed'<br/>Error logging<br/>Failure timestamp<br/>Error details"]
+            LogError["🚨 Error Logging<br/>Exception capture<br/>Debugging info<br/>Retry planning"]
+            
+            UpdateFailed --> LogError
+        end
+    end
+    
+    ResultHandling --> NextCompany
+    
+    subgraph NextCompany["➡️ SEQUENTIAL ITERATION CONTROL"]
+        RateLimit["⏱️ Sequential Rate Limiting<br/>⏸️ 2-second delay between companies<br/>🚫 NO PARALLEL COMPANY PROCESSING<br/>API quota management<br/>Respectful web scraping"]
+        ProgressUpdate["📊 Progress Reporting<br/>Console logs: Company X/Y<br/>Success/failure counts<br/>Time estimates per company"]
+        CheckMore["❓ More Companies in Queue?<br/>Sequential batch completion<br/>One-by-one processing"]
+        
+        RateLimit --> ProgressUpdate
+        ProgressUpdate --> CheckMore
+        CheckMore -->|Yes| ProcessLoop
+        CheckMore -->|No| Summary
+    end
+    
+    subgraph Summary["📈 BATCH COMPLETION"]
+        FinalStats["📊 Final Statistics<br/>Total processing time<br/>Success/failure rates<br/>Average time per company"]
+        SheetLink["🌐 Sheet Access Link<br/>Direct Google Sheets URL<br/>Results verification<br/>Manual review"]
+        
+        FinalStats --> SheetLink
+    end
+    
+    Summary --> Complete["🎉 Batch Processing Complete<br/>Results available in<br/>Google Sheets"]
+    
+    %% Error Handling
+    ProcessCompany -.->|Timeout/Error| ErrorRecovery["🔧 Error Recovery<br/>Exception handling<br/>Graceful degradation<br/>Continue with next"]
+    ErrorRecovery --> FailurePath
+    
+    %% Real-time Updates
+    ProcessLoop -.-> LiveProgress["📡 Live Progress Updates<br/>Real-time sheet updates<br/>Console feedback<br/>Status monitoring"]
+    
+    %% Sheet Structure
+    subgraph SheetStructure["📊 DUAL SHEET STRUCTURE"]
+        CompaniesSheet["📋 Companies Sheet<br/>• Company Name<br/>• Website URL<br/>• Processing Status<br/>• Timestamps"]
+        DetailsSheet["📄 Details Sheet<br/>• Complete extracted data<br/>• All research fields<br/>• Metadata & metrics<br/>• Processing details"]
+        
+        CompaniesSheet -.-> DetailsSheet
+    end
+    
+    WriteDetails -.-> SheetStructure
+    
+    %% Styling
+    classDef startStyle fill:#ff6b6b,stroke:#ff4757,stroke-width:3px,color:#ffffff
+    classDef initStyle fill:#ffa502,stroke:#ff6348,stroke-width:2px,color:#ffffff
+    classDef processStyle fill:#2ed573,stroke:#20bf6b,stroke-width:2px,color:#ffffff
+    classDef parallelStyle fill:#3498db,stroke:#2980b9,stroke-width:3px,color:#ffffff
+    classDef successStyle fill:#27ae60,stroke:#2ecc71,stroke-width:2px,color:#ffffff
+    classDef failureStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#ffffff
+    classDef controlStyle fill:#5352ed,stroke:#3742fa,stroke-width:2px,color:#ffffff
+    classDef summaryStyle fill:#8e44ad,stroke:#9b59b6,stroke-width:2px,color:#ffffff
+    classDef structureStyle fill:#34495e,stroke:#2c3e50,stroke-width:2px,color:#ffffff
+    
+    class Start startStyle
+    class ServiceAuth,SheetsClient,Pipeline initStyle
+    class ReadCompanies,FilterStatus,BatchLimit,UpdateStatus1,ProcessSingle processStyle
+    class Phase1,Phase2,Phase3,Phase4 parallelStyle
+    class UpdateSuccess,WriteDetails successStyle
+    class UpdateFailed,LogError,ErrorRecovery failureStyle
+    class RateLimit,ProgressUpdate,CheckMore,CheckResult controlStyle
+    class FinalStats,SheetLink,Complete summaryStyle
+    class CompaniesSheet,DetailsSheet structureStyle
+```
+
 ## 📊 Current Status
 
 ### ✅ Production Ready Features
