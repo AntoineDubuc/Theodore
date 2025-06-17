@@ -1,0 +1,11 @@
+Company Name;URL;Classification;Justification
+connatix.com;connatix.com;AdTech;Connatix provides an end-to-end video platform designed to optimize advertising campaigns for publishers and advertisers, leveraging technology and data analytics.
+jelli.com;jelli.com;AdTech;The company provides technology solutions for audio advertising, including monetization, measurement, and operations, which aligns with the AdTech vertical.
+Walmart;https://walmart.com;Retail;Walmart operates a chain of hypermarkets, discount department stores, and grocery stores, directly selling physical goods to consumers.
+IBM;https://ibm.com;IT Consulting Services;IBM provides a wide range of technology and consulting services, including AI, hybrid cloud solutions, and expert advisory services, which aligns with the definition of IT Consulting Services.
+TestCorp Fresh Verification;https://testcorp.com;Unclassified;Classification error: 'CompanyData' object has no attribute 'business_intelligence'
+Pheronym;https://pheronym.com;Biopharma R&D;Pheronym specializes in pheromone-based solutions for agricultural pest management, indicating they provide outsourced scientific services in the biotechnology space.
+OpenAI;https://openai.com;Unclassified;Classification error: 'CompanyData' object has no attribute 'business_intelligence'
+Pfizer Inc.;https://www.pfizer.com;Biopharma R&D;Pfizer is a global biopharmaceutical company focused on drug discovery, development, manufacturing, and commercialization of medicines and vaccines.
+Cloud Geometry;https://cloudgeometry.io;IT Consulting Services;Cloud Geometry provides human-led IT strategy, implementation, and advisory services focused on cloud migration, infrastructure modernization, and AI/ML implementation.
+Regeneron Pharmaceuticals;https://www.regeneron.com;Biopharma R&D;Regeneron Pharmaceuticals is a biotechnology company dedicated to inventing, developing, and commercializing medicines for serious diseases, primarily generating revenue through its portfolio of approved therapeutics and strategic collaborations.

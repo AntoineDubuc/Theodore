@@ -5,7 +5,72 @@ Pydantic models for Theodore company intelligence system
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, HttpUrl, Field
 from datetime import datetime
+from enum import Enum
 import uuid
+
+
+class SaaSCategory(str, Enum):
+    """59-category SaaS business model taxonomy"""
+    
+    # SaaS Verticals (26 categories - corrected count)
+    ADTECH = "AdTech"
+    ASSET_MANAGEMENT = "AssetManagement"
+    BILLING = "Billing"
+    BIO_LS = "Bio/LS"
+    COLLAB_TECH = "CollabTech"
+    DATA_BI_ANALYTICS = "Data/BI/Analytics"
+    DEVOPS_CLOUD_INFRA = "DevOps/CloudInfra"
+    ECOMMERCE_RETAIL = "E-commerce & Retail"
+    EDTECH = "EdTech"
+    ENERTECH = "Enertech"
+    FINTECH = "FinTech"
+    GOVTECH = "GovTech"
+    HRTECH = "HRTech"
+    HEALTHTECH = "HealthTech"
+    IAM = "Identity & Access Management (IAM)"
+    INSURETECH = "InsureTech"
+    LAWTECH = "LawTech"
+    LEISURETECH = "LeisureTech"
+    MANUFACTURING_AGTECH_IOT = "Manufacturing/AgTech/IoT"
+    MARTECH_CRM = "Martech & CRM"
+    MEDIATECH = "MediaTech"
+    PROPTECH = "PropTech"
+    RISK_AUDIT_GOVERNANCE = "Risk/Audit/Governance"
+    SOCIAL_COMMUNITY_NONPROFIT = "Social / Community / Non Profit"
+    SUPPLY_CHAIN_LOGISTICS = "Supply Chain & Logistics"
+    TRANSPOTECH = "TranspoTech"
+    
+    # Non-SaaS Categories (17 categories - corrected count)
+    ADVERTISING_MEDIA_SERVICES = "Advertising & Media Services"
+    BIOPHARMA_RD = "Biopharma R&D"
+    COMBO_HW_SW = "Combo HW & SW"
+    EDUCATION = "Education"
+    ENERGY = "Energy"
+    FINANCIAL_SERVICES = "Financial Services"
+    HEALTHCARE_SERVICES = "Healthcare Services"
+    INDUSTRY_CONSULTING = "Industry Consulting Services"
+    INSURANCE = "Insurance"
+    IT_CONSULTING = "IT Consulting Services"
+    LOGISTICS_SERVICES = "Logistics Services"
+    MANUFACTURING = "Manufacturing"
+    NONPROFIT = "Non-Profit"
+    RETAIL = "Retail"
+    SPORTS = "Sports"
+    TRAVEL_LEISURE = "Travel & Leisure"
+    WHOLESALE_DISTRIBUTION = "Wholesale Distribution & Supply"
+    
+    # Special category
+    UNCLASSIFIED = "Unclassified"
+
+
+class ClassificationResult(BaseModel):
+    """Result of business model classification"""
+    category: SaaSCategory
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score 0.0-1.0")
+    justification: str = Field(..., min_length=10, description="One-sentence explanation")
+    model_version: str = Field(default="v1.0", description="Classification model version")
+    timestamp: datetime = Field(default_factory=datetime.now)
+    is_saas: bool = Field(..., description="True if SaaS, False if Non-SaaS")
 
 
 class CompanyData(BaseModel):
@@ -51,6 +116,14 @@ class CompanyData(BaseModel):
     pages_crawled: List[str] = Field(default_factory=list, description="URLs successfully crawled")
     crawl_depth: int = Field(default=1, description="Number of pages deep crawled")
     crawl_duration: Optional[float] = Field(None, description="Time taken to crawl in seconds")
+    
+    # SaaS Classification fields (Phase 5 of pipeline)
+    saas_classification: Optional[str] = Field(None, description="Business model classification category")
+    classification_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Classification confidence score")
+    classification_justification: Optional[str] = Field(None, description="One-sentence explanation for classification")
+    classification_timestamp: Optional[datetime] = Field(None, description="When classification was performed")
+    classification_model_version: Optional[str] = Field(default="v1.0", description="Version of classification model used")
+    is_saas: Optional[bool] = Field(None, description="Quick boolean: True for SaaS, False for Non-SaaS")
     
     # Similarity metrics for sales intelligence
     company_stage: Optional[str] = Field(None, description="startup, growth, enterprise")

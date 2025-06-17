@@ -365,3 +365,15 @@ class BedrockClient:
             Generated analysis text
         """
         return self.generate_text(content)
+    
+    def generate_response(self, prompt: str) -> str:
+        """
+        Generate response for classification system
+        
+        Args:
+            prompt: Classification prompt to analyze
+            
+        Returns:
+            Generated classification response
+        """
+        return self.generate_text(prompt, max_tokens=2000)

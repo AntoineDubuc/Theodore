@@ -68,6 +68,9 @@
                     <button class="btn btn-secondary tab-button" data-tab="batchTab">
                         📊 Batch Processing
                     </button>
+                    <button class="btn btn-secondary tab-button" data-tab="classificationTab">
+                        🏷️ Classification Analytics
+                    </button>
                 </div>
             </div>
 
@@ -105,6 +108,92 @@
                                     <option value="7">7 companies</option>
                                     <option value="10">10 companies</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Filters -->
+                        <div class="advanced-filters">
+                            <div class="filters-header">
+                                <label class="form-label">🔍 Filter Results</label>
+                                <button type="button" class="filters-toggle" onclick="window.theodoreUI.toggleFilters()">
+                                    <span id="filtersToggleText">Show Filters</span>
+                                    <span id="filtersToggleIcon">▼</span>
+                                </button>
+                            </div>
+                            
+                            <div id="filtersContent" class="filters-content" style="display: none;">
+                                <div class="filters-grid">
+                                    <div class="filter-group">
+                                        <label for="businessModelFilter" class="filter-label">Business Model Type</label>
+                                        <select id="businessModelFilter" name="business_model_filter" class="filter-select">
+                                            <option value="">All Companies</option>
+                                            <option value="saas">SaaS Only</option>
+                                            <option value="non-saas">Non-SaaS Only</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="filter-group">
+                                        <label for="categoryFilter" class="filter-label">Classification Category</label>
+                                        <select id="categoryFilter" name="category_filter" class="filter-select">
+                                            <option value="">All Categories</option>
+                                            <optgroup label="SaaS Verticals">
+                                                <option value="AdTech">AdTech</option>
+                                                <option value="AssetManagement">Asset Management</option>
+                                                <option value="Billing">Billing</option>
+                                                <option value="Bio/LS">Bio/LS</option>
+                                                <option value="CollabTech">CollabTech</option>
+                                                <option value="Data/BI/Analytics">Data/BI/Analytics</option>
+                                                <option value="DevOps/CloudInfra">DevOps/CloudInfra</option>
+                                                <option value="E-commerce & Retail">E-commerce & Retail</option>
+                                                <option value="EdTech">EdTech</option>
+                                                <option value="Enertech">Enertech</option>
+                                                <option value="FinTech">FinTech</option>
+                                                <option value="GovTech">GovTech</option>
+                                                <option value="HRTech">HRTech</option>
+                                                <option value="HealthTech">HealthTech</option>
+                                                <option value="Identity & Access Management (IAM)">IAM</option>
+                                                <option value="InsureTech">InsureTech</option>
+                                                <option value="LawTech">LawTech</option>
+                                                <option value="LeisureTech">LeisureTech</option>
+                                                <option value="Manufacturing/AgTech/IoT">Manufacturing/AgTech/IoT</option>
+                                                <option value="Martech & CRM">Martech & CRM</option>
+                                                <option value="MediaTech">MediaTech</option>
+                                                <option value="PropTech">PropTech</option>
+                                                <option value="Risk/Audit/Governance">Risk/Audit/Governance</option>
+                                                <option value="Social / Community / Non Profit">Social/Community/Non Profit</option>
+                                                <option value="Supply Chain & Logistics">Supply Chain & Logistics</option>
+                                                <option value="TranspoTech">TranspoTech</option>
+                                            </optgroup>
+                                            <optgroup label="Non-SaaS Categories">
+                                                <option value="Advertising & Media Services">Advertising & Media Services</option>
+                                                <option value="Biopharma R&D">Biopharma R&D</option>
+                                                <option value="Combo HW & SW">Combo HW & SW</option>
+                                                <option value="Education">Education</option>
+                                                <option value="Energy">Energy</option>
+                                                <option value="Financial Services">Financial Services</option>
+                                                <option value="Healthcare Services">Healthcare Services</option>
+                                                <option value="Industry Consulting Services">Industry Consulting Services</option>
+                                                <option value="Insurance">Insurance</option>
+                                                <option value="IT Consulting Services">IT Consulting Services</option>
+                                                <option value="Logistics Services">Logistics Services</option>
+                                                <option value="Manufacturing">Manufacturing</option>
+                                                <option value="Non-Profit">Non-Profit</option>
+                                                <option value="Retail">Retail</option>
+                                                <option value="Sports">Sports</option>
+                                                <option value="Travel & Leisure">Travel & Leisure</option>
+                                                <option value="Wholesale Distribution & Supply">Wholesale Distribution & Supply</option>
+                                                <option value="Unclassified">Unclassified</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="filters-actions">
+                                    <button type="button" class="btn-mini btn-secondary" onclick="window.theodoreUI.clearFilters()">
+                                        Clear Filters
+                                    </button>
+                                    <span class="filter-status" id="filterStatus">No filters active</span>
+                                </div>
                             </div>
                         </div>
 
@@ -382,6 +471,160 @@
                         <h4>Processing Results</h4>
                         <div id="batchResultsContent">
                             <!-- Results will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classification Analytics Tab -->
+            <div id="classificationTab" class="tab-content">
+                <div class="search-card">
+                    <h3 style="margin-bottom: 24px; color: var(--text-primary);">🏷️ SaaS Classification Analytics</h3>
+                    <p style="margin-bottom: 24px; color: var(--text-secondary); font-size: 14px;">
+                        Analyze and export business model classification data for companies in the Theodore database.
+                    </p>
+                    
+                    <!-- Classification Overview Stats -->
+                    <div class="classification-overview" id="classificationOverview">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number" id="totalCompanies">-</div>
+                                <div class="stat-label">Total Companies</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="classifiedCompanies">-</div>
+                                <div class="stat-label">Classified</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="saasCompanies">-</div>
+                                <div class="stat-label">SaaS Companies</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="classificationPercentage">-</div>
+                                <div class="stat-label">Classification %</div>
+                            </div>
+                        </div>
+                        
+                        <div class="confidence-distribution" id="confidenceDistribution">
+                            <h4>Classification Confidence</h4>
+                            <div class="confidence-bars">
+                                <div class="confidence-bar">
+                                    <span class="confidence-label">High (≥80%)</span>
+                                    <div class="confidence-progress">
+                                        <div class="confidence-fill high" id="highConfidenceBar"></div>
+                                    </div>
+                                    <span class="confidence-count" id="highConfidenceCount">0</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <span class="confidence-label">Medium (60-79%)</span>
+                                    <div class="confidence-progress">
+                                        <div class="confidence-fill medium" id="mediumConfidenceBar"></div>
+                                    </div>
+                                    <span class="confidence-count" id="mediumConfidenceCount">0</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <span class="confidence-label">Low (<60%)</span>
+                                    <div class="confidence-progress">
+                                        <div class="confidence-fill low" id="lowConfidenceBar"></div>
+                                    </div>
+                                    <span class="confidence-count" id="lowConfidenceCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Categories -->
+                    <div class="top-categories" id="topCategories">
+                        <h4>Top Categories</h4>
+                        <div class="categories-list" id="categoriesList">
+                            <!-- Categories will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Batch Classification Section -->
+                    <div class="batch-classification-section" id="batchClassificationSection">
+                        <h4>Batch Classification</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                            Automatically classify unclassified companies using AI business model analysis.
+                        </p>
+                        
+                        <div class="batch-classification-stats" id="batchClassificationStats">
+                            <div class="batch-stat">
+                                <span class="batch-stat-number" id="unclassifiedCount">-</span>
+                                <span class="batch-stat-label">Unclassified Companies</span>
+                            </div>
+                        </div>
+                        
+                        <div class="batch-classification-controls">
+                            <div class="batch-control-group">
+                                <label for="batchClassificationSize" class="form-label">Batch Size</label>
+                                <select id="batchClassificationSize" class="form-input batch-size-select">
+                                    <option value="5">5 companies (test)</option>
+                                    <option value="10" selected>10 companies</option>
+                                    <option value="25">25 companies</option>
+                                    <option value="50">50 companies (max)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="batch-control-group">
+                                <label>
+                                    <input type="checkbox" id="forceReclassify">
+                                    Force reclassify all companies
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="batch-classification-actions">
+                            <button type="button" class="btn btn-secondary" onclick="window.theodoreUI.loadUnclassifiedCompanies()">
+                                🔄 Refresh Count
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="window.theodoreUI.startBatchClassification()" id="startBatchClassificationBtn">
+                                🏷️ Start Batch Classification
+                            </button>
+                        </div>
+                        
+                        <!-- Batch Classification Progress -->
+                        <div class="batch-classification-progress hidden" id="batchClassificationProgress">
+                            <div class="progress-header">
+                                <h5>Classification Progress</h5>
+                                <span class="progress-status" id="batchProgressStatus">Initializing...</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="batchProgressFill" style="width: 0%"></div>
+                            </div>
+                            <div class="progress-details">
+                                <span id="batchProgressText">0/0 companies processed</span>
+                                <span id="batchProgressSuccess">0 successful</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Batch Classification Results -->
+                        <div class="batch-classification-results hidden" id="batchClassificationResults">
+                            <h5>Classification Results</h5>
+                            <div id="batchClassificationResultsContent">
+                                <!-- Results will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Section -->
+                    <div class="export-section">
+                        <h4>Export Classification Data</h4>
+                        <div class="export-options">
+                            <div class="export-option">
+                                <label>
+                                    <input type="checkbox" id="includeUnclassified" checked>
+                                    Include unclassified companies
+                                </label>
+                            </div>
+                        </div>
+                        <div class="export-actions">
+                            <button type="button" class="btn btn-secondary" onclick="window.theodoreUI.exportClassificationData('json')">
+                                📄 Export JSON
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="window.theodoreUI.exportClassificationData('csv')">
+                                📊 Export CSV
+                            </button>
                         </div>
                     </div>
                 </div>

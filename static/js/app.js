@@ -83,6 +83,17 @@ class TheodoreUI {
         tabs.forEach(tab => {
             tab.addEventListener('click', this.handleTabSwitch.bind(this));
         });
+
+        // Filter change listeners
+        const businessModelFilter = document.getElementById('businessModelFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        
+        if (businessModelFilter) {
+            businessModelFilter.addEventListener('change', this.updateFilterStatus.bind(this));
+        }
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', this.updateFilterStatus.bind(this));
+        }
     }
 
     setupFormValidation() {
@@ -154,6 +165,9 @@ class TheodoreUI {
         // Show discovery progress
         this.showDiscoveryProgress(companyName);
 
+        // Get active filters
+        const activeFilters = this.getActiveFilters();
+
         try {
             const response = await fetch('/api/discover', {
                 method: 'POST',
@@ -162,7 +176,8 @@ class TheodoreUI {
                 },
                 body: JSON.stringify({
                     company_name: companyName,
-                    limit: parseInt(limit)
+                    limit: parseInt(limit),
+                    ...activeFilters
                 })
             });
 
@@ -517,6 +532,11 @@ class TheodoreUI {
         if (tabId === 'batchTab') {
             this.initializeBatchProcessing();
         }
+        
+        // If switching to classification tab, load classification analytics
+        if (tabId === 'classificationTab') {
+            this.loadClassificationAnalytics();
+        }
     }
 
     displayResults(data) {
@@ -592,6 +612,7 @@ class TheodoreUI {
         const researchStatusBadge = this.getResearchStatusBadge(result.research_status);
         const researchControls = this.getResearchControls(result);
         const progressId = `progress-${result.company_name.replace(/\s+/g, '-')}`;
+        const classificationBadge = this.createClassificationBadge(result);
 
         return `
             <div class="result-card" data-score="${scoreClass}" data-company-name="${this.escapeHtml(result.company_name)}" data-website="${this.escapeHtml(result.website || '')}">
@@ -602,6 +623,7 @@ class TheodoreUI {
                             ${researchStatusBadge}
                         </div>
                         <div class="result-type">${this.escapeHtml(result.relationship_type || 'Similar Company')}</div>
+                        ${classificationBadge}
                     </div>
                     <div class="result-score">
                         <div class="score-value">${(result.similarity_score * 100).toFixed(0)}%</div>
@@ -636,6 +658,108 @@ class TheodoreUI {
                     </div>
                     <div class="progress-text">Initializing...</div>
                     <div class="progress-details" style="display: none; font-size: 0.8em; margin-top: 5px; opacity: 0.8; white-space: pre-line;"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    createClassificationBadge(result) {
+        // Check if classification data exists
+        if (!result.saas_classification && !result.is_saas) {
+            return ''; // No classification data available
+        }
+
+        const isSaas = result.is_saas;
+        const category = result.saas_classification || 'Unclassified';
+        const confidence = result.classification_confidence;
+
+        return `
+            <div class="classification-badge">
+                <span class="saas-indicator ${isSaas ? 'saas' : 'non-saas'}">
+                    ${isSaas ? 'SaaS' : 'Non-SaaS'}
+                </span>
+                <span class="category-tag">${this.escapeHtml(category)}</span>
+                ${confidence ? `<span class="confidence-score">${(confidence * 100).toFixed(0)}%</span>` : ''}
+            </div>
+        `;
+    }
+
+    createTableClassificationBadge(company) {
+        // Check if classification data exists
+        if (!company.saas_classification) {
+            return '<span class="no-classification">Not classified</span>';
+        }
+
+        const isSaas = company.is_saas;
+        const category = company.saas_classification;
+        const confidence = company.classification_confidence;
+
+        return `
+            <div class="table-classification">
+                <div class="classification-type">
+                    <span class="saas-indicator-small ${isSaas ? 'saas' : 'non-saas'}">
+                        ${isSaas ? 'SaaS' : 'Non-SaaS'}
+                    </span>
+                </div>
+                <div class="classification-category">${this.escapeHtml(category)}</div>
+                ${confidence ? `<div class="classification-confidence">${(confidence * 100).toFixed(0)}% confidence</div>` : ''}
+            </div>
+        `;
+    }
+
+    renderClassificationSection(company) {
+        // Check if classification data exists
+        if (!company.saas_classification && !company.is_saas) {
+            return `
+                <div class="detail-section">
+                    <h4>🏷️ Business Model Classification</h4>
+                    <div class="classification-missing">
+                        <p style="color: var(--text-muted); font-style: italic;">
+                            ⏳ Not yet classified. Run classification to analyze this company's business model.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        const isSaas = company.is_saas;
+        const category = company.saas_classification || 'Unclassified';
+        const confidence = company.classification_confidence;
+        const justification = company.classification_justification;
+        const timestamp = company.classification_timestamp;
+
+        return `
+            <div class="detail-section">
+                <h4>🏷️ Business Model Classification</h4>
+                <div class="classification-details">
+                    <div class="classification-row">
+                        <span class="label">Type:</span>
+                        <span class="saas-badge ${isSaas ? 'saas' : 'non-saas'}">
+                            ${isSaas ? 'SaaS' : 'Non-SaaS'}
+                        </span>
+                    </div>
+                    <div class="classification-row">
+                        <span class="label">Category:</span>
+                        <span class="category">${this.escapeHtml(category)}</span>
+                    </div>
+                    ${confidence ? `
+                        <div class="classification-row">
+                            <span class="label">Confidence:</span>
+                            <span class="confidence">${(confidence * 100).toFixed(1)}%</span>
+                        </div>
+                    ` : ''}
+                    ${justification ? `
+                        <div class="classification-row">
+                            <span class="label">Justification:</span>
+                            <span class="justification">${this.escapeHtml(justification)}</span>
+                        </div>
+                    ` : ''}
+                    ${timestamp ? `
+                        <div class="classification-row">
+                            <span class="label">Classified:</span>
+                            <span class="timestamp">${new Date(timestamp).toLocaleDateString()}</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -916,6 +1040,75 @@ class TheodoreUI {
                   .replace(/\n/g, '\\n')
                   .replace(/\r/g, '\\r')
                   .replace(/\t/g, '\\t');
+    }
+
+    // Filter Management Functions
+    toggleFilters() {
+        const content = document.getElementById('filtersContent');
+        const toggleText = document.getElementById('filtersToggleText');
+        const toggleIcon = document.getElementById('filtersToggleIcon');
+        
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            toggleText.textContent = 'Hide Filters';
+            toggleIcon.textContent = '▲';
+        } else {
+            content.style.display = 'none';
+            toggleText.textContent = 'Show Filters';
+            toggleIcon.textContent = '▼';
+        }
+    }
+
+    clearFilters() {
+        const businessModelFilter = document.getElementById('businessModelFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        
+        if (businessModelFilter) businessModelFilter.value = '';
+        if (categoryFilter) categoryFilter.value = '';
+        
+        this.updateFilterStatus();
+    }
+
+    updateFilterStatus() {
+        const businessModelFilter = document.getElementById('businessModelFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const filterStatus = document.getElementById('filterStatus');
+        
+        const activeFilters = [];
+        
+        if (businessModelFilter && businessModelFilter.value) {
+            const displayValue = businessModelFilter.value === 'saas' ? 'SaaS' : 'Non-SaaS';
+            activeFilters.push(`Type: ${displayValue}`);
+        }
+        
+        if (categoryFilter && categoryFilter.value) {
+            activeFilters.push(`Category: ${categoryFilter.value}`);
+        }
+        
+        if (activeFilters.length > 0) {
+            filterStatus.textContent = `Active: ${activeFilters.join(', ')}`;
+            filterStatus.style.color = 'var(--text-primary)';
+        } else {
+            filterStatus.textContent = 'No filters active';
+            filterStatus.style.color = 'var(--text-muted)';
+        }
+    }
+
+    getActiveFilters() {
+        const businessModelFilter = document.getElementById('businessModelFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        
+        const filters = {};
+        
+        if (businessModelFilter && businessModelFilter.value) {
+            filters.business_model = businessModelFilter.value;
+        }
+        
+        if (categoryFilter && categoryFilter.value) {
+            filters.category = categoryFilter.value;
+        }
+        
+        return filters;
     }
 
     renderJobListingsDetails(jobDetails) {
@@ -2130,6 +2323,9 @@ class TheodoreUI {
                             <p><strong>Geographic Scope:</strong> ${displayText(company.geographic_scope)}</p>
                         </div>
 
+                        <!-- Business Model Classification -->
+                        ${this.renderClassificationSection(company)}
+
                         <!-- Business Intelligence -->
                         <div class="detail-section">
                             <h4>💼 Business Intelligence</h4>
@@ -2613,6 +2809,7 @@ class TheodoreUI {
                         <th>Website</th>
                         <th>Industry</th>
                         <th>Business Model</th>
+                        <th>Classification</th>
                         <th>Sales Intelligence</th>
                         <th>Last Updated</th>
                         <th>Actions</th>
@@ -2632,6 +2829,11 @@ class TheodoreUI {
                             </td>
                             <td>${this.escapeHtml(company.industry || 'Unknown')}</td>
                             <td>${this.escapeHtml(company.business_model || 'Unknown')}</td>
+                            <td>
+                                <div class="classification-info">
+                                    ${this.createTableClassificationBadge(company)}
+                                </div>
+                            </td>
                             <td>
                                 <div class="sales-intelligence-preview">
                                     ${company.has_sales_intelligence ? 
@@ -3256,6 +3458,309 @@ class TheodoreUI {
         resultsContent.innerHTML = resultsHTML;
         
         this.showSuccess(`Batch processing completed: ${successCount}/${results.length} companies processed successfully`);
+    }
+
+    // =============================================================================
+    // CLASSIFICATION ANALYTICS METHODS (Phase 3)
+    // =============================================================================
+
+    async loadClassificationAnalytics() {
+        try {
+            console.log('📊 Loading classification analytics...');
+            
+            // Load stats, categories, and unclassified count in parallel
+            const [statsResponse, categoriesResponse, unclassifiedResponse] = await Promise.all([
+                fetch('/api/classification/stats'),
+                fetch('/api/classification/categories'),
+                fetch('/api/classification/unclassified')
+            ]);
+            
+            if (!statsResponse.ok || !categoriesResponse.ok || !unclassifiedResponse.ok) {
+                throw new Error('Failed to load classification data');
+            }
+            
+            const stats = await statsResponse.json();
+            const categories = await categoriesResponse.json();
+            const unclassified = await unclassifiedResponse.json();
+            
+            this.updateClassificationStats(stats);
+            this.updateTopCategories(categories.categories.slice(0, 10)); // Top 10 categories
+            this.updateUnclassifiedCount(unclassified.total_unclassified);
+            
+            console.log('✅ Classification analytics loaded successfully');
+            
+        } catch (error) {
+            console.error('❌ Failed to load classification analytics:', error);
+            this.showError('Failed to load classification analytics. Please try again.');
+        }
+    }
+
+    updateClassificationStats(stats) {
+        // Update main stats
+        document.getElementById('totalCompanies').textContent = stats.total_companies;
+        document.getElementById('classifiedCompanies').textContent = stats.classified_companies;
+        document.getElementById('saasCompanies').textContent = stats.saas_companies;
+        document.getElementById('classificationPercentage').textContent = `${stats.classification_percentage}%`;
+        
+        // Update confidence distribution
+        const totalClassified = stats.classified_companies;
+        const highCount = stats.confidence_distribution.high;
+        const mediumCount = stats.confidence_distribution.medium;
+        const lowCount = stats.confidence_distribution.low;
+        
+        // Calculate percentages for progress bars
+        const highPercent = totalClassified > 0 ? (highCount / totalClassified) * 100 : 0;
+        const mediumPercent = totalClassified > 0 ? (mediumCount / totalClassified) * 100 : 0;
+        const lowPercent = totalClassified > 0 ? (lowCount / totalClassified) * 100 : 0;
+        
+        // Update progress bars with animation
+        setTimeout(() => {
+            document.getElementById('highConfidenceBar').style.width = `${highPercent}%`;
+            document.getElementById('mediumConfidenceBar').style.width = `${mediumPercent}%`;
+            document.getElementById('lowConfidenceBar').style.width = `${lowPercent}%`;
+        }, 100);
+        
+        // Update counts
+        document.getElementById('highConfidenceCount').textContent = highCount;
+        document.getElementById('mediumConfidenceCount').textContent = mediumCount;
+        document.getElementById('lowConfidenceCount').textContent = lowCount;
+    }
+
+    updateTopCategories(categories) {
+        const categoriesList = document.getElementById('categoriesList');
+        
+        if (!categories || categories.length === 0) {
+            categoriesList.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No categories found</p>';
+            return;
+        }
+        
+        const categoriesHTML = categories.map(category => `
+            <div class="category-item">
+                <span class="category-name">${this.escapeHtml(category.name)}</span>
+                <div>
+                    <span class="category-count">${category.count}</span>
+                    ${!category.in_taxonomy ? '<span class="category-badge">Custom</span>' : ''}
+                </div>
+            </div>
+        `).join('');
+        
+        categoriesList.innerHTML = categoriesHTML;
+    }
+
+    async exportClassificationData(format) {
+        try {
+            const includeUnclassified = document.getElementById('includeUnclassified').checked;
+            const url = `/api/classification/export?format=${format}&include_unclassified=${includeUnclassified}`;
+            
+            console.log(`📊 Exporting classification data as ${format.toUpperCase()}...`);
+            
+            if (format === 'csv') {
+                // For CSV, trigger a download
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `theodore_classification_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.showSuccess('CSV export started. Check your downloads folder.');
+            } else {
+                // For JSON, fetch and display
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+                
+                const data = await response.json();
+                
+                // Create a downloadable JSON file
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `theodore_classification_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(downloadUrl);
+                
+                this.showSuccess(`JSON export completed. ${data.total_companies} companies exported.`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Export failed:', error);
+            this.showError('Export failed. Please try again.');
+        }
+    }
+
+    // =============================================================================
+    // BATCH CLASSIFICATION METHODS (Phase 4)
+    // =============================================================================
+
+    updateUnclassifiedCount(count) {
+        document.getElementById('unclassifiedCount').textContent = count;
+    }
+
+    async loadUnclassifiedCompanies() {
+        try {
+            console.log('🔄 Refreshing unclassified companies count...');
+            
+            const response = await fetch('/api/classification/unclassified');
+            if (!response.ok) {
+                throw new Error('Failed to load unclassified companies');
+            }
+            
+            const data = await response.json();
+            this.updateUnclassifiedCount(data.total_unclassified);
+            
+            this.showSuccess(`Found ${data.total_unclassified} unclassified companies`);
+            
+        } catch (error) {
+            console.error('❌ Failed to load unclassified companies:', error);
+            this.showError('Failed to refresh unclassified count. Please try again.');
+        }
+    }
+
+    async startBatchClassification() {
+        try {
+            const batchSize = parseInt(document.getElementById('batchClassificationSize').value);
+            const forceReclassify = document.getElementById('forceReclassify').checked;
+            const startBtn = document.getElementById('startBatchClassificationBtn');
+            
+            console.log(`🏷️ Starting batch classification: ${batchSize} companies, force: ${forceReclassify}`);
+            
+            // Disable button and show progress
+            startBtn.disabled = true;
+            startBtn.textContent = '🔄 Classifying...';
+            this.showBatchClassificationProgress();
+            
+            const response = await fetch('/api/classification/batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    batch_size: batchSize,
+                    force_reclassify: forceReclassify
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Batch classification request failed');
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.updateBatchClassificationProgress(100, result.processed, result.processed, result.successful);
+                this.showBatchClassificationResults(result);
+                this.showSuccess(`Batch classification completed: ${result.successful}/${result.processed} companies classified successfully`);
+                
+                // Refresh the analytics after classification
+                setTimeout(() => {
+                    this.loadClassificationAnalytics();
+                }, 1000);
+            } else {
+                throw new Error(result.message || 'Batch classification failed');
+            }
+            
+        } catch (error) {
+            console.error('❌ Batch classification failed:', error);
+            this.showError('Batch classification failed. Please try again.');
+            this.hideBatchClassificationProgress();
+        } finally {
+            // Re-enable button
+            const startBtn = document.getElementById('startBatchClassificationBtn');
+            startBtn.disabled = false;
+            startBtn.textContent = '🏷️ Start Batch Classification';
+        }
+    }
+
+    showBatchClassificationProgress() {
+        const progressContainer = document.getElementById('batchClassificationProgress');
+        const resultsContainer = document.getElementById('batchClassificationResults');
+        
+        if (progressContainer) {
+            progressContainer.classList.remove('hidden');
+        }
+        if (resultsContainer) {
+            resultsContainer.classList.add('hidden');
+        }
+        
+        // Reset progress
+        this.updateBatchClassificationProgress(0, 0, 0, 0);
+        document.getElementById('batchProgressStatus').textContent = 'Starting classification...';
+    }
+
+    hideBatchClassificationProgress() {
+        const progressContainer = document.getElementById('batchClassificationProgress');
+        if (progressContainer) {
+            progressContainer.classList.add('hidden');
+        }
+    }
+
+    updateBatchClassificationProgress(percentage, current, total, successful) {
+        document.getElementById('batchProgressFill').style.width = `${percentage}%`;
+        document.getElementById('batchProgressText').textContent = `${current}/${total} companies processed`;
+        document.getElementById('batchProgressSuccess').textContent = `${successful} successful`;
+        
+        if (percentage === 100) {
+            document.getElementById('batchProgressStatus').textContent = 'Classification completed';
+        } else {
+            document.getElementById('batchProgressStatus').textContent = `Processing company ${current + 1} of ${total}...`;
+        }
+    }
+
+    showBatchClassificationResults(result) {
+        const resultsContainer = document.getElementById('batchClassificationResults');
+        const resultsContent = document.getElementById('batchClassificationResultsContent');
+        
+        if (!result.results || !resultsContainer || !resultsContent) {
+            return;
+        }
+        
+        resultsContainer.classList.remove('hidden');
+        
+        const successCount = result.successful || 0;
+        const failureCount = result.processed - successCount;
+        
+        const resultsHTML = `
+            <div class="batch-summary">
+                <div class="batch-summary-stats">
+                    <div class="batch-stat success">
+                        <span class="batch-stat-number">${successCount}</span>
+                        <span class="batch-stat-label">Successful</span>
+                    </div>
+                    <div class="batch-stat failure">
+                        <span class="batch-stat-number">${failureCount}</span>
+                        <span class="batch-stat-label">Failed</span>
+                    </div>
+                    <div class="batch-stat total">
+                        <span class="batch-stat-number">${result.processed}</span>
+                        <span class="batch-stat-label">Total</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="batch-results-list">
+                ${result.results.map(item => `
+                    <div class="batch-result-item ${item.status}">
+                        <div class="batch-result-company">${this.escapeHtml(item.company_name)}</div>
+                        <div class="batch-result-details">
+                            ${item.status === 'success' ? `
+                                <span class="batch-result-category">${this.escapeHtml(item.category || 'Unknown')}</span>
+                                <span class="batch-result-confidence">${Math.round((item.confidence || 0) * 100)}% confidence</span>
+                                <span>${item.is_saas ? '✅ SaaS' : '❌ Non-SaaS'}</span>
+                            ` : `
+                                <span class="batch-result-error">❌ ${this.escapeHtml(item.error || 'Classification failed')}</span>
+                            `}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        resultsContent.innerHTML = resultsHTML;
     }
 }
 

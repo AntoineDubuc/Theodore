@@ -235,10 +235,6 @@ def discover_similar_companies():
         company_name = data.get('company_name', '').strip()
         limit = min(int(data.get('limit', 5)), 20)  # Max 20 results
         
-        # Extract filter parameters
-        business_model_filter = data.get('business_model')  # 'saas' or 'non-saas'
-        category_filter = data.get('category')  # specific category name
-        
         if not company_name:
             return jsonify({
                 "error": "Company name is required",
@@ -278,7 +274,6 @@ def discover_similar_companies():
             
             # Initialize research manager if not exists
             if not hasattr(pipeline, 'research_manager'):
-                from src.legacy.research_manager import ResearchManager
                 pipeline.research_manager = ResearchManager(
                     intelligent_scraper=pipeline.scraper,
                     pinecone_client=pipeline.pinecone_client,
@@ -291,24 +286,6 @@ def discover_similar_companies():
             # Format response for UI
             formatted_results = []
             for company in enhanced_companies:
-                # Get classification data if available in database
-                classification_data = {}
-                if company.in_database and company.database_id:
-                    try:
-                        # Fetch classification from Pinecone metadata
-                        fetch_result = pipeline.pinecone_client.index.fetch(ids=[company.database_id])
-                        if fetch_result.vectors and company.database_id in fetch_result.vectors:
-                            metadata = fetch_result.vectors[company.database_id].metadata
-                            if metadata:
-                                classification_data = {
-                                    "saas_classification": metadata.get('saas_classification'),
-                                    "classification_confidence": metadata.get('classification_confidence'),
-                                    "classification_justification": metadata.get('classification_justification'),
-                                    "is_saas": metadata.get('is_saas')
-                                }
-                    except Exception as e:
-                        print(f"Warning: Could not fetch classification for {company.name}: {e}")
-                
                 formatted_results.append({
                     "company_name": company.name,
                     "website": company.website,
@@ -321,38 +298,14 @@ def discover_similar_companies():
                     "sources": company.sources,
                     "research_status": company.research_status.value,
                     "in_database": company.in_database,
-                    "database_id": company.database_id,
-                    **classification_data  # Include classification data if available
+                    "database_id": company.database_id
                 })
-            
-            # Apply filters to results
-            filtered_results = formatted_results
-            if business_model_filter or category_filter:
-                filtered_results = []
-                for result in formatted_results:
-                    # Check business model filter
-                    if business_model_filter:
-                        if business_model_filter == 'saas' and not result.get('is_saas'):
-                            continue
-                        elif business_model_filter == 'non-saas' and result.get('is_saas'):
-                            continue
-                    
-                    # Check category filter
-                    if category_filter and result.get('saas_classification') != category_filter:
-                        continue
-                    
-                    filtered_results.append(result)
             
             response = {
                 "success": True,
                 "target_company": company_name,
-                "results": filtered_results,
-                "total_found": len(filtered_results),
-                "total_before_filter": len(formatted_results),
-                "filters_applied": {
-                    "business_model": business_model_filter,
-                    "category": category_filter
-                } if (business_model_filter or category_filter) else None,
+                "results": formatted_results,
+                "total_found": len(formatted_results),
                 "discovery_method": "Enhanced Multi-Source Discovery",
                 "sources_used": list(set([s for r in enhanced_results for s in r.get("sources", [])])),
                 "timestamp": datetime.utcnow().isoformat()
@@ -532,40 +485,6 @@ def settings():
     """Settings page"""
     return render_template('settings.html')
 
-@app.route('/docs/features/sheets_integration/')
-def sheets_integration_docs():
-    """Serve Google Sheets integration documentation"""
-    try:
-        from pathlib import Path
-        docs_path = Path('docs/features/sheets_integration/README.md')
-        if docs_path.exists():
-            with open(docs_path, 'r') as f:
-                content = f.read()
-            # Simple markdown to HTML conversion for basic display
-            html_content = content.replace('\n', '<br>').replace('# ', '<h1>').replace('## ', '<h2>')
-            return f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Google Sheets Integration - Theodore Documentation</title>
-                <style>
-                    body {{ font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }}
-                    h1, h2 {{ color: #3b82f6; }}
-                    code {{ background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 4px; }}
-                </style>
-            </head>
-            <body>
-                <div>{html_content}</div>
-                <hr>
-                <p><a href="/settings">← Back to Settings</a></p>
-            </body>
-            </html>
-            """
-        else:
-            return "<h1>Documentation not found</h1><p><a href='/settings'>← Back to Settings</a></p>"
-    except Exception as e:
-        return f"<h1>Error loading documentation</h1><p>{str(e)}</p><p><a href='/settings'>← Back to Settings</a></p>"
-
 @app.route('/api/settings')
 def get_settings():
     """Get current system settings and configuration"""
@@ -616,19 +535,6 @@ def get_settings():
             'patterns_count': get_patterns_count()
         }
         
-        # Google Sheets integration
-        google_sheets = {
-            'service_account_configured': check_sheets_service_account(),
-            'sheet_url': 'https://docs.google.com/spreadsheets/d/1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk/edit#gid=0',
-            'sheet_id': '1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk',
-            'features_available': [
-                'Batch Processing',
-                'Progress Tracking', 
-                'Error Recovery',
-                'Real-time Updates'
-            ]
-        }
-        
         # Performance metrics
         performance = {
             'avg_processing_time': '45',
@@ -643,8 +549,7 @@ def get_settings():
             'prompts': prompts,
             'system_status': system_status,
             'extraction_settings': extraction_settings,
-            'performance': performance,
-            'google_sheets': google_sheets
+            'performance': performance
         })
         
     except Exception as e:
@@ -861,63 +766,6 @@ def get_patterns_count():
     """Get count of active extraction patterns"""
     # This would count the actual patterns in the extraction system
     return 15
-
-def check_sheets_service_account():
-    """Check if Google Sheets service account is configured"""
-    try:
-        from pathlib import Path
-        service_account_file = Path('config/credentials/theodore-service-account.json')
-        return service_account_file.exists()
-    except Exception:
-        return False
-
-@app.route('/api/settings/test-sheets-connection', methods=['POST'])
-def test_sheets_connection():
-    """Test Google Sheets service account connection"""
-    try:
-        from pathlib import Path
-        
-        service_account_file = Path('config/credentials/theodore-service-account.json')
-        
-        if not service_account_file.exists():
-            return jsonify({
-                'success': False,
-                'message': 'Service account file not found. Check config/credentials/theodore-service-account.json'
-            })
-        
-        # Try to import and test the sheets client
-        try:
-            from src.sheets_integration import GoogleSheetsServiceClient
-            sheets_client = GoogleSheetsServiceClient(service_account_file)
-            
-            # Test connection by attempting to access the test sheet
-            sheet_id = '1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk'
-            
-            # Simple read test - get sheet metadata
-            sheet_info = sheets_client.service.spreadsheets().get(spreadsheetId=sheet_id).execute()
-            sheet_title = sheet_info.get('properties', {}).get('title', 'Unknown')
-            
-            return jsonify({
-                'success': True,
-                'message': f'✅ Connected successfully to sheet: "{sheet_title}"'
-            })
-            
-        except ImportError:
-            return jsonify({
-                'success': False,
-                'message': 'Google Sheets integration not available. Missing dependencies.'
-            })
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'message': f'Connection failed: {str(e)}'
-            })
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error testing connection: {str(e)}'
-        })
 
 @app.route('/api/save-researched-company', methods=['POST'])
 def save_researched_company():
@@ -1421,12 +1269,7 @@ def list_companies():
                 'industry': metadata.get('industry', ''),
                 'business_model': metadata.get('business_model', ''),
                 'last_updated': metadata.get('last_updated', ''),
-                'has_sales_intelligence': bool(metadata.get('has_description', False) or metadata.get('company_description', '')),
-                # Classification data
-                'saas_classification': metadata.get('saas_classification'),
-                'classification_confidence': metadata.get('classification_confidence'),
-                'classification_justification': metadata.get('classification_justification'),
-                'is_saas': metadata.get('is_saas')
+                'has_sales_intelligence': bool(metadata.get('has_description', False) or metadata.get('company_description', ''))
             })
         
         return jsonify({
@@ -1557,7 +1400,6 @@ def start_research():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1591,7 +1433,6 @@ def start_bulk_research():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1619,7 +1460,6 @@ def get_research_progress(job_id):
         
         # Initialize research manager if not exists  
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1648,7 +1488,6 @@ def get_all_research_progress():
         
         # Initialize research manager if not exists  
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1679,7 +1518,6 @@ def cleanup_research_jobs():
         
         # Initialize research manager if not exists  
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1705,7 +1543,6 @@ def get_available_research_prompts():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1738,7 +1575,6 @@ def estimate_research_cost():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1777,7 +1613,6 @@ def start_structured_research():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1816,7 +1651,6 @@ def get_structured_research_session(session_id):
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1873,7 +1707,6 @@ def get_recent_structured_sessions():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1917,7 +1750,6 @@ def export_structured_research_results(session_id):
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1976,7 +1808,7 @@ def classify_unknown_industries():
             })
         
         # Import the prompt
-        from src.legacy.similarity_prompts import INDUSTRY_CLASSIFICATION_FROM_RESEARCH_PROMPT
+        from src.similarity_prompts import INDUSTRY_CLASSIFICATION_FROM_RESEARCH_PROMPT
         
         classified_count = 0
         results_log = []
@@ -2060,423 +1892,6 @@ def classify_unknown_industries():
     except Exception as e:
         return jsonify({'error': f'Failed to classify industries: {str(e)}'}), 500
 
-
-# =============================================================================
-# CLASSIFICATION API ENDPOINTS (Phase 3)
-# =============================================================================
-
-@app.route('/api/classification/stats', methods=['GET'])
-def get_classification_stats():
-    """Get overall classification statistics"""
-    try:
-        if not pipeline:
-            return jsonify({'error': 'Theodore pipeline not initialized'}), 500
-        
-        # Query all vectors to get classification stats
-        query_result = pipeline.pinecone_client.index.query(
-            vector=[0.0] * 1536,
-            top_k=1000,  # Get more results for stats
-            include_metadata=True,
-            include_values=False
-        )
-        
-        stats = {
-            'total_companies': len(query_result.matches),
-            'classified_companies': 0,
-            'saas_companies': 0,
-            'non_saas_companies': 0,
-            'categories': {},
-            'confidence_distribution': {'high': 0, 'medium': 0, 'low': 0}
-        }
-        
-        for match in query_result.matches:
-            metadata = match.metadata or {}
-            
-            # Check if company is classified
-            is_classified = metadata.get('saas_classification') is not None
-            if is_classified:
-                stats['classified_companies'] += 1
-                
-                # Count SaaS vs Non-SaaS
-                if metadata.get('is_saas'):
-                    stats['saas_companies'] += 1
-                else:
-                    stats['non_saas_companies'] += 1
-                
-                # Count categories
-                category = metadata.get('saas_classification', 'Unknown')
-                stats['categories'][category] = stats['categories'].get(category, 0) + 1
-                
-                # Confidence distribution
-                confidence = metadata.get('classification_confidence', 0)
-                if confidence >= 0.8:
-                    stats['confidence_distribution']['high'] += 1
-                elif confidence >= 0.6:
-                    stats['confidence_distribution']['medium'] += 1
-                else:
-                    stats['confidence_distribution']['low'] += 1
-        
-        # Calculate percentages
-        total = stats['total_companies']
-        if total > 0:
-            stats['classification_percentage'] = round((stats['classified_companies'] / total) * 100, 1)
-            stats['saas_percentage'] = round((stats['saas_companies'] / total) * 100, 1)
-        else:
-            stats['classification_percentage'] = 0
-            stats['saas_percentage'] = 0
-        
-        return jsonify(stats)
-        
-    except Exception as e:
-        return jsonify({'error': f'Failed to get classification stats: {str(e)}'}), 500
-
-@app.route('/api/classification/export', methods=['GET'])
-def export_classification_data():
-    """Export classification data in CSV format"""
-    try:
-        if not pipeline:
-            return jsonify({'error': 'Theodore pipeline not initialized'}), 500
-        
-        # Get export format from query params
-        export_format = request.args.get('format', 'json').lower()
-        include_unclassified = request.args.get('include_unclassified', 'false').lower() == 'true'
-        
-        # Query all vectors
-        query_result = pipeline.pinecone_client.index.query(
-            vector=[0.0] * 1536,
-            top_k=1000,
-            include_metadata=True,
-            include_values=False
-        )
-        
-        export_data = []
-        for match in query_result.matches:
-            metadata = match.metadata or {}
-            
-            # Skip unclassified if not requested
-            is_classified = metadata.get('saas_classification') is not None
-            if not include_unclassified and not is_classified:
-                continue
-            
-            company_data = {
-                'company_name': metadata.get('company_name', 'Unknown'),
-                'website': metadata.get('website', ''),
-                'industry': metadata.get('industry', ''),
-                'is_saas': metadata.get('is_saas'),
-                'saas_classification': metadata.get('saas_classification'),
-                'classification_confidence': metadata.get('classification_confidence'),
-                'classification_justification': metadata.get('classification_justification'),
-                'database_id': match.id,
-                'classification_timestamp': metadata.get('classification_timestamp')
-            }
-            export_data.append(company_data)
-        
-        if export_format == 'csv':
-            import csv
-            from io import StringIO
-            
-            output = StringIO()
-            if export_data:
-                writer = csv.DictWriter(output, fieldnames=export_data[0].keys())
-                writer.writeheader()
-                writer.writerows(export_data)
-            
-            from flask import Response
-            return Response(
-                output.getvalue(),
-                mimetype='text/csv',
-                headers={
-                    'Content-Disposition': f'attachment; filename=theodore_classification_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
-                }
-            )
-        else:
-            # JSON export
-            return jsonify({
-                'export_timestamp': datetime.now().isoformat(),
-                'total_companies': len(export_data),
-                'format': 'json',
-                'data': export_data
-            })
-            
-    except Exception as e:
-        return jsonify({'error': f'Failed to export classification data: {str(e)}'}), 500
-
-@app.route('/api/classification/company/<company_id>', methods=['GET'])
-def get_company_classification(company_id):
-    """Get detailed classification information for a specific company"""
-    try:
-        if not pipeline:
-            return jsonify({'error': 'Theodore pipeline not initialized'}), 500
-        
-        # Fetch company from Pinecone
-        fetch_result = pipeline.pinecone_client.index.fetch(ids=[company_id])
-        
-        if not fetch_result.vectors or company_id not in fetch_result.vectors:
-            return jsonify({'error': 'Company not found'}), 404
-        
-        vector_data = fetch_result.vectors[company_id]
-        metadata = vector_data.metadata or {}
-        
-        classification_data = {
-            'company_id': company_id,
-            'company_name': metadata.get('company_name', 'Unknown'),
-            'website': metadata.get('website', ''),
-            'industry': metadata.get('industry', ''),
-            'is_saas': metadata.get('is_saas'),
-            'saas_classification': metadata.get('saas_classification'),
-            'classification_confidence': metadata.get('classification_confidence'),
-            'classification_justification': metadata.get('classification_justification'),
-            'classification_timestamp': metadata.get('classification_timestamp'),
-            'is_classified': metadata.get('saas_classification') is not None
-        }
-        
-        return jsonify(classification_data)
-        
-    except Exception as e:
-        return jsonify({'error': f'Failed to get company classification: {str(e)}'}), 500
-
-@app.route('/api/classification/categories', methods=['GET'])
-def get_classification_categories():
-    """Get all available classification categories with counts"""
-    try:
-        if not pipeline:
-            return jsonify({'error': 'Theodore pipeline not initialized'}), 500
-        
-        # Import classification taxonomy
-        try:
-            from src.classification.classification_prompts import SAAS_BUSINESS_MODEL_TAXONOMY
-            taxonomy_categories = list(SAAS_BUSINESS_MODEL_TAXONOMY.keys())
-        except ImportError:
-            # Fallback categories if taxonomy not available
-            taxonomy_categories = [
-                "AdTech", "AI/ML Platform", "Analytics Platform", "API Management",
-                "Business Intelligence", "CRM", "Customer Support", "DevOps Platform",
-                "E-commerce Platform", "HR Tech", "IT Consulting Services", "Marketing Automation",
-                "Project Management", "Security Platform", "Social Media Management"
-            ]
-        
-        # Query database to get actual usage counts
-        query_result = pipeline.pinecone_client.index.query(
-            vector=[0.0] * 1536,
-            top_k=1000,
-            include_metadata=True,
-            include_values=False
-        )
-        
-        category_counts = {}
-        total_classified = 0
-        
-        for match in query_result.matches:
-            metadata = match.metadata or {}
-            category = metadata.get('saas_classification')
-            
-            if category:
-                total_classified += 1
-                category_counts[category] = category_counts.get(category, 0) + 1
-        
-        # Build response with taxonomy and actual counts
-        categories = []
-        for category in taxonomy_categories:
-            categories.append({
-                'name': category,
-                'count': category_counts.get(category, 0),
-                'in_taxonomy': True
-            })
-        
-        # Add any categories found in database but not in taxonomy
-        for category, count in category_counts.items():
-            if category not in taxonomy_categories:
-                categories.append({
-                    'name': category,
-                    'count': count,
-                    'in_taxonomy': False
-                })
-        
-        # Sort by count (descending)
-        categories.sort(key=lambda x: x['count'], reverse=True)
-        
-        return jsonify({
-            'categories': categories,
-            'total_categories': len(categories),
-            'total_classified_companies': total_classified,
-            'taxonomy_categories': len(taxonomy_categories)
-        })
-        
-    except Exception as e:
-        return jsonify({'error': f'Failed to get classification categories: {str(e)}'}), 500
-
-@app.route('/api/classification/batch', methods=['POST'])
-def batch_classify_companies():
-    """Classify multiple unclassified companies in batch"""
-    try:
-        if not pipeline:
-            return jsonify({'error': 'Theodore pipeline not initialized'}), 500
-        
-        data = request.get_json()
-        batch_size = min(int(data.get('batch_size', 10)), 50)  # Max 50 companies
-        force_reclassify = data.get('force_reclassify', False)
-        
-        # Query all companies to find unclassified ones
-        query_result = pipeline.pinecone_client.index.query(
-            vector=[0.0] * 1536,
-            top_k=1000,
-            include_metadata=True,
-            include_values=False
-        )
-        
-        # Filter for unclassified companies (or all if force_reclassify)
-        candidates = []
-        for match in query_result.matches:
-            metadata = match.metadata or {}
-            is_classified = metadata.get('saas_classification') is not None
-            
-            if force_reclassify or not is_classified:
-                company_name = metadata.get('company_name')
-                website = metadata.get('website', '')
-                industry = metadata.get('industry', '')
-                
-                if company_name:  # Only include companies with names
-                    candidates.append({
-                        'id': match.id,
-                        'name': company_name,
-                        'website': website,
-                        'industry': industry,
-                        'metadata': metadata
-                    })
-        
-        if not candidates:
-            return jsonify({
-                'success': False,
-                'message': 'No unclassified companies found',
-                'processed': 0,
-                'total_candidates': 0
-            })
-        
-        # Limit to batch size
-        companies_to_process = candidates[:batch_size]
-        
-        # Import classification system
-        try:
-            from src.classification.classification_system import SaaSBusinessModelClassifier
-            classifier = SaaSBusinessModelClassifier()
-        except ImportError:
-            return jsonify({'error': 'Classification system not available'}), 500
-        
-        results = []
-        successful_classifications = 0
-        
-        for i, company in enumerate(companies_to_process):
-            try:
-                print(f"🏷️ Classifying {i+1}/{len(companies_to_process)}: {company['name']}")
-                
-                # Prepare company data for classification
-                company_data = {
-                    'name': company['name'],
-                    'website': company['website'],
-                    'industry': company['industry'],
-                    'description': company['metadata'].get('value_proposition', ''),
-                    'products_services': company['metadata'].get('products_services_offered', '')
-                }
-                
-                # Perform classification
-                classification_result = classifier.classify_company(company_data)
-                
-                if classification_result and classification_result.get('success'):
-                    # Update company metadata with classification
-                    updated_metadata = company['metadata'].copy()
-                    updated_metadata.update({
-                        'is_saas': classification_result['is_saas'],
-                        'saas_classification': classification_result['category'],
-                        'classification_confidence': classification_result['confidence'],
-                        'classification_justification': classification_result['justification'],
-                        'classification_timestamp': datetime.now().isoformat()
-                    })
-                    
-                    # Update in Pinecone
-                    update_result = pipeline.pinecone_client.index.update(
-                        id=company['id'],
-                        metadata=updated_metadata
-                    )
-                    
-                    successful_classifications += 1
-                    results.append({
-                        'company_name': company['name'],
-                        'status': 'success',
-                        'category': classification_result['category'],
-                        'is_saas': classification_result['is_saas'],
-                        'confidence': classification_result['confidence']
-                    })
-                    
-                    print(f"✅ Successfully classified {company['name']} as {classification_result['category']}")
-                    
-                else:
-                    results.append({
-                        'company_name': company['name'],
-                        'status': 'failed',
-                        'error': 'Classification failed'
-                    })
-                    print(f"❌ Failed to classify {company['name']}")
-                    
-            except Exception as company_error:
-                results.append({
-                    'company_name': company['name'],
-                    'status': 'failed',
-                    'error': str(company_error)
-                })
-                print(f"❌ Error classifying {company['name']}: {company_error}")
-        
-        return jsonify({
-            'success': True,
-            'message': f'Batch classification completed: {successful_classifications}/{len(companies_to_process)} successful',
-            'processed': len(companies_to_process),
-            'successful': successful_classifications,
-            'total_candidates': len(candidates),
-            'results': results
-        })
-        
-    except Exception as e:
-        return jsonify({'error': f'Batch classification failed: {str(e)}'}), 500
-
-@app.route('/api/classification/unclassified', methods=['GET'])
-def get_unclassified_companies():
-    """Get list of companies that haven't been classified yet"""
-    try:
-        if not pipeline:
-            return jsonify({'error': 'Theodore pipeline not initialized'}), 500
-        
-        # Query all companies
-        query_result = pipeline.pinecone_client.index.query(
-            vector=[0.0] * 1536,
-            top_k=1000,
-            include_metadata=True,
-            include_values=False
-        )
-        
-        unclassified = []
-        for match in query_result.matches:
-            metadata = match.metadata or {}
-            is_classified = metadata.get('saas_classification') is not None
-            
-            if not is_classified:
-                company_name = metadata.get('company_name')
-                if company_name:  # Only include companies with names
-                    unclassified.append({
-                        'id': match.id,
-                        'company_name': company_name,
-                        'website': metadata.get('website', ''),
-                        'industry': metadata.get('industry', ''),
-                        'has_description': bool(metadata.get('value_proposition')),
-                        'has_products': bool(metadata.get('products_services_offered'))
-                    })
-        
-        return jsonify({
-            'unclassified_companies': unclassified,
-            'total_unclassified': len(unclassified),
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        return jsonify({'error': f'Failed to get unclassified companies: {str(e)}'}), 500
 
 @app.route('/favicon.ico')
 def favicon():
