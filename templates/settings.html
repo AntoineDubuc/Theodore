@@ -350,6 +350,7 @@
                 <div class="settings-grid">
                     ${renderModelConfiguration()}
                     ${renderCostEstimates()}
+                    ${renderGoogleSheetsIntegration()}
                     ${renderPromptConfiguration()}
                     ${renderSystemStatus()}
                     ${renderExtractionSettings()}
@@ -440,6 +441,77 @@ Embedding: ~$${costs.embedding || '0.0001'}
                     </div>
                     
                     <button class="action-button" onclick="recalculateCosts()">Recalculate Costs</button>
+                </div>
+            `;
+        }
+
+        function renderGoogleSheetsIntegration() {
+            const sheets = settingsData.google_sheets || {};
+            const isConfigured = sheets.service_account_configured || false;
+            const sheetUrl = sheets.sheet_url || 'https://docs.google.com/spreadsheets/d/1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk/edit#gid=0';
+            
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">📊</span>
+                        <h3 class="card-title">Google Sheets Integration</h3>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Service Account Status</label>
+                        <div class="model-status">
+                            <span class="status-dot ${isConfigured ? 'active' : 'inactive'}"></span>
+                            <div class="setting-value">${isConfigured ? 'Configured' : 'Not Configured'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Google Spreadsheet</label>
+                        <div class="setting-value" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="flex: 1; word-break: break-all;">${sheetUrl}</span>
+                            <a href="${sheetUrl}" target="_blank" class="action-button" style="margin: 0; padding: 0.5rem 1rem; text-decoration: none; font-size: 0.875rem;">
+                                🔗 Open Sheet
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Batch Processing</label>
+                        <div class="setting-value">
+                            • Service account authentication (no browser prompts)
+                            • Concurrent company processing with progress tracking
+                            • Real-time sheet updates with results
+                            • Error handling and retry logic
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Available Features</label>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">✅</div>
+                                <div class="stat-label">Batch Processing</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">✅</div>
+                                <div class="stat-label">Progress Tracking</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">✅</div>
+                                <div class="stat-label">Error Recovery</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">✅</div>
+                                <div class="stat-label">Real-time Updates</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="action-button" onclick="testSheetsConnection()">Test Connection</button>
+                        <button class="action-button" onclick="viewSheetsDocumentation()">📖 View Docs</button>
+                        <button class="action-button" onclick="configureSheetsAuth()">⚙️ Configure Auth</button>
+                    </div>
                 </div>
             `;
         }
@@ -733,6 +805,31 @@ ${prompts.extraction_prompt || 'Loading...'}
 
         function viewDetailedMetrics() {
             showToast('Detailed metrics panel coming soon...');
+        }
+
+        // Google Sheets Integration Functions
+        async function testSheetsConnection() {
+            try {
+                showToast('Testing Google Sheets connection...');
+                const response = await fetch('/api/settings/test-sheets-connection', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+                showToast(result.message);
+                await loadSettings(); // Refresh to show updated status
+            } catch (error) {
+                showToast('Error testing sheets connection: ' + error.message, 'error');
+            }
+        }
+
+        function viewSheetsDocumentation() {
+            // Open documentation in new tab
+            window.open('/docs/features/sheets_integration/', '_blank');
+        }
+
+        function configureSheetsAuth() {
+            showToast('Sheets authentication configuration guide: Check docs/features/sheets_integration/SERVICE_ACCOUNT_SETUP.md');
         }
     </script>
 </body>

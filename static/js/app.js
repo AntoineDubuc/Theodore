@@ -512,6 +512,11 @@ class TheodoreUI {
         if (tabId === 'databaseTab') {
             this.loadDatabaseBrowser();
         }
+        
+        // If switching to batch tab, initialize batch processing
+        if (tabId === 'batchTab') {
+            this.initializeBatchProcessing();
+        }
     }
 
     displayResults(data) {
@@ -3000,6 +3005,258 @@ class TheodoreUI {
             this.closeAllDropdowns();
         }
     }
+
+    // Batch Processing Methods
+    initializeBatchProcessing() {
+        console.log('Initializing batch processing...');
+        
+        // Set up form submission handler
+        const batchForm = document.getElementById('batchProcessForm');
+        if (batchForm) {
+            batchForm.addEventListener('submit', this.handleBatchProcessing.bind(this));
+        }
+        
+        // Load Google Sheet URL from settings if available
+        this.loadGoogleSheetUrl();
+    }
+
+    async loadGoogleSheetUrl() {
+        try {
+            const response = await fetch('/api/settings');
+            if (response.ok) {
+                const data = await response.json();
+                const googleSheetUrlInput = document.getElementById('googleSheetUrl');
+                if (googleSheetUrlInput && data.google_sheet_url) {
+                    googleSheetUrlInput.value = data.google_sheet_url;
+                }
+            }
+        } catch (error) {
+            console.log('Could not load saved Google Sheet URL:', error);
+        }
+    }
+
+    async handleBatchProcessing(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        const googleSheetUrl = formData.get('google_sheet_url');
+        const batchSize = parseInt(formData.get('batch_size'));
+        
+        if (!googleSheetUrl) {
+            this.showError('Please enter a Google Sheet URL');
+            return;
+        }
+        
+        // Extract sheet ID from URL
+        const sheetIdMatch = googleSheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (!sheetIdMatch) {
+            this.showError('Invalid Google Sheet URL format');
+            return;
+        }
+        
+        const sheetId = sheetIdMatch[1];
+        
+        // Show processing status
+        this.showBatchStatus('Starting batch processing...', 0, batchSize);
+        
+        try {
+            // Start batch processing
+            const response = await fetch('/api/batch/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sheet_id: sheetId,
+                    batch_size: batchSize
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Start polling for progress
+                    this.pollBatchProgress(data.job_id, batchSize);
+                } else {
+                    this.showBatchError(data.error || 'Failed to start batch processing');
+                }
+            } else {
+                this.showBatchError('Server error starting batch processing');
+            }
+        } catch (error) {
+            console.error('Batch processing error:', error);
+            this.showBatchError('Network error starting batch processing');
+        }
+    }
+
+    async validateGoogleSheet() {
+        const googleSheetUrl = document.getElementById('googleSheetUrl').value;
+        
+        if (!googleSheetUrl) {
+            this.showError('Please enter a Google Sheet URL');
+            return;
+        }
+        
+        // Extract sheet ID from URL
+        const sheetIdMatch = googleSheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (!sheetIdMatch) {
+            this.showError('Invalid Google Sheet URL format');
+            return;
+        }
+        
+        const sheetId = sheetIdMatch[1];
+        
+        try {
+            const response = await fetch('/api/batch/validate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sheet_id: sheetId
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    this.showSuccess(`✅ Sheet validated: ${data.companies_count} companies found`);
+                } else {
+                    this.showError(data.error || 'Failed to validate sheet');
+                }
+            } else {
+                this.showError('Server error validating sheet');
+            }
+        } catch (error) {
+            console.error('Sheet validation error:', error);
+            this.showError('Network error validating sheet');
+        }
+    }
+
+    showBatchStatus(message, processed, total) {
+        const statusContainer = document.getElementById('batchStatus');
+        const statusText = document.getElementById('statusText');
+        const progressText = document.getElementById('progressText');
+        const progressFill = statusContainer.querySelector('.progress-fill');
+        
+        if (statusContainer) {
+            statusContainer.classList.remove('hidden');
+        }
+        
+        if (statusText) {
+            statusText.textContent = message;
+        }
+        
+        if (progressText) {
+            progressText.textContent = `${processed}/${total}`;
+        }
+        
+        if (progressFill) {
+            const percentage = total > 0 ? (processed / total) * 100 : 0;
+            progressFill.style.width = `${percentage}%`;
+        }
+    }
+
+    showBatchError(message) {
+        const statusContainer = document.getElementById('batchStatus');
+        const statusText = document.getElementById('statusText');
+        
+        if (statusContainer) {
+            statusContainer.classList.remove('hidden');
+        }
+        
+        if (statusText) {
+            statusText.textContent = `❌ Error: ${message}`;
+            statusText.style.color = '#ef4444';
+        }
+        
+        this.showError(message);
+    }
+
+    async pollBatchProgress(jobId, totalCompanies) {
+        const pollInterval = 2000; // Poll every 2 seconds
+        
+        const poll = async () => {
+            try {
+                const response = await fetch(`/api/batch/progress/${jobId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.status === 'completed') {
+                        this.showBatchStatus('✅ Batch processing completed!', totalCompanies, totalCompanies);
+                        this.showBatchResults(data.results);
+                        return;
+                    } else if (data.status === 'failed') {
+                        this.showBatchError(data.error || 'Batch processing failed');
+                        return;
+                    } else {
+                        // Update progress
+                        const processed = data.processed || 0;
+                        this.showBatchStatus(`Processing companies... (${data.current_company || 'Loading'})`, processed, totalCompanies);
+                        
+                        // Continue polling
+                        setTimeout(poll, pollInterval);
+                    }
+                } else {
+                    this.showBatchError('Failed to get progress updates');
+                }
+            } catch (error) {
+                console.error('Progress polling error:', error);
+                this.showBatchError('Network error getting progress');
+            }
+        };
+        
+        poll();
+    }
+
+    showBatchResults(results) {
+        const resultsContainer = document.getElementById('batchResults');
+        const resultsContent = document.getElementById('batchResultsContent');
+        
+        if (!results || !resultsContainer || !resultsContent) {
+            return;
+        }
+        
+        resultsContainer.classList.remove('hidden');
+        
+        const successCount = results.filter(r => r.status === 'success').length;
+        const failureCount = results.filter(r => r.status === 'failed').length;
+        
+        const resultsHTML = `
+            <div class="batch-summary">
+                <div class="summary-stats">
+                    <div class="summary-stat success">
+                        <span class="stat-number">${successCount}</span>
+                        <span class="stat-label">Successful</span>
+                    </div>
+                    <div class="summary-stat failure">
+                        <span class="stat-number">${failureCount}</span>
+                        <span class="stat-label">Failed</span>
+                    </div>
+                    <div class="summary-stat total">
+                        <span class="stat-number">${results.length}</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                </div>
+            </div>
+            <div class="batch-results-list">
+                ${results.map(result => `
+                    <div class="batch-result-item ${result.status}">
+                        <div class="result-company">${this.escapeHtml(result.company)}</div>
+                        <div class="result-status">
+                            ${result.status === 'success' ? '✅' : '❌'} ${result.status}
+                        </div>
+                        ${result.products_count ? `<div class="result-details">${result.products_count} products/services extracted</div>` : ''}
+                        ${result.error ? `<div class="result-error">${this.escapeHtml(result.error)}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        resultsContent.innerHTML = resultsHTML;
+        
+        this.showSuccess(`Batch processing completed: ${successCount}/${results.length} companies processed successfully`);
+    }
 }
 
 // Global functions
@@ -3021,6 +3278,11 @@ function addSampleCompanies() {
 function clearDatabase() {
     const ui = window.theodoreUI || new TheodoreUI();
     ui.clearDatabase();
+}
+
+function validateGoogleSheet() {
+    const ui = window.theodoreUI || new TheodoreUI();
+    ui.validateGoogleSheet();
 }
 
 // Initialize the app when DOM is loaded

@@ -133,32 +133,102 @@ class BedrockClient:
         content_preview = content_source[:4000]  # First 4000 chars for Nova
         
         prompt = f"""
-        Analyze this company's website content and extract structured intelligence:
+        Analyze this company's website content and extract comprehensive structured intelligence:
         
         Company: {company_data.name}
         Website: {company_data.website}
         Content: {content_preview}
         
-        Extract the following information in JSON format:
+        Extract ALL available information in this JSON format:
         {{
             "industry": "primary industry/sector (e.g., healthcare, fintech, saas)",
             "business_model": "B2B, B2C, marketplace, or other",
             "company_size": "startup, SMB, or enterprise (based on content tone)",
-            "tech_stack": ["technology1", "technology2"],
+            "company_stage": "startup, growth, established, or mature",
+            "founding_year": 2020,
+            "location": "City, State/Country or headquarters location",
+            "employee_count_range": "1-10, 11-50, 51-200, 201-1000, 1000+ employees",
+            "company_description": "detailed description of what the company does",
+            "value_proposition": "key value they offer to customers",
+            "target_market": "specific customer segments they serve",
+            "tech_stack": ["technology1", "technology2", "technology3"],
             "key_services": ["service1", "service2", "service3"],
-            "pain_points": ["inferred business challenge1", "challenge2"],
-            "target_market": "who they serve",
+            "products_services_offered": ["specific product/service names"],
+            "pain_points": ["business problems they solve for customers"],
+            "competitive_advantages": ["what makes them unique or better"],
+            "leadership_team": ["CEO Name - Title", "CTO Name - Title", "key executives"],
+            "contact_info": {{
+                "email": "contact@company.com",
+                "phone": "+1-555-0123",
+                "address": "street address if available"
+            }},
+            "social_media": {{
+                "linkedin": "linkedin.com/company/name",
+                "twitter": "@companyhandle",
+                "facebook": "facebook.com/company"
+            }},
+            "funding_status": "bootstrapped, seed, Series A/B/C, public, or acquisition status",
+            "partnerships": ["key partner companies or integrations"],
+            "awards": ["notable recognition or certifications"],
+            "company_culture": "work environment, values, or culture description",
+            "recent_news": ["recent announcements or developments"],
+            "job_listings_count": 5,
+            "job_listings_details": ["Job Title 1 - Department", "Job Title 2 - Department"],
+            "job_listings": "Actively hiring for multiple positions",
             "ai_summary": "2-3 sentence summary focused on sales relevance"
         }}
         
-        Guidelines:
-        - Focus on information useful for sales teams
-        - Infer pain points from their solutions/services
-        - Detect technologies from mentions, integrations, or job postings
-        - Keep summaries actionable and specific
-        - If information isn't clear, use "unknown" rather than guessing
+        CRITICAL EXTRACTION GUIDELINES:
         
-        Return only valid JSON.
+        🔍 **Leadership Team**: Look for CEO, CTO, founder names and titles in:
+        - About pages, team pages, leadership sections
+        - Press releases, news mentions, executive quotes
+        - Format as "First Last - Title" (e.g., "John Smith - CEO")
+        
+        📅 **Founding Year**: Search for:
+        - "Founded in", "established", "since", company history
+        - Timeline graphics, milestone dates, anniversary mentions
+        - Return as integer (e.g., 2015)
+        
+        📍 **Location**: Extract headquarters/main office:
+        - Contact pages, about sections, office locations
+        - Address information, "based in", "located in"
+        - Format as "City, State" or "City, Country"
+        
+        👥 **Employee Count**: Infer from:
+        - Team size mentions, "we are X people", headcount
+        - Job listings count, office size descriptions
+        - Use ranges: "1-10", "11-50", "51-200", "201-1000", "1000+"
+        
+        📞 **Contact Info**: Extract from contact pages:
+        - Email addresses (not forms), phone numbers, physical addresses
+        - Support emails, sales emails, general contact info
+        
+        🌐 **Social Media**: Find official accounts:
+        - Footer links, social media sections, share buttons
+        - LinkedIn company pages, Twitter handles, Facebook pages
+        
+        💰 **Funding**: Look for investment mentions:
+        - "raised $X", "Series A/B/C", "funded by", investor names
+        - IPO status, acquisition announcements, bootstrapped mentions
+        
+        🤝 **Partnerships**: Find business relationships:
+        - Integration partners, technology partners, channel partners
+        - "powered by", "partners with", customer logos
+        
+        🏆 **Awards/Recognition**: Extract achievements:
+        - Industry awards, certifications, "recognized by"
+        - Security certifications, compliance badges, accolades
+        
+        IMPORTANT:
+        - Extract ACTUAL data from content, don't infer unless explicitly mentioned
+        - Use "unknown" for any field not found in content
+        - For arrays, return empty [] if no data found
+        - For objects, return empty {{}} if no data found
+        - Be precise with leadership names and titles
+        - Include both first and last names when available
+        
+        Return only valid JSON with all fields present.
         """
         
         return prompt

@@ -62,6 +62,72 @@ def health_check():
         'timestamp': datetime.utcnow().isoformat()
     })
 
+@app.route('/api/companies/details')
+def get_companies_details():
+    """Get detailed company data for spreadsheet view"""
+    if not pipeline:
+        return jsonify({'error': 'Theodore pipeline not initialized'}), 500
+    
+    try:
+        # Query all vectors
+        query_result = pipeline.pinecone_client.index.query(
+            vector=[0.0] * 1536,
+            top_k=50,
+            include_metadata=True,
+            include_values=False
+        )
+        
+        companies_with_details = []
+        
+        for match in query_result.matches:
+            metadata = match.metadata
+            
+            # Extract products/services data
+            products_services = metadata.get('products_services_offered', '')
+            if isinstance(products_services, str) and products_services:
+                products_list = [item.strip() for item in products_services.split(',') if item.strip()]
+            else:
+                products_list = []
+            
+            company_detail = {
+                'id': match.id,
+                'name': metadata.get('company_name', 'Unknown'),
+                'website': metadata.get('website', ''),
+                'industry': metadata.get('industry', 'Unknown'),
+                'products_services_offered': products_list,
+                'products_services_text': ', '.join(products_list) if products_list else 'No data',
+                'value_proposition': metadata.get('value_proposition', 'No data'),
+                'company_culture': metadata.get('company_culture', 'No data'),
+                'location': metadata.get('location', 'Unknown'),
+                'leadership_team': metadata.get('leadership_team', '').split(',') if metadata.get('leadership_team') else [],
+                'job_listings_count': metadata.get('job_listings_count', 0),
+                'founding_year': metadata.get('founding_year', 'Unknown'),
+                'funding_status': metadata.get('funding_status', 'Unknown'),
+                'last_updated': metadata.get('last_updated', 'Unknown')
+            }
+            companies_with_details.append(company_detail)
+        
+        # Sort by company name
+        companies_with_details.sort(key=lambda x: x['name'])
+        
+        # Statistics
+        companies_with_products = len([c for c in companies_with_details if c['products_services_offered']])
+        companies_with_culture = len([c for c in companies_with_details if c['company_culture'] not in ['No data', 'unknown', '']])
+        
+        return jsonify({
+            'success': True,
+            'companies': companies_with_details,
+            'total': len(companies_with_details),
+            'stats': {
+                'companies_with_products': companies_with_products,
+                'companies_with_culture': companies_with_culture,
+                'enhanced_coverage': round((companies_with_products / len(companies_with_details)) * 100) if companies_with_details else 0
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get detailed companies: {str(e)}'}), 500
+
 @app.route('/api/test-discovery', methods=['POST'])
 def test_discovery():
     """Test endpoint for fast AI discovery"""
@@ -208,7 +274,7 @@ def discover_similar_companies():
             
             # Initialize research manager if not exists
             if not hasattr(pipeline, 'research_manager'):
-                from src.research_manager import ResearchManager
+                from src.legacy.research_manager import ResearchManager
                 pipeline.research_manager = ResearchManager(
                     intelligent_scraper=pipeline.scraper,
                     pinecone_client=pipeline.pinecone_client,
@@ -420,6 +486,40 @@ def settings():
     """Settings page"""
     return render_template('settings.html')
 
+@app.route('/docs/features/sheets_integration/')
+def sheets_integration_docs():
+    """Serve Google Sheets integration documentation"""
+    try:
+        from pathlib import Path
+        docs_path = Path('docs/features/sheets_integration/README.md')
+        if docs_path.exists():
+            with open(docs_path, 'r') as f:
+                content = f.read()
+            # Simple markdown to HTML conversion for basic display
+            html_content = content.replace('\n', '<br>').replace('# ', '<h1>').replace('## ', '<h2>')
+            return f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Google Sheets Integration - Theodore Documentation</title>
+                <style>
+                    body {{ font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }}
+                    h1, h2 {{ color: #3b82f6; }}
+                    code {{ background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 4px; }}
+                </style>
+            </head>
+            <body>
+                <div>{html_content}</div>
+                <hr>
+                <p><a href="/settings">← Back to Settings</a></p>
+            </body>
+            </html>
+            """
+        else:
+            return "<h1>Documentation not found</h1><p><a href='/settings'>← Back to Settings</a></p>"
+    except Exception as e:
+        return f"<h1>Error loading documentation</h1><p>{str(e)}</p><p><a href='/settings'>← Back to Settings</a></p>"
+
 @app.route('/api/settings')
 def get_settings():
     """Get current system settings and configuration"""
@@ -470,6 +570,19 @@ def get_settings():
             'patterns_count': get_patterns_count()
         }
         
+        # Google Sheets integration
+        google_sheets = {
+            'service_account_configured': check_sheets_service_account(),
+            'sheet_url': 'https://docs.google.com/spreadsheets/d/1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk/edit#gid=0',
+            'sheet_id': '1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk',
+            'features_available': [
+                'Batch Processing',
+                'Progress Tracking', 
+                'Error Recovery',
+                'Real-time Updates'
+            ]
+        }
+        
         # Performance metrics
         performance = {
             'avg_processing_time': '45',
@@ -484,7 +597,8 @@ def get_settings():
             'prompts': prompts,
             'system_status': system_status,
             'extraction_settings': extraction_settings,
-            'performance': performance
+            'performance': performance,
+            'google_sheets': google_sheets
         })
         
     except Exception as e:
@@ -701,6 +815,63 @@ def get_patterns_count():
     """Get count of active extraction patterns"""
     # This would count the actual patterns in the extraction system
     return 15
+
+def check_sheets_service_account():
+    """Check if Google Sheets service account is configured"""
+    try:
+        from pathlib import Path
+        service_account_file = Path('config/credentials/theodore-service-account.json')
+        return service_account_file.exists()
+    except Exception:
+        return False
+
+@app.route('/api/settings/test-sheets-connection', methods=['POST'])
+def test_sheets_connection():
+    """Test Google Sheets service account connection"""
+    try:
+        from pathlib import Path
+        
+        service_account_file = Path('config/credentials/theodore-service-account.json')
+        
+        if not service_account_file.exists():
+            return jsonify({
+                'success': False,
+                'message': 'Service account file not found. Check config/credentials/theodore-service-account.json'
+            })
+        
+        # Try to import and test the sheets client
+        try:
+            from src.sheets_integration import GoogleSheetsServiceClient
+            sheets_client = GoogleSheetsServiceClient(service_account_file)
+            
+            # Test connection by attempting to access the test sheet
+            sheet_id = '1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk'
+            
+            # Simple read test - get sheet metadata
+            sheet_info = sheets_client.service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+            sheet_title = sheet_info.get('properties', {}).get('title', 'Unknown')
+            
+            return jsonify({
+                'success': True,
+                'message': f'✅ Connected successfully to sheet: "{sheet_title}"'
+            })
+            
+        except ImportError:
+            return jsonify({
+                'success': False,
+                'message': 'Google Sheets integration not available. Missing dependencies.'
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Connection failed: {str(e)}'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error testing connection: {str(e)}'
+        })
 
 @app.route('/api/save-researched-company', methods=['POST'])
 def save_researched_company():
@@ -1237,6 +1408,38 @@ def get_company_details(company_id):
         vector_data = result.vectors[company_id]
         metadata = vector_data.metadata
         
+        # Helper function to parse JSON fields safely
+        def parse_json_field(value):
+            if isinstance(value, str) and value.strip():
+                try:
+                    import json
+                    return json.loads(value)
+                except:
+                    return value
+            return value if value else {}
+        
+        # Helper function to split comma-separated strings
+        def split_field(value):
+            if isinstance(value, str) and value.strip():
+                return [item.strip() for item in value.split(',') if item.strip()]
+            return value if isinstance(value, list) else []
+        
+        # Helper function to safely convert to int
+        def safe_int_convert(value):
+            if isinstance(value, int):
+                return value
+            elif isinstance(value, float):
+                return int(value)
+            elif isinstance(value, str):
+                if value.lower() in ['unknown', 'none', '']:
+                    return 0
+                try:
+                    return int(float(value))
+                except (ValueError, TypeError):
+                    return 0
+            else:
+                return 0
+        
         return jsonify({
             'success': True,
             'company': {
@@ -1249,7 +1452,38 @@ def get_company_details(company_id):
                 'pages_crawled': metadata.get('pages_crawled', []),
                 'processing_time': metadata.get('crawl_duration', 0),
                 'last_updated': metadata.get('last_updated', ''),
-                'scrape_status': metadata.get('scrape_status', 'unknown')
+                'scrape_status': metadata.get('scrape_status', 'unknown'),
+                
+                # ENHANCED FIELDS - Now included in API response
+                'raw_content_length': len(metadata.get('raw_content', '')),
+                'founding_year': metadata.get('founding_year'),
+                'location': metadata.get('location', ''),
+                'employee_count_range': metadata.get('employee_count_range', ''),
+                'value_proposition': metadata.get('value_proposition', ''),
+                'funding_status': metadata.get('funding_status', ''),
+                'company_culture': metadata.get('company_culture', ''),
+                'company_stage': metadata.get('company_stage', ''),
+                
+                # List fields (split from comma-separated strings)
+                'leadership_team': split_field(metadata.get('leadership_team', '')),
+                'key_services': split_field(metadata.get('key_services', '')),
+                'tech_stack': split_field(metadata.get('tech_stack', '')),
+                'competitive_advantages': split_field(metadata.get('competitive_advantages', '')),
+                'products_services_offered': split_field(metadata.get('products_services_offered', '')),
+                'partnerships': split_field(metadata.get('partnerships', '')),
+                'awards': split_field(metadata.get('awards', '')),
+                'recent_news_events': split_field(metadata.get('recent_news_events', '')),
+                'pain_points': split_field(metadata.get('pain_points', '')),
+                
+                # Structured fields (parse from JSON strings)
+                'contact_info': parse_json_field(metadata.get('contact_info', '')),
+                'social_media': parse_json_field(metadata.get('social_media', '')),
+                
+                # Job-related fields that frontend expects (with safe conversion)
+                'has_job_listings': bool(safe_int_convert(metadata.get('job_listings_count', 0)) > 0),
+                'job_listings_count': safe_int_convert(metadata.get('job_listings_count', 0)),
+                'job_listings_details': split_field(metadata.get('job_listings_details', '')),
+                'job_listings': metadata.get('job_listings', 'Job data unavailable')
             }
         })
         
@@ -1272,7 +1506,7 @@ def start_research():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1306,7 +1540,7 @@ def start_bulk_research():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1334,7 +1568,7 @@ def get_research_progress(job_id):
         
         # Initialize research manager if not exists  
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1363,7 +1597,7 @@ def get_all_research_progress():
         
         # Initialize research manager if not exists  
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1394,7 +1628,7 @@ def cleanup_research_jobs():
         
         # Initialize research manager if not exists  
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1420,7 +1654,7 @@ def get_available_research_prompts():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1453,7 +1687,7 @@ def estimate_research_cost():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1492,7 +1726,7 @@ def start_structured_research():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1531,7 +1765,7 @@ def get_structured_research_session(session_id):
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1588,7 +1822,7 @@ def get_recent_structured_sessions():
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1632,7 +1866,7 @@ def export_structured_research_results(session_id):
         
         # Initialize research manager if not exists
         if not hasattr(pipeline, 'research_manager'):
-            from src.research_manager import ResearchManager
+            from src.legacy.research_manager import ResearchManager
             pipeline.research_manager = ResearchManager(
                 intelligent_scraper=pipeline.scraper,
                 pinecone_client=pipeline.pinecone_client,
@@ -1691,7 +1925,7 @@ def classify_unknown_industries():
             })
         
         # Import the prompt
-        from src.similarity_prompts import INDUSTRY_CLASSIFICATION_FROM_RESEARCH_PROMPT
+        from src.legacy.similarity_prompts import INDUSTRY_CLASSIFICATION_FROM_RESEARCH_PROMPT
         
         classified_count = 0
         results_log = []

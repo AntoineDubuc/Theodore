@@ -432,6 +432,26 @@ class PineconeClient:
             "tech_stack": safe_join(company.tech_stack),
             "pain_points": safe_join(company.pain_points),
             
+            # CRITICAL FIX: Enhanced fields that were missing
+            "raw_content": safe_get(company.raw_content, ""),
+            "founding_year": company.founding_year if company.founding_year else None,
+            "location": safe_get(company.location, ""),
+            "employee_count_range": safe_get(company.employee_count_range, ""),
+            "leadership_team": safe_join(company.leadership_team),
+            "contact_info": json.dumps(company.contact_info) if company.contact_info else "",
+            "social_media": json.dumps(company.social_media) if company.social_media else "",
+            "products_services_offered": safe_join(company.products_services_offered),
+            "funding_status": safe_get(company.funding_status, ""),
+            "partnerships": safe_join(company.partnerships),
+            "awards": safe_join(company.awards),
+            "recent_news_events": safe_join(company.recent_news_events),
+            "company_culture": safe_get(company.company_culture, ""),
+            
+            # Job-related fields
+            "job_listings_count": company.job_listings_count or 0,
+            "job_listings": safe_get(company.job_listings, ""),
+            "job_listings_details": safe_join(company.job_listings_details),
+            
             # Processing metadata
             "pages_crawled": company.pages_crawled if company.pages_crawled else [],
             "crawl_duration": company.crawl_duration or 0,
@@ -546,11 +566,11 @@ class PineconeClient:
             vector_data = fetch_response.vectors[company_id]
             metadata = vector_data.metadata
             
-            # Build CompanyData object with available metadata
+            # Build CompanyData object with available metadata INCLUDING enhanced fields
             company = CompanyData(
                 id=company_id,
                 name=metadata.get('company_name', ''),
-                website=metadata.get('website', ''),  # Add website field - required by model
+                website=metadata.get('website', ''),
                 industry=metadata.get('industry', ''),
                 business_model=metadata.get('business_model', ''),
                 target_market=metadata.get('target_market', ''),
@@ -558,9 +578,68 @@ class PineconeClient:
                 embedding=list(vector_data.values) if vector_data.values else None
             )
             
-            # Add funding stage if available
-            if 'funding_stage' in metadata:
-                company.funding_status = metadata['funding_stage']
+            # CRITICAL FIX: Restore all enhanced fields from metadata
+            company.raw_content = metadata.get('raw_content', '')
+            company.founding_year = metadata.get('founding_year')
+            company.location = metadata.get('location', '')
+            company.employee_count_range = metadata.get('employee_count_range', '')
+            company.company_description = metadata.get('company_description', '')
+            company.value_proposition = metadata.get('value_proposition', '')
+            company.funding_status = metadata.get('funding_status', '')
+            company.company_culture = metadata.get('company_culture', '')
+            
+            # Convert comma-separated strings back to lists
+            def split_safe(value):
+                if not value or not isinstance(value, str):
+                    return []
+                return [item.strip() for item in value.split(',') if item.strip()]
+            
+            company.leadership_team = split_safe(metadata.get('leadership_team', ''))
+            company.key_services = split_safe(metadata.get('key_services', ''))
+            company.tech_stack = split_safe(metadata.get('tech_stack', ''))
+            company.competitive_advantages = split_safe(metadata.get('competitive_advantages', ''))
+            company.products_services_offered = split_safe(metadata.get('products_services_offered', ''))
+            company.partnerships = split_safe(metadata.get('partnerships', ''))
+            company.awards = split_safe(metadata.get('awards', ''))
+            company.recent_news_events = split_safe(metadata.get('recent_news_events', ''))
+            company.pain_points = split_safe(metadata.get('pain_points', ''))
+            
+            # Restore structured data fields (convert from JSON strings)
+            contact_info_str = metadata.get('contact_info', '')
+            social_media_str = metadata.get('social_media', '')
+            
+            try:
+                company.contact_info = json.loads(contact_info_str) if contact_info_str else {}
+            except:
+                company.contact_info = {}
+                
+            try:
+                company.social_media = json.loads(social_media_str) if social_media_str else {}
+            except:
+                company.social_media = {}
+            
+            # Restore processing metadata
+            company.pages_crawled = metadata.get('pages_crawled', [])
+            company.crawl_duration = metadata.get('crawl_duration', 0)
+            company.scrape_status = metadata.get('scrape_status', 'unknown')
+            company.ai_summary = metadata.get('ai_summary', '')
+            
+            # Restore similarity dimensions
+            company.company_stage = metadata.get('company_stage', '')
+            company.tech_sophistication = metadata.get('tech_sophistication', '')
+            
+            # Restore job-related fields
+            company.job_listings_count = metadata.get('job_listings_count', 0)
+            company.job_listings = metadata.get('job_listings', '')
+            company.job_listings_details = split_safe(metadata.get('job_listings_details', ''))
+            
+            # Handle last_updated
+            if metadata.get('last_updated'):
+                from datetime import datetime
+                try:
+                    company.last_updated = datetime.fromisoformat(metadata['last_updated'])
+                except:
+                    pass
             
             return company
             

@@ -20,15 +20,323 @@ Theodore provides an advanced company analysis platform with dynamic link discov
 - **Universal Website Integration**: Green website buttons throughout the interface for seamless company access
 - **WCAG-Compliant Design**: High-contrast dark mode with light blue (#60a5fa) links for optimal readability
 
-## 🏗️ Intelligent Scraper Architecture
+## 📚 Documentation Structure
 
+### 🎯 For New Users
+- **[docs/core/DEVELOPER_ONBOARDING_NEW.md](docs/core/DEVELOPER_ONBOARDING_NEW.md)** - Start here! Complete getting started guide
+- **[docs/core/setup_guide.md](docs/core/setup_guide.md)** - Installation and configuration
+
+### 🏗️ For Developers  
+- **[docs/core/CORE_ARCHITECTURE.md](docs/core/CORE_ARCHITECTURE.md)** - System architecture overview
+- **[docs/technical/](docs/technical/)** - Component-specific technical documentation
+
+### 🔍 Feature Information
+- **[docs/features/](docs/features/)** - Documentation for specific features (may be experimental)
+
+### 📦 Reference
+- **[docs/legacy/](docs/legacy/)** - Historical documentation from reorganization
+- **[docs/outdated/](docs/outdated/)** - Pre-reorganization documentation
+- **[docs/advanced_similarity/](docs/advanced_similarity/)** - Advanced similarity algorithm research
+
+### 📋 Documentation Status
+- ✅ **Core docs**: Current and maintained
+- ⚠️ **Technical docs**: May need updates, verify before use
+- 🔬 **Feature docs**: Experimental/partial implementations
+- 📚 **Legacy/Outdated**: Historical reference only
+
+## 🏗️ System Architecture
+
+### Core Components Architecture
+
+Theodore uses a sophisticated 4-layered architecture:
+
+1. **Web Interface Layer** - Flask + HTML/CSS/JS
+2. **API Layer** - RESTful endpoints with real-time progress
+3. **Core Business Logic** - 4-phase scraping + similarity discovery
+4. **External Services** - AI models + vector database + web scraping
+
+### Intelligent Scraping System (4-Phase Process)
+
+Theodore's core innovation is its sophisticated 4-phase intelligent scraping system that combines comprehensive web crawling with AI-driven analysis. See the [Visual System Architecture](#-visual-system-architecture) section below for detailed interactive diagrams.
+
+#### **Phase 1: Comprehensive Link Discovery**
+- **Multi-source discovery**: robots.txt parsing + sitemap.xml analysis + recursive crawling
+- **Discovers up to 1000 links** from all major site sections
+- **Target patterns**: `/about`, `/contact`, `/careers`, `/team`, `/products`, `/services`
+- **Intelligence focus**: Corporate pages, leadership info, business intelligence
+
+#### **Phase 2: LLM-Driven Page Selection**
+- **AI-powered analysis**: Uses specialized prompt to intelligently select most valuable pages
+- **Prioritizes based on**: Contact data, founding info, employee count, leadership, business intelligence
+- **Selects 10-50 pages** from all discovered links for maximum data extraction efficiency
+
+#### **Phase 3: Parallel Content Extraction**
+- **High-performance processing**: 10 concurrent pages simultaneously
+- **Content optimization**: Removes nav, footer, scripts while preserving main content
+- **Chromium-based**: Uses Crawl4AI with JavaScript execution for modern websites
+- **Structured extraction**: Targets main content areas with intelligent selectors
+
+#### **Phase 4: LLM Content Aggregation**
+- **Large context analysis**: Gemini 2.5 Pro with 1M token context window
+- **Comprehensive processing**: Combines content from all scraped pages
+- **Business intelligence generation**: Creates structured summaries focused on sales insights
+- **Quality output**: 2-3 paragraph summaries optimized for business context
+
+## 📊 Visual System Architecture
+
+### Complete System Overview
+
+```mermaid
+%%{init: {
+  'theme': 'dark',
+  'themeVariables': {
+    'primaryColor': '#ff6b6b',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ff4757',
+    'lineColor': '#ffa502',
+    'secondaryColor': '#2ed573',
+    'tertiaryColor': '#5352ed',
+    'background': '#2f3542',
+    'mainBkg': '#2f3542',
+    'secondBkg': '#57606f',
+    'tertiaryBkg': '#3742fa'
+  }
+}}%%
+
+graph TB
+    %% User Interface Layer
+    subgraph UI["🎨 USER INTERFACE LAYER"]
+        DiscoveryTab["🔍 Discovery Tab<br/>Find Similar Companies"]
+        ProcessTab["⚙️ Process Tab<br/>Add New Company"]
+        DatabaseTab["🗃️ Database Tab<br/>Browse All Companies"]
+        SettingsTab["⚙️ Settings Tab<br/>Configuration"]
+    end
+    
+    %% API Layer
+    subgraph API["🔗 FLASK API ENDPOINTS"]
+        DiscoverAPI["/api/discover<br/>POST"]
+        ProcessAPI["/api/process-company<br/>POST"]
+        DatabaseAPI["/api/database<br/>GET"]
+        SettingsAPI["/api/settings<br/>GET/POST"]
+    end
+    
+    %% Core Processing
+    subgraph CORE["🧠 CORE PROCESSING ENGINE"]
+        SimpleDiscovery["SimpleEnhancedDiscovery<br/>🔍 AI + Vector Search"]
+        IntelligentScraper["IntelligentCompanyScraper<br/>🕷️ 4-Phase Pipeline"]
+        MainPipeline["TheodoreIntelligencePipeline<br/>🔧 Orchestration"]
+    end
+    
+    %% AI Services
+    subgraph AI["🤖 AI MODEL SERVICES"]
+        Gemini["Gemini 2.5 Pro<br/>📝 Content Aggregation<br/>1M Token Context"]
+        Bedrock["AWS Bedrock<br/>🧮 Nova Pro Model<br/>6x Cost Reduction"]
+        OpenAI["OpenAI GPT-4o-mini<br/>🔄 Fallback Service"]
+    end
+    
+    %% Storage
+    subgraph STORAGE["🗃️ VECTOR DATABASE"]
+        Pinecone["Pinecone<br/>📊 Vector Storage<br/>1536 Dimensions"]
+        Metadata["Essential Metadata<br/>📋 5 Core Fields<br/>72% Reduction"]
+    end
+    
+    %% Data Flow Connections
+    DiscoveryTab --> DiscoverAPI
+    ProcessTab --> ProcessAPI
+    DatabaseTab --> DatabaseAPI
+    SettingsTab --> SettingsAPI
+    
+    DiscoverAPI --> SimpleDiscovery
+    ProcessAPI --> MainPipeline
+    DatabaseAPI --> Pinecone
+    
+    SimpleDiscovery --> Pinecone
+    SimpleDiscovery --> Bedrock
+    
+    MainPipeline --> IntelligentScraper
+    IntelligentScraper --> Gemini
+    MainPipeline --> Bedrock
+    
+    Bedrock --> Pinecone
+    Gemini --> Pinecone
+    Pinecone --> Metadata
+    
+    %% Styling
+    classDef uiStyle fill:#ff6b6b,stroke:#ff4757,stroke-width:3px,color:#ffffff
+    classDef apiStyle fill:#ffa502,stroke:#ff6348,stroke-width:3px,color:#ffffff
+    classDef coreStyle fill:#2ed573,stroke:#20bf6b,stroke-width:3px,color:#ffffff
+    classDef aiStyle fill:#5352ed,stroke:#3742fa,stroke-width:3px,color:#ffffff
+    classDef storageStyle fill:#8e44ad,stroke:#9b59b6,stroke-width:3px,color:#ffffff
+    
+    class DiscoveryTab,ProcessTab,DatabaseTab,SettingsTab uiStyle
+    class DiscoverAPI,ProcessAPI,DatabaseAPI,SettingsAPI apiStyle
+    class SimpleDiscovery,IntelligentScraper,MainPipeline coreStyle
+    class Gemini,Bedrock,OpenAI aiStyle
+    class Pinecone,Metadata storageStyle
 ```
-Company Input → Link Discovery → LLM Page Selection → Parallel Extraction → AI Aggregation → Sales Intelligence
-      ↓              ↓                    ↓                    ↓                   ↓                ↓
-  Name + URL    robots.txt +       Gemini/Claude         10 Concurrent         Gemini 2.5 Pro    2-3 Paragraph
-               sitemaps.xml        Page Analysis          Crawl4AI             Content Fusion     Summary
-                +670 links          Select Best           Extractions          (1M tokens)       Optimized
-                                   5-10 pages                                                   for Sales
+
+### 4-Phase Intelligent Scraping Pipeline
+
+```mermaid
+%%{init: {
+  'theme': 'dark',
+  'themeVariables': {
+    'primaryColor': '#ff6b6b',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ff4757',
+    'lineColor': '#ffa502',
+    'secondaryColor': '#2ed573',
+    'tertiaryColor': '#5352ed',
+    'background': '#2f3542',
+    'mainBkg': '#2f3542',
+    'secondBkg': '#57606f'
+  }
+}}%%
+
+flowchart TD
+    Start["🚀 Company Input<br/>Name + Website URL"] --> Phase1
+    
+    subgraph Phase1["🔍 PHASE 1: LINK DISCOVERY"]
+        RobotsTxt["🤖 robots.txt<br/>Parse additional paths<br/>Find sitemaps"]
+        Sitemap["🗺️ sitemap.xml<br/>Structured navigation<br/>All site sections"]
+        Recursive["🔄 Recursive Crawling<br/>3 levels deep<br/>Navigation links"]
+        
+        RobotsTxt --> Combine1["📝 Combine Links<br/>Up to 1000 URLs"]
+        Sitemap --> Combine1
+        Recursive --> Combine1
+    end
+    
+    Phase1 --> Phase2
+    
+    subgraph Phase2["🎯 PHASE 2: LLM PAGE SELECTION"]
+        LLMAnalysis["🧠 Gemini 2.5 Flash<br/>Analyze all discovered links<br/>Intelligent prioritization"]
+        Selection["✅ Select 10-50 Pages<br/>• /contact, /about<br/>• /team, /careers<br/>• /products, /services<br/>• Business intelligence"]
+        
+        LLMAnalysis --> Selection
+    end
+    
+    Phase2 --> Phase3
+    
+    subgraph Phase3["📄 PHASE 3: PARALLEL EXTRACTION"]
+        Crawl4AI["🕷️ Crawl4AI AsyncWebCrawler<br/>Chromium browser<br/>JavaScript execution"]
+        Parallel["⚡ 10 Concurrent Requests<br/>Real-time progress<br/>Content optimization"]
+        Clean["🧹 Clean Content<br/>Remove nav/footer<br/>Preserve main content"]
+        
+        Crawl4AI --> Parallel
+        Parallel --> Clean
+    end
+    
+    Phase3 --> Phase4
+    
+    subgraph Phase4["🧠 PHASE 4: AI AGGREGATION"]
+        Aggregate["🔮 Gemini 2.5 Pro<br/>1M token context<br/>Process all page content"]
+        Intelligence["📊 Sales Intelligence<br/>2-3 paragraph summary<br/>Business context<br/>Market positioning"]
+        
+        Aggregate --> Intelligence
+    end
+    
+    Phase4 --> Storage
+    
+    subgraph Storage["🗃️ STORAGE & ANALYSIS"]
+        Analysis["🤖 Bedrock Analysis<br/>Industry classification<br/>Business model<br/>Company stage"]
+        Embedding["📐 Vector Embedding<br/>Amazon Titan<br/>1536 dimensions"]
+        Database["🗄️ Pinecone Storage<br/>Vector + metadata<br/>Semantic search ready"]
+        
+        Analysis --> Embedding
+        Embedding --> Database
+    end
+    
+    %% Progress tracking
+    Phase1 -.-> Progress["📊 Real-time Progress<br/>Live UI updates<br/>Phase-by-phase status"]
+    Phase2 -.-> Progress
+    Phase3 -.-> Progress
+    Phase4 -.-> Progress
+    
+    %% Styling
+    classDef phaseStyle fill:#ff6b6b,stroke:#ff4757,stroke-width:3px,color:#ffffff
+    classDef processStyle fill:#2ed573,stroke:#20bf6b,stroke-width:2px,color:#ffffff
+    classDef aiStyle fill:#5352ed,stroke:#3742fa,stroke-width:2px,color:#ffffff
+    classDef storageStyle fill:#8e44ad,stroke:#9b59b6,stroke-width:2px,color:#ffffff
+    classDef progressStyle fill:#ffa502,stroke:#ff6348,stroke-width:2px,color:#ffffff
+    
+    class Start phaseStyle
+    class RobotsTxt,Sitemap,Recursive,Combine1,LLMAnalysis,Selection,Crawl4AI,Parallel,Clean processStyle
+    class Aggregate,Intelligence,Analysis aiStyle
+    class Embedding,Database storageStyle
+    class Progress progressStyle
+```
+
+### Company Discovery Workflow
+
+```mermaid
+%%{init: {
+  'theme': 'dark',
+  'themeVariables': {
+    'primaryColor': '#ff6b6b',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#ff4757',
+    'lineColor': '#ffa502',
+    'secondaryColor': '#2ed573',
+    'tertiaryColor': '#5352ed',
+    'background': '#2f3542',
+    'mainBkg': '#2f3542',
+    'secondBkg': '#57606f'
+  }
+}}%%
+
+flowchart TD
+    UserInput["👤 User Input<br/>Company Name"] --> Discovery
+    
+    subgraph Discovery["🔍 DISCOVERY ENGINE"]
+        DatabaseCheck["🗃️ Database Check<br/>Pinecone.find_by_name()"]
+        
+        DatabaseCheck -->|Found| ExistingFlow["📊 Existing Company Flow"]
+        DatabaseCheck -->|Not Found| UnknownFlow["❓ Unknown Company Flow"]
+    end
+    
+    subgraph ExistingFlow["📊 EXISTING COMPANY ANALYSIS"]
+        ContextualLLM["🧠 LLM Contextual Discovery<br/>Use company description<br/>Generate search terms<br/>Industry analysis"]
+        VectorSearch["📐 Vector Similarity Search<br/>Embedding comparison<br/>Cosine similarity<br/>Industry filtering"]
+        
+        ContextualLLM --> Combine
+        VectorSearch --> Combine
+    end
+    
+    subgraph UnknownFlow["❓ UNKNOWN COMPANY ANALYSIS"]
+        InferLLM["🔮 LLM Inference<br/>Predict industry<br/>Infer business model<br/>Generate search strategy"]
+        SemanticSearch["🔍 Semantic Discovery<br/>Industry-based matching<br/>Business model similarity<br/>Market positioning"]
+        
+        InferLLM --> SemanticSearch
+        SemanticSearch --> Combine
+    end
+    
+    subgraph Enhancement["✨ RESULT ENHANCEMENT"]
+        Combine["🔗 Combine & Deduplicate<br/>Merge LLM + Vector results<br/>Remove duplicates<br/>Rank by relevance"]
+        Research["📋 Research Status Check<br/>Database metadata<br/>Processing history<br/>Availability assessment"]
+        Format["📊 Format Results<br/>Confidence scores<br/>Reasoning explanations<br/>Business context"]
+        
+        Combine --> Research
+        Research --> Format
+    end
+    
+    Format --> Response["📤 JSON Response<br/>Similarity scores<br/>Discovery methods<br/>Research status<br/>Business relationships"]
+    
+    Response --> UI["🎨 UI Display<br/>Discovery cards<br/>Website links<br/>Research buttons<br/>Real-time updates"]
+    
+    %% Styling
+    classDef inputStyle fill:#ff6b6b,stroke:#ff4757,stroke-width:3px,color:#ffffff
+    classDef discoveryStyle fill:#ffa502,stroke:#ff6348,stroke-width:2px,color:#ffffff
+    classDef existingStyle fill:#2ed573,stroke:#20bf6b,stroke-width:2px,color:#ffffff
+    classDef unknownStyle fill:#5352ed,stroke:#3742fa,stroke-width:2px,color:#ffffff
+    classDef enhanceStyle fill:#8e44ad,stroke:#9b59b6,stroke-width:2px,color:#ffffff
+    classDef outputStyle fill:#e67e22,stroke:#d35400,stroke-width:2px,color:#ffffff
+    
+    class UserInput inputStyle
+    class DatabaseCheck discoveryStyle
+    class ContextualLLM,VectorSearch existingStyle
+    class InferLLM,SemanticSearch unknownStyle
+    class Combine,Research,Format enhanceStyle
+    class Response,UI outputStyle
 ```
 
 ## 📊 Current Status
@@ -84,15 +392,73 @@ cp .env.example .env
 # Edit .env with your API keys
 ```
 
-### Basic Usage
+## 🛠️ Development Commands
 
-**Web Interface (Recommended)**:
+### Running the Application
+
+**✅ CORRECT STARTUP METHOD:**
 ```bash
-# Start the web application
-python app.py
+# Start main web application (PROPER WAY - background with logging)
+nohup python3 app.py > app.log 2>&1 & echo $!
+# Verify startup: sleep 10 && tail -10 app.log
+# Access at: http://localhost:5002
+# Settings page: http://localhost:5002/settings
 
-# Access the modern web interface
-# Open: http://localhost:5002
+# Alternative: Development mode (foreground)
+python3 app.py
+
+# Stop the application
+pkill -f "python3 app.py"
+```
+
+**🔧 Troubleshooting Startup:**
+```bash
+# Check if app is running
+curl -I http://localhost:5002/
+
+# View startup logs
+tail -f app.log
+
+# Check port usage
+lsof -i :5002
+
+# Verify imports
+python3 -c "import app; print('Import successful')"
+```
+
+### Testing & Debugging
+```bash
+# Test single company processing
+python test_real_company.py
+
+# Test scraping pipeline
+python test_subprocess_scraper.py
+
+# Test research system
+python tests/test_real_ai.py
+
+# Debug environment setup
+python test_credentials.py
+
+# Test similarity engine
+python tests/test_similarity_engine.py
+
+# Additional test files in tests/ directory
+```
+
+### Database Operations
+```bash
+# Check Pinecone database
+python scripts/check_pinecone_database.py
+
+# Clear all data
+python scripts/clear_pinecone.py
+
+# Add test companies
+python scripts/add_test_companies_with_similarity.py
+
+# Extract raw data
+python scripts/extract_raw_pinecone_data.py
 ```
 
 ### 📊 Complete Research Data Display
@@ -189,40 +555,100 @@ result = pipeline.process_single_company("Company Name", "https://company.com")
 
 ## 📁 Project Structure
 
+### Production Files (Core System)
 ```
 Theodore/
-├── app.py                     # 🌐 Main web application (Flask)
-├── src/                       # 🔧 Core application code
-│   ├── main_pipeline.py       # Main orchestration
-│   ├── models.py              # Pydantic data models  
-│   ├── intelligent_company_scraper.py # 🧠 4-phase intelligent scraper
-│   ├── intelligent_url_discovery.py  # 🔍 Dynamic link discovery
-│   ├── progress_logger.py     # 📊 Real-time progress tracking
-│   ├── bedrock_client.py      # AWS AI integration
-│   ├── pinecone_client.py     # Optimized vector storage
-│   ├── similarity_engine.py   # Enhanced similarity calculations
-│   └── similarity_pipeline.py # Similarity processing
-├── templates/                 # 🎨 Web UI templates
-├── static/                    # 📱 CSS, JavaScript, assets
-├── tests/                     # 🧪 Test suite
-├── scripts/                   # 🛠️ Utility scripts
-├── docs/                      # 📚 Documentation (7 files)
-├── config/                    # ⚙️ Configuration management
-└── data/                      # 📊 Input data
+├── app.py                                  # 🌐 Main Flask application
+├── templates/
+│   ├── index.html                         # 🎨 Primary UI (4 tabs)
+│   └── settings.html                      # ⚙️ Configuration UI
+├── static/
+│   ├── css/style.css                      # 💄 Styling
+│   └── js/app.js                          # 🧠 Frontend logic
+└── src/
+    ├── main_pipeline.py                   # 🔧 Core orchestration
+    ├── models.py                          # 📋 Pydantic data models
+    ├── intelligent_company_scraper.py     # 🕷️ 4-phase scraper
+    ├── simple_enhanced_discovery.py       # 🔍 Similarity engine
+    ├── bedrock_client.py                  # 🤖 AWS AI client
+    ├── pinecone_client.py                 # 🗃️ Vector database
+    ├── gemini_client.py                   # 🧮 Google AI client
+    ├── openai_client.py                   # 🔄 OpenAI fallback
+    └── progress_logger.py                 # 📊 Real-time progress
 ```
 
-## 📚 Documentation
+### Organized Resources (Clean Structure)
+```
+├── docs/                                  # 📚 Organized documentation
+│   ├── core/                             # Essential docs
+│   ├── technical/                        # Component-specific
+│   ├── features/                         # Feature docs
+│   ├── outdated/                         # Pre-reorganization
+│   └── legacy/                           # Historical reference
+├── src/
+│   ├── experimental/                     # 🔬 Experimental features
+│   ├── legacy/                          # 📚 Legacy implementations  
+│   └── sheets_integration/              # 📊 Google Sheets feature
+├── tests/                               # 🧪 Organized test suite
+│   ├── legacy/                          # Legacy tests
+│   └── sandbox/                         # Development testing
+├── scripts/                             # 🛠️ Utility scripts
+│   ├── analysis/                        # Data analysis tools
+│   ├── batch/                           # Batch processing
+│   ├── testing/                         # Test utilities
+│   └── utilities/                       # General utilities
+├── config/                              # ⚙️ Configuration management
+└── data/                                # 📊 Input data and exports
+```
 
-**Essential Docs**:
-- **[Developer Onboarding](docs/DEVELOPER_ONBOARDING.md)**: Complete getting started guide
-- **[Setup Guide](docs/setup_guide.md)**: Detailed installation and configuration  
-- **[Architecture](docs/architecture.md)**: System design and components
+## 🔧 Configuration
 
-**Technical Deep Dives**:
-- **[AI Extraction Pipeline](docs/ai_extraction_pipeline.md)**: Technical implementation details
-- **[Vector Storage Strategy](docs/vector_storage_strategy.md)**: Pinecone optimization
-- **[Crawl4AI Configuration](docs/crawl4ai_configuration.md)**: Web scraping configuration
-- **[Technical Decisions](docs/technical_decisions.md)**: Key decisions and lessons learned
+### Environment Variables (Required)
+```bash
+# AWS Bedrock (Primary AI)
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+BEDROCK_ANALYSIS_MODEL=amazon.nova-pro-v1:0  # 6x cost reduction
+
+# Google AI (Primary Analysis)
+GEMINI_API_KEY=AIza...
+
+# Vector Database
+PINECONE_API_KEY=...
+PINECONE_INDEX_NAME=theodore-companies
+
+# Optional: OpenAI (Fallback)
+OPENAI_API_KEY=sk-...
+```
+
+### AI Model Hierarchy
+1. **Primary:** Gemini 2.5 Pro (1M context for aggregation)
+2. **Cost-Optimized:** Nova Pro (6x cheaper for research)
+3. **Fallback:** OpenAI GPT-4o-mini (when others fail)
+
+## 💡 Development Notes
+
+### Key Data Flow Patterns
+
+**Company Research Workflow:**
+```
+User Input → Research Manager → Intelligent Scraper → AI Analysis → Vector Generation → Pinecone Storage → Similarity Analysis → UI Display
+```
+
+**Discovery Workflow:**
+```
+Company Name → Database Check → Research Status Assessment → Real-time Research (if needed) → Enhanced Results Display
+```
+
+### Threading & Concurrency
+- Research manager uses thread-safe progress logging
+- Scraper implements semaphore-limited parallel extraction
+- UI updates via Server-Sent Events (SSE)
+
+### Error Handling Strategy
+- Graceful degradation: AI analysis → web search → manual fallback
+- Comprehensive logging with emoji prefixes for easy debugging
+- User-friendly error messages with actionable suggestions
 
 ## 🎯 Use Cases
 

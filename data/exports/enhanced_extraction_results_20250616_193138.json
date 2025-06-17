@@ -1,0 +1,840 @@
+{
+  "analysis_date": "2025-06-16T19:31:38.722044",
+  "companies_processed": 10,
+  "critical_fields": [
+    "founding_year",
+    "location",
+    "employee_count_range",
+    "company_description",
+    "value_proposition",
+    "target_market",
+    "tech_stack",
+    "competitive_advantages",
+    "leadership_team",
+    "contact_info",
+    "social_media",
+    "key_services",
+    "products_services_offered",
+    "pain_points",
+    "company_culture",
+    "funding_status",
+    "partnerships",
+    "awards",
+    "recent_news"
+  ],
+  "summary": {
+    "total_improvements": -5,
+    "avg_before": 5.263157894736842,
+    "avg_after": 2.631578947368421,
+    "successful_companies": 0
+  },
+  "results": [
+    {
+      "company_name": "Coupa Software",
+      "website": "https://www.coupa.com",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "company_description"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "target_market"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": 0,
+      "new_fields": [
+        "target_market"
+      ],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "OpenAI",
+      "website": "https://openai.com",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "target_market"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "target_market"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": 0,
+      "new_fields": [],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "Pfizer Inc.",
+      "website": "https://www.pfizer.com",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "company_description"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 0,
+        "empty_count": 19,
+        "completeness": 0.0,
+        "filled_fields": [],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": -1,
+      "new_fields": [],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "Anthropic",
+      "website": "https://anthropic.com",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "target_market"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "target_market"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": 0,
+      "new_fields": [],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "Cloud Geometry",
+      "website": "https://cloudgeometry.io",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "company_description"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 0,
+        "empty_count": 19,
+        "completeness": 0.0,
+        "filled_fields": [],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": -1,
+      "new_fields": [],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "Test Company",
+      "website": "https://www.google.com",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "company_description"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 0,
+        "empty_count": 19,
+        "completeness": 0.0,
+        "filled_fields": [],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": -1,
+      "new_fields": [],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "Adimab",
+      "website": "https://www.adimab.com",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "company_description"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "target_market"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": 0,
+      "new_fields": [
+        "target_market"
+      ],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "AI Entourage",
+      "website": "https://www.ai-entourage.ca",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "company_description"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 0,
+        "empty_count": 19,
+        "completeness": 0.0,
+        "filled_fields": [],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": -1,
+      "new_fields": [],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "Carrier",
+      "website": "https://www.carrier.com",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "company_description"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "target_market"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": 0,
+      "new_fields": [
+        "target_market"
+      ],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    },
+    {
+      "company_name": "AbGenomics",
+      "website": "https://abgenomics.com",
+      "before": {
+        "filled_count": 1,
+        "empty_count": 18,
+        "completeness": 5.263157894736842,
+        "filled_fields": [
+          "company_description"
+        ],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "after": {
+        "filled_count": 0,
+        "empty_count": 19,
+        "completeness": 0.0,
+        "filled_fields": [],
+        "empty_fields": [
+          "founding_year",
+          "location",
+          "employee_count_range",
+          "company_description",
+          "value_proposition",
+          "target_market",
+          "tech_stack",
+          "competitive_advantages",
+          "leadership_team",
+          "contact_info",
+          "social_media",
+          "key_services",
+          "products_services_offered",
+          "pain_points",
+          "company_culture",
+          "funding_status",
+          "partnerships",
+          "awards",
+          "recent_news"
+        ]
+      },
+      "improvement": -1,
+      "new_fields": [],
+      "sample_data": {
+        "leadership_team": [],
+        "founding_year": null,
+        "location": null,
+        "contact_info": {},
+        "social_media": {}
+      }
+    }
+  ],
+  "field_improvements": {
+    "founding_year": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "location": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "employee_count_range": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "company_description": {
+      "before": 8,
+      "after": 0,
+      "improvement": -8,
+      "success_rate": 0.0
+    },
+    "value_proposition": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "target_market": {
+      "before": 2,
+      "after": 5,
+      "improvement": 3,
+      "success_rate": 50.0
+    },
+    "tech_stack": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "competitive_advantages": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "leadership_team": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "contact_info": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "social_media": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "key_services": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "products_services_offered": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "pain_points": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "company_culture": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "funding_status": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "partnerships": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "awards": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    },
+    "recent_news": {
+      "before": 0,
+      "after": 0,
+      "improvement": 0,
+      "success_rate": 0.0
+    }
+  }
+}

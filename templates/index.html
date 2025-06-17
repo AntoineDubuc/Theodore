@@ -13,6 +13,9 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ timestamp }}">
     
+    <!-- Force cache refresh for updated interface -->
+    <script>console.log('🔄 Template updated with Details tab - v{{ timestamp }}');</script>
+    
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Theodore - AI Company Intelligence">
@@ -61,6 +64,9 @@
                     </button>
                     <button class="btn btn-secondary tab-button" data-tab="databaseTab">
                         🗄️ Browse Database
+                    </button>
+                    <button class="btn btn-secondary tab-button" data-tab="batchTab">
+                        📊 Batch Processing
                     </button>
                 </div>
             </div>
@@ -303,6 +309,80 @@
                     <!-- Companies Table -->
                     <div id="companiesTable" class="companies-table">
                         <div class="loading">Loading companies...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Processing Tab -->
+            <div id="batchTab" class="tab-content">
+                <div class="search-card">
+                    <h3 style="margin-bottom: 24px; color: var(--text-primary);">📊 Batch Processing</h3>
+                    <p style="margin-bottom: 24px; color: var(--text-secondary); font-size: 14px;">
+                        Process multiple companies from Google Sheets with AI-powered intelligence extraction.
+                        Upload company lists and enrich them with products, services, leadership, and market data.
+                    </p>
+                    
+                    <!-- Google Sheets Configuration -->
+                    <form id="batchProcessForm">
+                        <div class="form-group">
+                            <label for="googleSheetUrl" class="form-label">
+                                Google Sheets URL
+                            </label>
+                            <div class="input-wrapper">
+                                <input 
+                                    type="url" 
+                                    id="googleSheetUrl" 
+                                    name="google_sheet_url" 
+                                    class="form-input" 
+                                    placeholder="https://docs.google.com/spreadsheets/d/..."
+                                    required
+                                >
+                            </div>
+                            <p class="form-help">
+                                Enter the URL of your Google Sheet containing company names and URLs.
+                            </p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="batchSize" class="form-label">
+                                Number of Companies to Process
+                            </label>
+                            <select id="batchSize" name="batch_size" class="form-input">
+                                <option value="5">5 companies (test)</option>
+                                <option value="10" selected>10 companies</option>
+                                <option value="25">25 companies</option>
+                                <option value="50">50 companies</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="validateGoogleSheet()">
+                                🔍 Validate Sheet
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                🚀 Start Batch Processing
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Batch Processing Status -->
+                    <div id="batchStatus" class="batch-status hidden">
+                        <h4>Processing Status</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="status-details">
+                            <span id="statusText">Initializing...</span>
+                            <span id="progressText">0/0</span>
+                        </div>
+                    </div>
+
+                    <!-- Batch Results -->
+                    <div id="batchResults" class="batch-results hidden">
+                        <h4>Processing Results</h4>
+                        <div id="batchResultsContent">
+                            <!-- Results will be populated by JavaScript -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -644,6 +724,227 @@
             .database-stats {
                 grid-template-columns: 1fr;
             }
+        }
+
+        /* Details Spreadsheet Styles */
+        .details-spreadsheet {
+            margin-top: 20px;
+        }
+
+        .details-table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 1200px;
+        }
+
+        .details-table th {
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .details-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+            max-width: 120px;
+        }
+
+        .details-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .details-table .products-cell,
+        .details-table .value-prop-cell,
+        .details-table .culture-cell,
+        .details-table .leadership-cell {
+            max-width: 150px;
+        }
+
+        .details-table .cell-content {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: help;
+        }
+
+        .details-table .company-name-cell strong {
+            color: var(--primary-color);
+        }
+
+        .details-table a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .details-table a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive details table */
+        /* Batch Processing Styles */
+        .batch-status {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .status-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .batch-results {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+        }
+
+        .batch-summary {
+            margin-bottom: 20px;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+        }
+
+        .summary-stat {
+            text-align: center;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .summary-stat.success {
+            background: rgba(67, 233, 123, 0.1);
+            border-color: rgba(67, 233, 123, 0.3);
+        }
+
+        .summary-stat.failure {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .summary-stat.total {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .summary-stat .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .summary-stat.success .stat-number {
+            color: #43e97b;
+        }
+
+        .summary-stat.failure .stat-number {
+            color: #ef4444;
+        }
+
+        .summary-stat.total .stat-number {
+            color: #667eea;
+        }
+
+        .summary-stat .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .batch-results-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .batch-result-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .batch-result-item.success {
+            border-left: 3px solid #43e97b;
+        }
+
+        .batch-result-item.failed {
+            border-left: 3px solid #ef4444;
+        }
+
+        .result-company {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .result-status {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .result-details {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .result-error {
+            font-size: 0.85rem;
+            color: #ef4444;
+            margin-top: 4px;
+        }
+
+        .form-help {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            line-height: 1.4;
         }
     </style>
 </body>

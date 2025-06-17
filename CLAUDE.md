@@ -56,8 +56,8 @@ nohup python3 app.py > app.log 2>&1 & echo $!
 # Alternative: Development mode (foreground)
 python3 app.py
 
-# Start V2 application (enhanced interface with advanced features)
-python3 v2_app.py &
+# Start V2 application (enhanced interface with advanced features - experimental)
+python3 src/experimental/v2_app.py &
 # Access at: http://localhost:5004
 
 # Direct pipeline execution (CLI mode)
@@ -99,13 +99,17 @@ python test_credentials.py
 # Test similarity engine
 python tests/test_similarity_engine.py
 
-# Additional test files in testing_sandbox/
-python testing_sandbox/test_v2_research.py
-python testing_sandbox/test_v2_discovery.py
-python testing_sandbox/minimal_test.py
+# Additional test files in organized test directories
+python tests/sandbox/testing_sandbox/test_v2_research.py
+python tests/sandbox/testing_sandbox/test_v2_discovery.py
+python tests/sandbox/testing_sandbox/minimal_test.py
 
-# Note: Many legacy test files have been cleaned up from root directory
-# Active tests are now in tests/ directory and testing_sandbox/
+# Legacy tests (reference only)
+python tests/legacy/test_similarity_pipeline.py
+
+# Note: Test files have been reorganized into tests/ with subdirectories:
+# tests/legacy/ - Legacy test implementations
+# tests/sandbox/ - Development and experimental tests
 ```
 
 ### Database Operations
@@ -141,6 +145,47 @@ cp .env.example .env  # Then configure API keys
 # Debug specific issues
 python debug_research_pipeline.py
 python debug_scraping_issue.py
+```
+
+## 📁 Project Organization
+
+### Clean Codebase Structure
+
+Theodore has been reorganized for maintainability and clarity:
+
+**Production Code (Core System):**
+```
+src/
+├── main_pipeline.py                   # Core orchestration
+├── models.py                          # Pydantic data models
+├── intelligent_company_scraper.py     # 4-phase scraper (primary)
+├── simple_enhanced_discovery.py       # Similarity discovery (primary)
+├── bedrock_client.py                  # AWS AI integration
+├── gemini_client.py                   # Google AI integration
+├── openai_client.py                   # OpenAI fallback
+├── pinecone_client.py                 # Vector database
+└── progress_logger.py                 # Real-time progress tracking
+```
+
+**Organized Development Resources:**
+```
+src/
+├── experimental/                      # Experimental features and research
+├── legacy/                           # Legacy implementations (reference)
+│   ├── research_manager.py          # Structured research prompts
+│   └── similarity_prompts.py        # Research prompt definitions
+└── sheets_integration/               # Google Sheets batch processing
+
+tests/
+├── legacy/                           # Legacy test implementations
+└── sandbox/                          # Development and experimental tests
+
+docs/
+├── core/                             # Essential documentation
+├── technical/                        # Component-specific docs
+├── features/                         # Feature documentation
+├── outdated/                         # Pre-reorganization reference
+└── legacy/                           # Historical documentation
 ```
 
 ## 🏗️ System Architecture
@@ -194,12 +239,17 @@ Company Name → Database Check → Research Status Assessment → Real-time Res
 
 ### Critical Files and Their Roles
 
-**Core Pipeline:**
+**Core Pipeline (Production):**
 - `src/main_pipeline.py` - Main orchestration and entry point
 - `src/models.py` - Pydantic data models for all entities
 - `src/intelligent_company_scraper.py` - 4-phase intelligent scraping system
-- `src/research_manager.py` - Structured research with 8 predefined prompts
-- `src/similarity_engine.py` - Multi-dimensional similarity scoring
+- `src/simple_enhanced_discovery.py` - Similarity discovery engine (primary)
+- `src/progress_logger.py` - Thread-safe real-time progress tracking
+
+**Legacy Components (Reference Only):**
+- `src/legacy/research_manager.py` - Structured research with 8 predefined prompts
+- `src/legacy/similarity_prompts.py` - Research prompt definitions
+- `src/experimental/similarity_engine.py` - Multi-dimensional similarity scoring
 
 ### Intelligent Scraping System (intelligent_company_scraper.py)
 
@@ -310,10 +360,14 @@ The scraping system is highly sophisticated and DOES crawl comprehensive content
 
 **Web Interface:**
 - `app.py` - Flask application with comprehensive API endpoints (primary interface)
-- `v2_app.py` - V2 Flask application with enhanced research features
 - `templates/index.html` - Modern dark-themed UI (primary)
-- `templates/v2_index.html` - Enhanced V2 UI
+- `templates/settings.html` - Configuration and settings UI
 - `static/js/app.js` - Frontend logic with real-time updates
+- `static/css/style.css` - Modern gradient styling with dark theme
+
+**Experimental/Development:**
+- `src/experimental/v2_app.py` - V2 Flask application with enhanced research features
+- `templates/v2_index.html` - Enhanced V2 UI
 - `static/js/v2_app.js` - V2 frontend enhancements
 
 ### Configuration Management
@@ -350,10 +404,37 @@ aws_client = BedrockClient(
 
 ## 🔧 Common Development Patterns
 
-### Adding New Research Prompts
+### Import Patterns After Reorganization
+
+**Core imports (production code):**
+```python
+# Main pipeline and models
+from src.main_pipeline import TheodoreIntelligencePipeline
+from src.models import CompanyData, CompanyIntelligenceConfig
+from src.intelligent_company_scraper import IntelligentCompanyScraperSync
+from src.simple_enhanced_discovery import SimpleEnhancedDiscovery
+
+# AI clients
+from src.bedrock_client import BedrockClient
+from src.gemini_client import GeminiClient
+from src.pinecone_client import PineconeClient
+```
+
+**Legacy/experimental imports:**
+```python
+# Legacy research system (reference only)
+from src.legacy.research_manager import ResearchManager
+from src.legacy.similarity_prompts import INDUSTRY_CLASSIFICATION_FROM_RESEARCH_PROMPT
+
+# Experimental features
+from src.experimental.v2_research import V2ResearchManager
+from src.experimental.similarity_engine import SimilarityEngine
+```
+
+### Adding New Research Prompts (Legacy System)
 
 ```python
-# In src/research_prompts.py
+# In src/legacy/research_prompts.py
 new_prompt = ResearchPrompt(
     id="custom_analysis",
     name="Custom Analysis", 
@@ -577,3 +658,23 @@ The system demonstrates that Theodore can indeed extract meaningful company inte
 - Showing how the system would work at scale
 - Validating the AI extraction capabilities
 - Creating a usable web interface for company intelligence discovery
+
+## 📚 Documentation Structure
+
+The project documentation is well-organized for different audiences:
+
+**For New Developers:**
+- Start with `docs/core/DEVELOPER_ONBOARDING_NEW.md` for complete setup
+- Review `docs/core/CORE_ARCHITECTURE.md` for system understanding
+- Check `docs/core/setup_guide.md` for installation details
+
+**For Technical Implementation:**
+- `docs/technical/` contains component-specific documentation
+- `docs/features/` covers experimental features and batch processing
+- `docs/outdated/` and `docs/legacy/` provide historical reference
+
+**Documentation Status:**
+- ✅ **Core docs**: Current and maintained
+- ⚠️ **Technical docs**: May need updates, verify before use
+- 🔬 **Feature docs**: Experimental/partial implementations
+- 📚 **Legacy/Outdated**: Historical reference only

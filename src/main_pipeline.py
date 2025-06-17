@@ -13,16 +13,17 @@ from src.models import (
     CompanyData, SurveyResponse, ProcessingJob, 
     CompanyIntelligenceConfig, SectorCluster, CompanySimilarity
 )
-from src.crawl4ai_scraper import CompanyWebScraper
+# Core modules only - experimental modules commented out
+# from src.experimental.crawl4ai_scraper import CompanyWebScraper
 from src.intelligent_company_scraper import IntelligentCompanyScraperSync
 from src.bedrock_client import BedrockClient
 from src.gemini_client import GeminiClient
 from src.pinecone_client import PineconeClient
-from src.clustering import SectorClusteringEngine
-from src.similarity_pipeline import SimilarityDiscoveryPipeline
-from src.company_discovery import CompanyDiscoveryService
-from src.similarity_validator import SimilarityValidator
-from src.extraction_improvements import enhance_company_extraction, ENHANCED_EXTRACTION_PROMPTS
+# from src.experimental.clustering import SectorClusteringEngine
+# from src.experimental.similarity_pipeline import SimilarityDiscoveryPipeline
+# from src.experimental.company_discovery import CompanyDiscoveryService
+# from src.experimental.similarity_validator import SimilarityValidator
+# from src.experimental.extraction_improvements import enhance_company_extraction, ENHANCED_EXTRACTION_PROMPTS
 
 # Set up logging
 logging.basicConfig(
@@ -44,19 +45,20 @@ class TheodoreIntelligencePipeline:
         self.gemini_client = GeminiClient(config)    # Use for analysis and similarity
         # Use intelligent scraper for comprehensive sales intelligence
         self.scraper = IntelligentCompanyScraperSync(config, self.bedrock_client)
-        # Keep legacy scraper as fallback
-        self.legacy_scraper = CompanyWebScraper(config, self.bedrock_client)
+        # Legacy scraper removed - using intelligent scraper only
+        # self.legacy_scraper = CompanyWebScraper(config, self.bedrock_client)
         self.pinecone_client = PineconeClient(
             config, pinecone_api_key, pinecone_environment, pinecone_index
         )
-        self.clustering_engine = SectorClusteringEngine(config, self.pinecone_client)
-        self.similarity_pipeline = SimilarityDiscoveryPipeline(config)
+        # Experimental clustering engine removed
+        # self.clustering_engine = SectorClusteringEngine(config, self.pinecone_client)
+        # self.similarity_pipeline = SimilarityDiscoveryPipeline(config)
         
-        # Initialize similarity pipeline clients (use Gemini for analysis)
-        self.similarity_pipeline.bedrock_client = self.gemini_client  # Use Gemini instead of Bedrock
-        self.similarity_pipeline.pinecone_client = self.pinecone_client
-        self.similarity_pipeline.discovery_service = CompanyDiscoveryService(self.gemini_client)
-        self.similarity_pipeline.similarity_validator = SimilarityValidator(self.gemini_client)
+        # Similarity pipeline removed - using simple enhanced discovery in app.py
+        # self.similarity_pipeline.bedrock_client = self.gemini_client  # Use Gemini instead of Bedrock
+        # self.similarity_pipeline.pinecone_client = self.pinecone_client
+        # self.similarity_pipeline.discovery_service = CompanyDiscoveryService(self.gemini_client)
+        # self.similarity_pipeline.similarity_validator = SimilarityValidator(self.gemini_client)
         
         logger.info("Theodore Intelligence Pipeline initialized")
     
@@ -328,14 +330,31 @@ class TheodoreIntelligencePipeline:
             logger.warning(f"Analysis error for {company.name}: {analysis_result['error']}")
             return
         
-        # Update company data with analysis results
+        # Update basic company data with analysis results
         company.industry = analysis_result.get("industry", company.industry)
         company.business_model = analysis_result.get("business_model", company.business_model)
         company.company_size = analysis_result.get("company_size", company.company_size)
         company.target_market = analysis_result.get("target_market", company.target_market)
         company.ai_summary = analysis_result.get("ai_summary", "")
         
-        # Merge lists (avoid duplicates)
+        # Apply enhanced fields from the new comprehensive prompt
+        company.company_stage = analysis_result.get("company_stage", company.company_stage)
+        company.founding_year = analysis_result.get("founding_year", company.founding_year)
+        company.location = analysis_result.get("location", company.location)
+        company.employee_count_range = analysis_result.get("employee_count_range", company.employee_count_range)
+        company.company_description = analysis_result.get("company_description", company.company_description)
+        company.value_proposition = analysis_result.get("value_proposition", company.value_proposition)
+        company.funding_status = analysis_result.get("funding_status", company.funding_status)
+        company.company_culture = analysis_result.get("company_culture", company.company_culture)
+        
+        # Apply structured data fields (contact_info, social_media)
+        if analysis_result.get("contact_info"):
+            company.contact_info = analysis_result["contact_info"]
+        
+        if analysis_result.get("social_media"):
+            company.social_media = analysis_result["social_media"]
+        
+        # Merge lists (avoid duplicates) - existing fields
         if analysis_result.get("tech_stack"):
             existing_tech = set(company.tech_stack)
             new_tech = set(analysis_result["tech_stack"])
@@ -350,6 +369,49 @@ class TheodoreIntelligencePipeline:
             existing_pains = set(company.pain_points)
             new_pains = set(analysis_result["pain_points"])
             company.pain_points = list(existing_pains.union(new_pains))
+        
+        # Merge new enhanced list fields
+        if analysis_result.get("products_services_offered"):
+            existing_products = set(company.products_services_offered)
+            new_products = set(analysis_result["products_services_offered"])
+            company.products_services_offered = list(existing_products.union(new_products))
+        
+        if analysis_result.get("competitive_advantages"):
+            existing_advantages = set(company.competitive_advantages)
+            new_advantages = set(analysis_result["competitive_advantages"])
+            company.competitive_advantages = list(existing_advantages.union(new_advantages))
+        
+        if analysis_result.get("leadership_team"):
+            existing_leadership = set(company.leadership_team)
+            new_leadership = set(analysis_result["leadership_team"])
+            company.leadership_team = list(existing_leadership.union(new_leadership))
+        
+        if analysis_result.get("partnerships"):
+            existing_partnerships = set(company.partnerships)
+            new_partnerships = set(analysis_result["partnerships"])
+            company.partnerships = list(existing_partnerships.union(new_partnerships))
+        
+        if analysis_result.get("awards"):
+            existing_awards = set(company.awards)
+            new_awards = set(analysis_result["awards"])
+            company.awards = list(existing_awards.union(new_awards))
+        
+        if analysis_result.get("recent_news"):
+            existing_news = set(company.recent_news_events)
+            new_news = set(analysis_result["recent_news"])
+            company.recent_news_events = list(existing_news.union(new_news))
+        
+        # Job-related fields
+        if analysis_result.get("job_listings_count"):
+            company.job_listings_count = analysis_result["job_listings_count"]
+        
+        if analysis_result.get("job_listings"):
+            company.job_listings = analysis_result["job_listings"]
+            
+        if analysis_result.get("job_listings_details"):
+            existing_jobs = set(company.job_listings_details)
+            new_jobs = set(analysis_result["job_listings_details"])
+            company.job_listings_details = list(existing_jobs.union(new_jobs))
     
     def _prepare_embedding_text(self, company: CompanyData) -> str:
         """Prepare comprehensive text for embedding generation using vector content approach"""
