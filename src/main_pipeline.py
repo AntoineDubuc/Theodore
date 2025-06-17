@@ -109,8 +109,8 @@ class TheodoreIntelligencePipeline:
         """Process a single company for testing/demo purposes"""
         logger.info(f"Processing single company: {company_name}")
         
-        # Create company data object
-        company = CompanyData(name=company_name, website=website)
+        # Get existing company or create new one to prevent duplicates
+        company = self._get_or_create_company(company_name, website)
         
         # Scrape website
         company = self.scraper.scrape_company(company)
@@ -157,9 +157,13 @@ class TheodoreIntelligencePipeline:
         embedding_text = self._prepare_embedding_text(company)
         company.embedding = self.bedrock_client.generate_embedding(embedding_text)
         
-        # Store in Pinecone
+        # Update timestamp when processing/updating company
+        company.last_updated = datetime.utcnow()
+        
+        # Store in Pinecone (will update existing entry if company already exists)
         if company.embedding:
             self.pinecone_client.upsert_company(company)
+            logger.info(f"Successfully upserted {company_name} to Pinecone database")
         
         logger.info(f"Successfully processed {company_name}")
         return company
@@ -213,14 +217,44 @@ class TheodoreIntelligencePipeline:
         logger.info(f"Loaded {len(survey_responses)} survey responses")
         return survey_responses
     
+    def _get_or_create_company(self, company_name: str, website: str, **kwargs) -> CompanyData:
+        """Get existing company or create new one to prevent duplicates"""
+        # Check if company already exists
+        existing_company = self.pinecone_client.find_company_by_name(company_name)
+        
+        if existing_company:
+            logger.info(f"Found existing company: {company_name} (ID: {existing_company.id})")
+            # Update website if different
+            if website and website != existing_company.website:
+                logger.info(f"Updating website from {existing_company.website} to {website}")
+                existing_company.website = website
+            
+            # Update any additional fields from kwargs
+            for key, value in kwargs.items():
+                if hasattr(existing_company, key) and value:
+                    current_value = getattr(existing_company, key)
+                    # For list fields, extend rather than replace
+                    if isinstance(current_value, list) and isinstance(value, list):
+                        if not current_value:  # If current is empty, use new value
+                            setattr(existing_company, key, value)
+                    elif not current_value:  # For other fields, only update if current is empty
+                        setattr(existing_company, key, value)
+            
+            return existing_company
+        else:
+            # Create new company
+            logger.info(f"Creating new company entry for: {company_name}")
+            return CompanyData(name=company_name, website=website, **kwargs)
+    
     def _convert_survey_to_companies(self, survey_responses: List[SurveyResponse]) -> List[CompanyData]:
         """Convert survey responses to CompanyData objects"""
         companies = []
         
         for response in survey_responses:
-            company = CompanyData(
-                name=response.company_name,
-                website=response.website or f"https://{response.company_name.lower().replace(' ', '')}.com",
+            website = response.website or f"https://{response.company_name.lower().replace(' ', '')}.com"
+            company = self._get_or_create_company(
+                company_name=response.company_name,
+                website=website,
                 pain_points=[response.pain_points] if response.pain_points else []
             )
             companies.append(company)

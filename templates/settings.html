@@ -309,7 +309,7 @@
 
         <div class="nav-bar">
             <a href="/" class="nav-button">🏠 Dashboard</a>
-            <a href="#" class="nav-button active">⚙️ Settings</a>
+            <a href="/settings" class="nav-button active">⚙️ Settings</a>
             <a href="#" class="nav-button" onclick="refreshSettings()">🔄 Refresh</a>
             <a href="#" class="nav-button" onclick="exportSettings()">📥 Export Config</a>
         </div>
@@ -422,6 +422,10 @@
                         <div class="stat-item">
                             <div class="stat-value">$${costs.batch_400 || '1.89'}</div>
                             <div class="stat-label">400 Companies</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">$${costs.batch_1000 || '4.70'}</div>
+                            <div class="stat-label">1000 Companies</div>
                         </div>
                     </div>
                     

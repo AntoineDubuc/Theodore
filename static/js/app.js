@@ -864,6 +864,22 @@ class TheodoreUI {
             }
         });
 
+        // Add ESC key support
+        const handleEscKey = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', handleEscKey);
+            }
+        };
+        document.addEventListener('keydown', handleEscKey);
+
+        // Clean up event listener when modal is removed
+        const originalRemove = modal.remove.bind(modal);
+        modal.remove = () => {
+            document.removeEventListener('keydown', handleEscKey);
+            originalRemove();
+        };
+
         return modal;
     }
 
@@ -2019,23 +2035,236 @@ class TheodoreUI {
     }
 
     showCompanyDetailsModal(company) {
+        // Helper function to safely display array data
+        const displayArray = (arr, defaultText = 'Not specified') => {
+            if (!arr || !Array.isArray(arr) || arr.length === 0) {
+                return `<span style="color: #888; font-style: italic;">${defaultText}</span>`;
+            }
+            return arr.map(item => this.escapeHtml(item)).join(', ');
+        };
+
+        // Helper function to safely display object data
+        const displayObject = (obj, defaultText = 'Not specified') => {
+            if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
+                return `<span style="color: #888; font-style: italic;">${defaultText}</span>`;
+            }
+            return Object.entries(obj)
+                .map(([key, value]) => `<strong>${this.escapeHtml(key)}:</strong> ${this.escapeHtml(value)}`)
+                .join('<br>');
+        };
+
+        // Helper function to safely display text
+        const displayText = (text, defaultText = 'Not specified') => {
+            if (text && text !== 'unknown') {
+                return this.escapeHtml(text);
+            }
+            return `<span style="color: #888; font-style: italic;">${defaultText}</span>`;
+        };
+
+        // Helper function to display numbers (like founding year)
+        const displayNumber = (num, defaultText = 'Not specified') => {
+            if (num && typeof num === 'number' && num > 0) {
+                return num.toString();
+            }
+            return `<span style="color: #888; font-style: italic;">${defaultText}</span>`;
+        };
+
+        // Helper function to display boolean values
+        const displayBoolean = (bool, trueText = 'Yes', falseText = 'No') => {
+            if (typeof bool === 'boolean') {
+                return bool ? trueText : falseText;
+            }
+            return `<span style="color: #888; font-style: italic;">Not specified</span>`;
+        };
+
+        // Helper function to display percentages
+        const displayPercentage = (value, defaultText = 'Not calculated') => {
+            if (value && typeof value === 'number') {
+                return `${(value * 100).toFixed(1)}%`;
+            }
+            return `<span style="color: #888; font-style: italic;">${defaultText}</span>`;
+        };
+
+        // Helper function to check if a section has meaningful data
+        const hasData = (fields) => {
+            return fields.some(field => {
+                if (Array.isArray(field)) return field && field.length > 0;
+                if (typeof field === 'object') return field && Object.keys(field).length > 0;
+                return field && field !== 'unknown' && field !== '';
+            });
+        };
+
         const modalContent = `
             <div class="company-details">
                 <h3>${this.escapeHtml(company.name)}</h3>
-                <div class="detail-section">
-                    <h4>Basic Information</h4>
-                    <p><strong>Website:</strong> <a href="${company.website}" target="_blank">${this.escapeHtml(company.website)}</a></p>
-                    <p><strong>Industry:</strong> ${this.escapeHtml(company.industry || 'Unknown')}</p>
-                    <p><strong>Business Model:</strong> ${this.escapeHtml(company.business_model || 'Unknown')}</p>
-                </div>
-                ${company.sales_intelligence ? `
-                    <div class="detail-section">
-                        <h4>Sales Intelligence</h4>
-                        <div class="sales-intelligence-content">
-                            ${this.escapeHtml(company.sales_intelligence).replace(/\n/g, '<br>')}
-                        </div>
+                
+                <!-- Data Availability Notice -->
+                ${company.scrape_status === 'failed' || (company.sales_intelligence && company.sales_intelligence.startsWith('No content could be extracted')) ? `
+                    <div class="detail-section full-width" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                        <h4 style="color: #ff6b6b;">⚠️ Limited Data Available</h4>
+                        <p style="margin: 8px 0 0 0; color: var(--text-secondary);">
+                            This company's data extraction was incomplete. Only basic information is available. 
+                            Consider re-researching this company to get complete intelligence.
+                        </p>
                     </div>
                 ` : ''}
+                
+                <div class="details-grid">
+                    <div class="details-column">
+                        <!-- Basic Information -->
+                        <div class="detail-section">
+                            <h4>🏢 Basic Information</h4>
+                            <p><strong>Website:</strong> <a href="${company.website}" target="_blank">${this.escapeHtml(company.website)}</a></p>
+                            <p><strong>Industry:</strong> ${displayText(company.industry)}</p>
+                            <p><strong>Business Model:</strong> ${displayText(company.business_model)}</p>
+                            <p><strong>Company Size:</strong> ${displayText(company.company_size)}</p>
+                            <p><strong>Company Stage:</strong> ${displayText(company.company_stage)}</p>
+                            <p><strong>Founded:</strong> ${displayNumber(company.founding_year)}</p>
+                            <p><strong>Location:</strong> ${displayText(company.location)}</p>
+                            <p><strong>Employee Count:</strong> ${displayText(company.employee_count_range)}</p>
+                            <p><strong>Geographic Scope:</strong> ${displayText(company.geographic_scope)}</p>
+                        </div>
+
+                        <!-- Business Intelligence -->
+                        <div class="detail-section">
+                            <h4>💼 Business Intelligence</h4>
+                            <p><strong>Key Services:</strong> ${displayArray(company.key_services)}</p>
+                            <p><strong>Products/Services Offered:</strong> ${displayArray(company.products_services_offered)}</p>
+                            <p><strong>Pain Points:</strong> ${displayArray(company.pain_points)}</p>
+                            <p><strong>Competitive Advantages:</strong> ${displayArray(company.competitive_advantages)}</p>
+                            <p><strong>Business Model Type:</strong> ${displayText(company.business_model_type)}</p>
+                            <p><strong>Decision Maker Type:</strong> ${displayText(company.decision_maker_type)}</p>
+                            <p><strong>Sales Complexity:</strong> ${displayText(company.sales_complexity)}</p>
+                        </div>
+
+                        <!-- Financial & Growth -->
+                        <div class="detail-section">
+                            <h4>💰 Financial & Growth</h4>
+                            <p><strong>Funding Status:</strong> ${displayText(company.funding_status)}</p>
+                            <p><strong>Funding Stage (Detailed):</strong> ${displayText(company.funding_stage_detailed)}</p>
+                            <p><strong>Has Job Listings:</strong> ${displayBoolean(company.has_job_listings)}</p>
+                            <p><strong>Job Openings Count:</strong> ${displayNumber(company.job_listings_count, 'Not specified')}</p>
+                        </div>
+
+                        <!-- Contact & Social -->
+                        <div class="detail-section">
+                            <h4>📞 Contact & Social Media</h4>
+                            <div><strong>Contact Information:</strong><br>${displayObject(company.contact_info)}</div>
+                            <div><strong>Social Media:</strong><br>${displayObject(company.social_media)}</div>
+                        </div>
+                    </div>
+
+                    <div class="details-column">
+                        <!-- Company Overview -->
+                        <div class="detail-section">
+                            <h4>📋 Company Overview</h4>
+                            <p><strong>Description:</strong> ${displayText(company.company_description)}</p>
+                            <p><strong>Value Proposition:</strong> ${displayText(company.value_proposition)}</p>
+                            <p><strong>Target Market:</strong> ${displayText(company.target_market)}</p>
+                            <p><strong>Company Culture:</strong> ${displayText(company.company_culture)}</p>
+                        </div>
+
+                        <!-- Technology & Tools -->
+                        <div class="detail-section">
+                            <h4>💻 Technology & Tools</h4>
+                            <p><strong>Tech Stack:</strong> ${displayArray(company.tech_stack)}</p>
+                            <p><strong>Tech Sophistication:</strong> ${displayText(company.tech_sophistication)}</p>
+                            <p><strong>Has Chat Widget:</strong> ${displayBoolean(company.has_chat_widget)}</p>
+                            <p><strong>Has Forms:</strong> ${displayBoolean(company.has_forms)}</p>
+                            <p><strong>Sales/Marketing Tools:</strong> ${displayArray(company.sales_marketing_tools)}</p>
+                        </div>
+
+                        <!-- Leadership & Team -->
+                        <div class="detail-section">
+                            <h4>👥 Leadership & Team</h4>
+                            <p><strong>Leadership Team:</strong> ${displayArray(company.leadership_team)}</p>
+                            <div><strong>Key Decision Makers:</strong><br>${displayObject(company.key_decision_makers)}</div>
+                        </div>
+
+                        <!-- Recognition & Partnerships -->
+                        <div class="detail-section">
+                            <h4>🏆 Recognition & Partnerships</h4>
+                            <p><strong>Awards:</strong> ${displayArray(company.awards)}</p>
+                            <p><strong>Certifications:</strong> ${displayArray(company.certifications)}</p>
+                            <p><strong>Partnerships:</strong> ${displayArray(company.partnerships)}</p>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="detail-section">
+                            <h4>📈 Recent Activity</h4>
+                            <p><strong>Recent News:</strong> ${displayArray(company.recent_news)}</p>
+                            <div><strong>Recent News/Events:</strong><br>
+                                ${company.recent_news_events && company.recent_news_events.length > 0 ? 
+                                    company.recent_news_events.map(event => 
+                                        `<p>• ${this.escapeHtml(event.date || 'Date unknown')}: ${this.escapeHtml(event.description || event.title || 'No description')}</p>`
+                                    ).join('') : 'No recent news available'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Listings Details -->
+                ${company.job_listings_details && company.job_listings_details.length > 0 ? `
+                    <div class="detail-section">
+                        <h4>💼 Current Job Openings</h4>
+                        ${company.job_listings_details.map(job => `
+                            <div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                                <strong>${this.escapeHtml(job.title || 'Job Title')}</strong><br>
+                                <small>Department: ${this.escapeHtml(job.department || 'Not specified')} | Location: ${this.escapeHtml(job.location || 'Not specified')}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                <!-- Crawling Information -->
+                <div class="detail-section">
+                    <h4>🕷️ Data Collection</h4>
+                    <p><strong>Pages Crawled:</strong> ${displayNumber(company.pages_crawled ? company.pages_crawled.length : 0, '0')}</p>
+                    <p><strong>Crawl Depth:</strong> ${displayNumber(company.crawl_depth)}</p>
+                    <p><strong>Crawl Duration:</strong> ${company.crawl_duration ? `${company.crawl_duration.toFixed(2)}s` : `<span style="color: #888; font-style: italic;">Not specified</span>`}</p>
+                    <p><strong>Scrape Status:</strong> ${displayText(company.scrape_status)}</p>
+                    ${company.scrape_error ? `<p><strong>Scrape Error:</strong> <span style="color: #ff6b6b;">${this.escapeHtml(company.scrape_error)}</span></p>` : ''}
+                </div>
+
+                <!-- Confidence Scores -->
+                <div class="detail-section">
+                    <h4>📊 Confidence Scores</h4>
+                    <p><strong>Stage Confidence:</strong> ${displayPercentage(company.stage_confidence)}</p>
+                    <p><strong>Tech Confidence:</strong> ${displayPercentage(company.tech_confidence)}</p>
+                    <p><strong>Industry Confidence:</strong> ${displayPercentage(company.industry_confidence)}</p>
+                </div>
+
+                <!-- AI Analysis -->
+                ${company.ai_summary || company.sales_intelligence ? `
+                    <div class="detail-section">
+                        <h4>🤖 AI Analysis</h4>
+                        ${company.sales_intelligence ? `
+                            <div style="margin-bottom: 16px;">
+                                <strong>Sales Intelligence:</strong>
+                                <div class="sales-intelligence-content" style="margin-top: 8px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; line-height: 1.6;">
+                                    ${this.escapeHtml(company.sales_intelligence).replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${company.ai_summary ? `
+                            <div>
+                                <strong>AI Summary:</strong>
+                                <div style="margin-top: 8px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; line-height: 1.6;">
+                                    ${this.escapeHtml(company.ai_summary).replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+
+                <!-- Metadata -->
+                <div class="detail-section">
+                    <h4>ℹ️ Metadata</h4>
+                    <p><strong>ID:</strong> <code style="font-family: monospace; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px;">${this.escapeHtml(company.id)}</code></p>
+                    <p><strong>Created:</strong> ${company.created_at ? new Date(company.created_at).toLocaleString() : `<span style="color: #888; font-style: italic;">Not specified</span>`}</p>
+                    <p><strong>Last Updated:</strong> ${company.last_updated ? new Date(company.last_updated).toLocaleString() : `<span style="color: #888; font-style: italic;">Not specified</span>`}</p>
+                </div>
             </div>
         `;
         
@@ -2401,8 +2630,7 @@ class TheodoreUI {
                             <td>
                                 <div class="sales-intelligence-preview">
                                     ${company.has_sales_intelligence ? 
-                                        `<span class="intelligence-indicator">✅ Available</span>
-                                         <button class="btn-mini" onclick="viewSalesIntelligence('${company.id}')">View</button>` : 
+                                        '<span class="intelligence-indicator">✅ Available</span>' : 
                                         '<span class="intelligence-indicator">❌ Not Available</span>'
                                     }
                                 </div>
@@ -2411,14 +2639,11 @@ class TheodoreUI {
                                 <div class="update-time">${company.last_updated ? new Date(company.last_updated).toLocaleDateString() : 'Unknown'}</div>
                             </td>
                             <td>
-                                <button class="btn-mini btn-primary" onclick="testSimilarity('${this.escapeHtml(company.name)}')">
-                                    🔍 Test Similarity
-                                </button>
-                                ${company.website ? `
-                                    <button class="btn-mini btn-website" onclick="window.open('${this.escapeHtml(company.website)}', '_blank')" title="Open ${this.escapeHtml(company.name)} website">
-                                        🌐 Website
+                                <div class="actions-dropdown">
+                                    <button class="dropdown-trigger" onclick="window.theodoreUI.toggleDropdown(this, '${this.escapeHtml(company.id)}', '${this.escapeJs(company.name)}', '${this.escapeJs(company.website || '')}')">
+                                        ⋯
                                     </button>
-                                ` : ''}
+                                </div>
                             </td>
                         </tr>
                     `).join('')}
@@ -2702,6 +2927,77 @@ class TheodoreUI {
         const progressContainer = document.getElementById('discoveryProgress');
         if (progressContainer) {
             progressContainer.style.display = 'none';
+        }
+    }
+
+    toggleDropdown(triggerElement, companyId, companyName, website) {
+        // Close any existing dropdowns
+        this.closeAllDropdowns();
+        
+        // Create dropdown menu
+        const dropdown = document.createElement('div');
+        dropdown.className = 'dropdown-menu';
+        dropdown.innerHTML = `
+            <button class="dropdown-item" onclick="window.theodoreUI.viewCompanyDetails('${this.escapeJs(companyId)}', '${this.escapeJs(companyName)}'); window.theodoreUI.closeAllDropdowns();">
+                <span class="dropdown-icon">👁️</span>
+                <span class="dropdown-text">View Details</span>
+            </button>
+            <button class="dropdown-item" onclick="testSimilarity('${this.escapeJs(companyName)}'); window.theodoreUI.closeAllDropdowns();">
+                <span class="dropdown-icon">🔍</span>
+                <span class="dropdown-text">Test Similarity</span>
+            </button>
+            ${website ? `
+                <button class="dropdown-item" onclick="window.open('${this.escapeJs(website)}', '_blank'); window.theodoreUI.closeAllDropdowns();">
+                    <span class="dropdown-icon">🌐</span>
+                    <span class="dropdown-text">Visit Website</span>
+                </button>
+            ` : ''}
+        `;
+        
+        // Position dropdown relative to trigger - positioned to connect with trigger
+        const triggerRect = triggerElement.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = (triggerRect.bottom - 2) + 'px'; // Overlap slightly to create connection
+        dropdown.style.right = (window.innerWidth - triggerRect.right) + 'px';
+        dropdown.style.zIndex = '1000';
+        
+        // Add dropdown to body
+        document.body.appendChild(dropdown);
+        
+        // Add click outside to close
+        setTimeout(() => {
+            document.addEventListener('click', this.handleDropdownClickOutside.bind(this), { once: true });
+        }, 0);
+        
+        // Add ESC key to close
+        document.addEventListener('keydown', this.handleDropdownEscape.bind(this), { once: true });
+        
+        // Mark this dropdown as active
+        triggerElement.classList.add('dropdown-active');
+        dropdown.setAttribute('data-trigger-id', companyId);
+    }
+    
+    closeAllDropdowns() {
+        // Remove all dropdown menus
+        document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
+        
+        // Remove active state from all triggers
+        document.querySelectorAll('.dropdown-trigger.dropdown-active').forEach(trigger => {
+            trigger.classList.remove('dropdown-active');
+        });
+    }
+    
+    handleDropdownClickOutside(event) {
+        // Don't close if clicking on a dropdown trigger or menu item
+        if (event.target.closest('.dropdown-trigger') || event.target.closest('.dropdown-menu')) {
+            return;
+        }
+        this.closeAllDropdowns();
+    }
+    
+    handleDropdownEscape(event) {
+        if (event.key === 'Escape') {
+            this.closeAllDropdowns();
         }
     }
 }

@@ -48,7 +48,8 @@ init_pipeline()
 @app.route('/')
 def index():
     """Main dashboard page"""
-    return render_template('index.html')
+    import time
+    return render_template('index.html', timestamp=int(time.time()))
 
 @app.route('/api/health')
 def health_check():
@@ -439,6 +440,7 @@ def get_settings():
             'batch_10': '0.05',
             'batch_100': '0.47',
             'batch_400': '1.89',
+            'batch_1000': '4.70',
             'primary_analysis': '0.0042',
             'enhancement_cost': '0.0002',
             'embedding': '0.0001'
@@ -545,6 +547,7 @@ def recalculate_costs():
             'batch_10': f"{estimate_batch_costs(10)['total_cost']:.2f}",
             'batch_100': f"{estimate_batch_costs(100)['total_cost']:.2f}",
             'batch_400': f"{batch_400['total_cost']:.2f}",
+            'batch_1000': f"{estimate_batch_costs(1000)['total_cost']:.2f}",
             'primary_analysis': f"{standard_cost['primary_analysis']:.4f}",
             'enhancement_cost': f"{standard_cost['enhanced_extraction']:.4f}",
             'embedding': f"{standard_cost['embedding_generation']:.4f}"

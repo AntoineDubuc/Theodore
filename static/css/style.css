@@ -95,7 +95,61 @@ body::before {
 }
 
 .header-content {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-right {
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+
+.header-nav {
+  display: flex;
+  gap: 16px;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  color: var(--text-primary);
+}
+
+/* Responsive adjustments for header */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+  
+  .header-right {
+    margin-top: 0;
+  }
 }
 
 .logo {
@@ -907,41 +961,9 @@ html {
   color: var(--text-muted);
 }
 
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(5px);
-  padding: 20px;
-}
+/* Modal Styles - moved to end of file for 66% width styling */
 
-.modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  max-width: 1000px;
-  max-height: 90vh;
-  width: 95%;
-  overflow: hidden;
-  box-shadow: var(--shadow-strong);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content {
-  padding: 24px;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+/* Old modal-content style - moved to specific modal styles below */
 
 .modal-header {
   display: flex;
@@ -1090,11 +1112,7 @@ html {
     min-width: 800px;
   }
   
-  .modal-content {
-    width: 95%;
-    max-width: none;
-    margin: 20px;
-  }
+  /* Modal content responsive handled below */
 }
 
 /* Research Status Badges */
@@ -1202,6 +1220,26 @@ html {
     background: linear-gradient(135deg, #ff3742 0%, #ff2d37 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+}
+
+.btn-mini.btn-website {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.btn-mini.btn-website:hover:not(:disabled) {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+/* Action buttons container for proper spacing */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 /* Research Progress */
@@ -1759,5 +1797,248 @@ html {
   .career-link {
     word-break: break-all;
   }
+}
+
+/* 3-Dot Dropdown Menu Styles */
+.actions-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-trigger {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.2s ease;
+  min-width: 40px;
+  text-align: center;
+  backdrop-filter: var(--glass-backdrop);
+}
+
+.dropdown-trigger:hover {
+  background: rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.dropdown-trigger.dropdown-active {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+.dropdown-menu {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-medium);
+  backdrop-filter: var(--glass-backdrop);
+  min-width: 160px;
+  padding: 8px 0;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+.dropdown-item {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: rgba(102, 126, 234, 0.15);
+  color: #667eea;
+}
+
+.dropdown-item:active {
+  background: rgba(102, 126, 234, 0.25);
+}
+
+.dropdown-icon {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.dropdown-text {
+  flex: 1;
+  white-space: nowrap;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Two-Column Company Details Modal */
+.details-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 24px !important;
+  margin-top: 20px;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+.details-column {
+  min-width: 0; /* Prevent grid overflow */
+}
+
+.detail-section.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Company details styling */
+.company-details {
+  padding: 24px !important;
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+  margin: 0 !important;
+}
+
+.company-details h3 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
+}
+
+.detail-section {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 16px !important;
+  margin-bottom: 16px;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.detail-section h4 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.detail-section p {
+  margin: 8px 0;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.detail-section strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1024px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .modal-content {
+    width: 90%;
+    max-width: none;
+    max-height: 85vh;
+  }
+}
+
+/* Modal overlay takes full viewport */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+  padding: 20px;
+}
+
+/* Modal wrapper (the actual modal container) is 90% of viewport */
+.modal-overlay .modal {
+  width: 90vw !important;
+  max-width: none !important;
+  min-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-strong);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure modal content takes full width */
+.modal-overlay .modal .modal-content {
+  width: 100% !important;
+  padding: 0 !important;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Ensure modal header takes full width */
+.modal-overlay .modal .modal-header {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* For modals that don't use the .modal wrapper */
+.modal-overlay > .modal-content {
+  width: 66%;
+  max-width: 66%;
+  min-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-strong);
+}
+
+/* Dropdown connection styling */
+.dropdown-menu {
+  border-top-right-radius: 4px !important; /* Rounded corner to connect with trigger */
+}
+
+.dropdown-trigger.dropdown-active {
+  border-bottom-right-radius: 4px; /* Match the dropdown's corner */
+  border-bottom-left-radius: 4px;
 }
 

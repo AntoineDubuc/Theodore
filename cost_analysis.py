@@ -249,10 +249,10 @@ def main():
     print(f"\n\n📈 Batch Processing Cost Estimates:")
     print("-" * 70)
     
-    batch_sizes = [10, 50, 100, 400]
+    batch_sizes = [10, 50, 100, 400, 1000]
     for batch_size in batch_sizes:
         estimate = estimate_batch_costs(batch_size)
-        print(f"{batch_size:3d} companies: ${estimate['total_cost']:.2f} total (${estimate['avg_cost_per_company']:.4f} avg)")
+        print(f"{batch_size:4d} companies: ${estimate['total_cost']:.2f} total (${estimate['avg_cost_per_company']:.4f} avg)")
     
     # 5. Detailed breakdown for 400 companies
     print(f"\n\n🎯 Detailed Cost Breakdown (400 companies):")

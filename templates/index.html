@@ -11,7 +11,7 @@
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ timestamp }}">
     
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
@@ -28,9 +28,18 @@
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <h1 class="logo">Theodore</h1>
-                <p class="tagline">AI-Powered Company Intelligence</p>
-                <p class="subtitle">Discover similar companies with advanced similarity analysis</p>
+                <div class="header-left">
+                    <h1 class="logo">Theodore</h1>
+                    <p class="tagline">AI-Powered Company Intelligence</p>
+                    <p class="subtitle">Discover similar companies with advanced similarity analysis</p>
+                </div>
+                <div class="header-right">
+                    <nav class="header-nav">
+                        <a href="/settings" class="nav-link" title="System Configuration">
+                            ⚙️ Settings
+                        </a>
+                    </nav>
+                </div>
             </div>
         </div>
     </header>
@@ -378,7 +387,7 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v={{ timestamp }}"></script>
     
     <!-- Additional CSS for components -->
     <style>
