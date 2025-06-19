@@ -689,10 +689,17 @@ Selected URLs:"""
             selected_urls = safe_json_parse(result.response.strip(), fallback_value=[])
             
             if selected_urls and isinstance(selected_urls, list):
-                print(f"🎯 LLM selected {len(selected_urls)} priority pages", flush=True)
-                for i, url in enumerate(selected_urls[:5]):  # Show first 5
+                # Normalize all selected URLs to ensure proper format
+                normalized_urls = []
+                for url in selected_urls:
+                    normalized_url = self._normalize_url(url)
+                    if normalized_url:  # Only add valid URLs
+                        normalized_urls.append(normalized_url)
+                
+                print(f"🎯 LLM selected {len(normalized_urls)} priority pages", flush=True)
+                for i, url in enumerate(normalized_urls[:5]):  # Show first 5
                     progress_logger.add_to_progress_log(job_id, f"🎯 Priority {i+1}: {url}")
-                return selected_urls
+                return normalized_urls
             else:
                 print(f"❌ LLM response parsing failed, using heuristic fallback", flush=True)
                 progress_logger.add_to_progress_log(job_id, "❌ LLM response parsing failed, using heuristic fallback")
@@ -835,7 +842,16 @@ Respond in JSON format:
                 scored_urls.append((url, score))
         
         scored_urls.sort(key=lambda x: x[1], reverse=True)
-        return [url for url, score in scored_urls[:20]]
+        selected_urls = [url for url, score in scored_urls[:20]]
+        
+        # Normalize URLs before returning
+        normalized_urls = []
+        for url in selected_urls:
+            normalized_url = self._normalize_url(url)
+            if normalized_url:  # Only add valid URLs
+                normalized_urls.append(normalized_url)
+        
+        return normalized_urls
     
     def _normalize_url(self, url: str) -> str:
         """Normalize URL to ensure proper format"""

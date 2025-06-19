@@ -483,14 +483,48 @@ def research_company():
             print(f"🐍 FLASK: This will use the subprocess approach via IntelligentCompanyScraperSync...")
             
             import time
+            import signal
+            from contextlib import contextmanager
             start_time = time.time()
             
-            # Use the original process_single_company method which uses subprocess
-            scraped_company = pipeline.process_single_company(
-                company_name,
-                company_website,
-                job_id=job_id
-            )
+            @contextmanager
+            def timeout_context(seconds):
+                def timeout_handler(signum, frame):
+                    raise TimeoutError(f"Research timeout after {seconds} seconds")
+                
+                # Set up the timeout
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(seconds)
+                
+                try:
+                    yield
+                finally:
+                    # Clean up the timeout
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, old_handler)
+            
+            # Use the original process_single_company method with timeout
+            try:
+                with timeout_context(60):  # 60 second timeout for research
+                    scraped_company = pipeline.process_single_company(
+                        company_name,
+                        company_website,
+                        job_id=job_id
+                    )
+            except TimeoutError as e:
+                print(f"🐍 FLASK: ⏱️ Research timed out: {e}")
+                from src.progress_logger import complete_company_processing
+                complete_company_processing(
+                    job_id=job_id, 
+                    success=False, 
+                    error="Research timed out after 60 seconds"
+                )
+                return jsonify({
+                    "success": False,
+                    "error": "Research timed out. The company website may be taking too long to analyze.",
+                    "company": {},
+                    "timeout": True
+                }), 408
             
             end_time = time.time()
             duration = end_time - start_time

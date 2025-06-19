@@ -309,13 +309,10 @@ class ProgressLogger:
             
             self.progress_data["last_updated"] = datetime.now().isoformat()
             
-            # Console logging for immediate feedback
-            print(f"🔍 [{page_number}/{total_pages}] Scraping: {page_url}")
-            if content_preview:
-                preview = content_preview[:200] + "..." if len(content_preview) > 200 else content_preview
-                print(f"📄 Content preview: {preview}")
+            # Console logging for immediate feedback  
+            print(f"🧠 LLM Call #{call_number}: {model} - {prompt_length:,} chars")
             
-            logger.info(f"Job {job_id}: Scraped page {page_number}/{total_pages} - {page_url}")
+            logger.info(f"Job {job_id}: LLM Call #{call_number} - {model}")
     
     def _load_progress(self) -> None:
         """Load progress data from JSON file"""
@@ -374,7 +371,7 @@ progress_logger = ProgressLogger()
 
 def log_processing_phase(job_id: str, phase_name: str, status: str = "running", **details):
     """Convenience function for logging processing phases"""
-    progress_logger.update_phase(job_id, phase_name, status, details)
+    progress_logger.update_phase(job_id, phase_name, status, details=details)
 
 
 def start_company_processing(company_name: str) -> str:

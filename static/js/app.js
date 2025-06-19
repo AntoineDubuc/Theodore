@@ -9,6 +9,7 @@ class TheodoreUI {
         this.activeResearchJobs = new Map(); // Track active research jobs
         this.pollingIntervals = new Map(); // Track polling intervals
         this.currentPollingInterval = null; // Track main progress polling
+        this.researchDataCache = new Map(); // Store research results data
     }
 
     initializeEventListeners() {
@@ -1400,15 +1401,6 @@ class TheodoreUI {
             return;
         }
         
-        
-        // Prepare request payload
-        const requestPayload = {
-            company: {
-                name: companyName,
-                website: website
-            }
-        };
-        
         // Update UI immediately
         this.updateResearchButton(companyName, 'researching');
         
@@ -1429,12 +1421,11 @@ class TheodoreUI {
             // Start polling immediately, no delay
             this.pollCurrentJobProgress(progressContainer, companyName);
             
-            
             const requestStartTime = Date.now();
             
             // Create abort controller for timeout
             const abortController = new AbortController();
-            const timeoutDuration = 300000; // 5 minutes for large sites like Amazon
+            const timeoutDuration = 120000; // 2 minutes timeout (same as Add Company)
             
             console.log(`🟦 JS: ✅ Created AbortController, signal aborted: ${abortController.signal.aborted}`);
             
@@ -1443,14 +1434,18 @@ class TheodoreUI {
                 abortController.abort(new DOMException('Research timeout', 'TimeoutError'));
             }, timeoutDuration);
             
-            console.log(`🟦 JS: 🚀 Starting fetch request to /api/research`);
+            // USE THE SAME ENDPOINT AS "ADD COMPANY" - both should use identical process
+            console.log(`🟦 JS: 🚀 Starting fetch request to /api/process-company (same as Add Company)`);
             
-            const response = await fetch('/api/research', {
+            const response = await fetch('/api/process-company', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(requestPayload),
+                body: JSON.stringify({
+                    company_name: companyName,
+                    website: website
+                }),
                 signal: abortController.signal
             });
             
@@ -1465,9 +1460,29 @@ class TheodoreUI {
 
             if (response.ok && data.success) {
                 
-                const enhancedCompany = data.company;
+                this.showSuccess(`Research completed for ${companyName}! Generated ${data.sales_intelligence?.length || 0} character sales intelligence.`);
                 
-                this.showSuccess(`Research completed for ${companyName}! Generated comprehensive business intelligence.`);
+                // Create enhanced company object from /api/process-company response
+                const enhancedCompany = {
+                    name: data.company_name,
+                    company_name: data.company_name,  // Required by getResearchControls
+                    website: website,
+                    company_description: data.sales_intelligence,
+                    // Add required research status fields
+                    is_researched: true,
+                    research_status: 'success',
+                    // Add more fields as available from the response
+                    processing_time: data.processing_time,
+                    pages_processed: data.pages_processed,
+                    company_id: data.company_id,
+                    token_usage: data.token_usage,
+                    pages_crawled: data.pages_processed ? Array(data.pages_processed).fill('processed') : [],
+                    research_timestamp: new Date().toISOString(),
+                    discovery_method: 'Deep AI Research'
+                };
+                
+                // Store the enhanced company data for later access
+                this.storeResearchData(companyName, enhancedCompany);
                 
                 // Update the result card with enhanced data
                 this.updateResultCardWithResearch(companyName, enhancedCompany);
@@ -2739,9 +2754,66 @@ class TheodoreUI {
         }
     }
     
+    storeResearchData(companyName, researchData) {
+        // Store research data for later access by viewResearchDetails
+        this.researchDataCache.set(companyName.toLowerCase(), researchData);
+    }
+    
     viewResearchDetails(companyName) {
+        // Get stored research data
+        const researchData = this.researchDataCache.get(companyName.toLowerCase());
         
-        // Find the result card to get research data
+        if (!researchData) {
+            console.error(`❌ No cached research data found for ${companyName}`);
+            this.showError(`No research data available for ${companyName}. Please re-research the company.`);
+            return;
+        }
+        
+        // Convert research data to company format expected by showCompanyDetailsModal
+        const companyData = {
+            // Required fields for modal
+            id: researchData.company_id || `research_${Date.now()}`,
+            name: researchData.name || researchData.company_name || companyName,
+            website: researchData.website || '',
+            company_description: researchData.company_description || 'No description available',
+            
+            // Required fields that may be empty
+            industry: 'Unknown',
+            business_model: 'Unknown', 
+            company_size: 'Unknown',
+            company_stage: 'Unknown',
+            founding_year: null,
+            location: 'Unknown',
+            
+            // Research-specific fields
+            sales_intelligence: researchData.company_description || 'No sales intelligence available',
+            ai_summary: '',
+            scrape_status: 'completed',
+            scrape_error: '',
+            
+            // Timestamps  
+            created_at: researchData.research_timestamp || new Date().toISOString(),
+            last_updated: researchData.research_timestamp || new Date().toISOString(),
+            research_timestamp: researchData.research_timestamp || new Date().toISOString(),
+            
+            // Research metadata
+            discovery_method: researchData.discovery_method || 'AI Research',
+            processing_time: researchData.processing_time || 0,
+            pages_processed: researchData.pages_processed || 0,
+            token_usage: researchData.token_usage || {},
+            
+            // Mark as researched data
+            is_researched: true,
+            research_status: 'completed'
+        };
+        
+        // Use the same modal as "Add Company" view details
+        this.showCompanyDetailsModal(companyData);
+    }
+
+    // Keep the extractResearchField helper for potential future use
+    extractResearchField_unused(researchElement, fieldName) {
+        // Look for a research section with the given field name
         const resultCard = document.querySelector(`[data-company-name="${this.escapeHtml(companyName)}"]`);
         
         if (!resultCard) {
