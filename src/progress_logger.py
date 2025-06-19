@@ -395,3 +395,97 @@ def start_company_processing(company_name: str) -> str:
 def complete_company_processing(job_id: str, success: bool, error: str = None, summary: str = None, results: dict = None):
     """Complete company processing tracking"""
     progress_logger.complete_job(job_id, success, error, summary, results)
+
+
+# ============================================================================ 
+# BATCH PROCESSING PROGRESS TRACKING
+# ============================================================================
+
+class BatchProgressLogger:
+    """Handles progress tracking for batch processing operations"""
+    
+    def __init__(self):
+        self.batch_jobs = {}
+        self.lock = threading.Lock()
+    
+    def start_batch_job(self, job_id: str, total_companies: int):
+        """Start tracking a batch processing job"""
+        with self.lock:
+            self.batch_jobs[job_id] = {
+                'job_id': job_id,
+                'total_companies': total_companies,
+                'processed': 0,
+                'successful': 0,
+                'failed': 0,
+                'status': 'running',
+                'start_time': datetime.now().isoformat(),
+                'current_message': f'Starting batch processing of {total_companies} companies...',
+                'current_company': 'Initializing...',
+                'companies': []
+            }
+    
+    def update_batch_progress(self, job_id: str, processed_count: int, message: str, current_company: str = None):
+        """Update progress for a batch job"""
+        with self.lock:
+            if job_id in self.batch_jobs:
+                self.batch_jobs[job_id]['processed'] = processed_count
+                self.batch_jobs[job_id]['current_message'] = message
+                
+                # Extract current company from message if not provided
+                if current_company:
+                    self.batch_jobs[job_id]['current_company'] = current_company
+                elif 'Processing ' in message:
+                    # Extract company name from "Processing CompanyName..." message
+                    import re
+                    match = re.search(r'Processing ([^.]+)\.\.\.', message)
+                    if match:
+                        self.batch_jobs[job_id]['current_company'] = match.group(1)
+                elif 'Completed' in message or 'Failed' in message:
+                    # Extract company name from completion messages
+                    import re
+                    match = re.search(r'(?:Completed|Failed) ([^:]+)', message)
+                    if match:
+                        self.batch_jobs[job_id]['current_company'] = match.group(1)
+    
+    def complete_batch_job(self, job_id: str, successful_count: int, failed_count: int, results: dict):
+        """Complete a batch processing job"""
+        with self.lock:
+            if job_id in self.batch_jobs:
+                job = self.batch_jobs[job_id]
+                job['successful'] = successful_count
+                job['failed'] = failed_count
+                job['status'] = 'completed'
+                job['end_time'] = datetime.now().isoformat()
+                job['current_message'] = f'Completed: {successful_count} successful, {failed_count} failed'
+                job['results'] = results
+    
+    def get_batch_progress(self, job_id: str):
+        """Get progress for a specific batch job"""
+        with self.lock:
+            return self.batch_jobs.get(job_id)
+
+# Global batch progress logger instance
+batch_progress_logger = BatchProgressLogger()
+
+# Add batch methods to the main progress_logger for compatibility
+def start_batch_job(job_id: str, total_companies: int):
+    """Start batch job tracking"""
+    batch_progress_logger.start_batch_job(job_id, total_companies)
+
+def update_batch_progress(job_id: str, processed_count: int, message: str):
+    """Update batch progress"""
+    batch_progress_logger.update_batch_progress(job_id, processed_count, message)
+
+def complete_batch_job(job_id: str, successful_count: int, failed_count: int, results: dict):
+    """Complete batch job"""
+    batch_progress_logger.complete_batch_job(job_id, successful_count, failed_count, results)
+
+def get_batch_progress(job_id: str):
+    """Get batch progress"""
+    return batch_progress_logger.get_batch_progress(job_id)
+
+# Attach batch methods to progress_logger instance for easy access
+progress_logger.start_batch_job = start_batch_job
+progress_logger.update_batch_progress = update_batch_progress 
+progress_logger.complete_batch_job = complete_batch_job
+progress_logger.get_batch_progress = get_batch_progress

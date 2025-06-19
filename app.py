@@ -62,8 +62,8 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'pipeline_ready': pipeline is not None,
-        'similarity_pipeline_ready': pipeline.similarity_pipeline is not None if pipeline else False,
-        'discovery_service_ready': pipeline.similarity_pipeline.discovery_service is not None if pipeline and pipeline.similarity_pipeline else False,
+        'concurrent_scraper_ready': hasattr(pipeline, 'scraper') and pipeline.scraper is not None if pipeline else False,
+        'gemini_client_ready': hasattr(pipeline, 'gemini_client') and pipeline.gemini_client is not None if pipeline else False,
         'timestamp': datetime.utcnow().isoformat()
     })
 
@@ -2721,6 +2721,449 @@ def batch_classify_companies():
         
     except Exception as e:
         return jsonify({'error': f'Batch classification failed: {str(e)}'}), 500
+
+@app.route('/api/batch/validate', methods=['POST'])
+def validate_google_sheet():
+    """Validate Google Sheet access and structure"""
+    try:
+        data = request.get_json()
+        sheet_id = data.get('sheet_id')
+        
+        if not sheet_id:
+            return jsonify({'error': 'Sheet ID is required'}), 400
+        
+        # Check if service account is configured
+        from pathlib import Path
+        service_account_file = Path('config/credentials/theodore-service-account.json')
+        
+        if not service_account_file.exists():
+            return jsonify({
+                'error': 'Google Sheets service account not configured',
+                'details': 'Please add theodore-service-account.json to config/credentials/ folder'
+            }), 400
+        
+        # Import and initialize Google Sheets client
+        try:
+            from src.sheets_integration.google_sheets_service_client import GoogleSheetsServiceClient
+            sheets_client = GoogleSheetsServiceClient(service_account_file)
+        except ImportError as e:
+            return jsonify({
+                'error': 'Google Sheets integration not available',
+                'details': str(e)
+            }), 500
+        
+        # Validate sheet access
+        is_accessible = sheets_client.validate_sheet_access(sheet_id)
+        
+        if not is_accessible:
+            return jsonify({
+                'error': 'Cannot access Google Sheet',
+                'details': 'Make sure the sheet is shared with the service account email'
+            }), 403
+        
+        # Get sheet info
+        try:
+            spreadsheet = sheets_client.service.spreadsheets().get(
+                spreadsheetId=sheet_id
+            ).execute()
+            
+            sheet_title = spreadsheet['properties']['title']
+            sheets = spreadsheet.get('sheets', [])
+            sheet_names = [sheet['properties']['title'] for sheet in sheets]
+            
+            # Try to get company count from the Companies sheet
+            companies_count = 0
+            try:
+                # Read data from the Companies sheet (assuming it's the first sheet or named "Companies")
+                companies_sheet_name = None
+                for sheet in sheets:
+                    name = sheet['properties']['title']
+                    if 'companies' in name.lower() or sheet == sheets[0]:  # Use Companies sheet or first sheet
+                        companies_sheet_name = name
+                        break
+                
+                if companies_sheet_name:
+                    # Get the data range (assuming headers in row 1, data starts from row 2)
+                    range_name = f"{companies_sheet_name}!A:A"  # Read entire column A to count all rows
+                    result = sheets_client.service.spreadsheets().values().get(
+                        spreadsheetId=sheet_id,
+                        range=range_name
+                    ).execute()
+                    
+                    values = result.get('values', [])
+                    # Count non-empty rows, skipping header (first row)
+                    if len(values) > 1:  # Make sure there's more than just the header
+                        data_rows = values[1:]  # Skip header row
+                        companies_count = len([row for row in data_rows if row and len(row) > 0 and row[0].strip()])
+                    else:
+                        companies_count = 0
+                    
+            except Exception as count_error:
+                logger.warning(f"Could not get company count: {count_error}")
+                companies_count = 0
+            
+            return jsonify({
+                'success': True,
+                'sheet_id': sheet_id,
+                'title': sheet_title,
+                'sheets': sheet_names,
+                'companies_count': companies_count,
+                'message': f'Successfully validated access to "{sheet_title}"'
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'error': 'Failed to get sheet information',
+                'details': str(e)
+            }), 500
+        
+    except Exception as e:
+        return jsonify({'error': f'Validation failed: {str(e)}'}), 500
+
+@app.route('/api/batch/process', methods=['POST'])
+def start_batch_processing():
+    """Start batch processing of companies from Google Sheet"""
+    try:
+        data = request.get_json()
+        sheet_id = data.get('sheet_id')
+        batch_size = data.get('batch_size', 10)
+        start_row = data.get('start_row', 2)
+        
+        if not sheet_id:
+            return jsonify({'error': 'Sheet ID is required'}), 400
+        
+        if not pipeline:
+            return jsonify({'error': 'Theodore pipeline not initialized'}), 500
+        
+        # Validate parameters
+        if batch_size < 1 or batch_size > 1000:
+            return jsonify({'error': 'Batch size must be between 1 and 1000'}), 400
+        
+        if start_row < 2:
+            return jsonify({'error': 'Start row must be at least 2 (first data row)'}), 400
+        
+        # Check if service account is configured
+        from pathlib import Path
+        service_account_file = Path('config/credentials/theodore-service-account.json')
+        
+        if not service_account_file.exists():
+            return jsonify({
+                'error': 'Google Sheets service account not configured',
+                'details': 'Please add theodore-service-account.json to config/credentials/ folder'
+            }), 400
+        
+        # Import and initialize Google Sheets client
+        try:
+            from src.sheets_integration.google_sheets_service_client import GoogleSheetsServiceClient
+            sheets_client = GoogleSheetsServiceClient(service_account_file)
+        except ImportError as e:
+            return jsonify({
+                'error': 'Google Sheets integration not available',
+                'details': str(e)
+            }), 500
+        
+        # Validate sheet access
+        is_accessible = sheets_client.validate_sheet_access(sheet_id)
+        if not is_accessible:
+            return jsonify({
+                'error': 'Cannot access Google Sheet',
+                'details': 'Make sure the sheet is shared with the service account email'
+            }), 403
+        
+        # Read company data from sheet
+        try:
+            # Find the Companies sheet
+            spreadsheet = sheets_client.service.spreadsheets().get(
+                spreadsheetId=sheet_id
+            ).execute()
+            
+            sheets = spreadsheet.get('sheets', [])
+            companies_sheet_name = None
+            for sheet in sheets:
+                name = sheet['properties']['title']
+                if 'companies' in name.lower() or sheet == sheets[0]:
+                    companies_sheet_name = name
+                    break
+            
+            if not companies_sheet_name:
+                return jsonify({'error': 'Could not find Companies sheet'}), 400
+            
+            # Calculate end row
+            end_row = start_row + batch_size - 1
+            
+            # Read the data range (assuming Company Name in column A, Website in column B)
+            range_name = f"{companies_sheet_name}!A{start_row}:B{end_row}"
+            result = sheets_client.service.spreadsheets().values().get(
+                spreadsheetId=sheet_id,
+                range=range_name
+            ).execute()
+            
+            values = result.get('values', [])
+            if not values:
+                return jsonify({'error': f'No data found in rows {start_row}-{end_row}'}), 400
+            
+            # Extract company data
+            companies_to_process = []
+            for i, row in enumerate(values):
+                if len(row) >= 1 and row[0].strip():  # Has company name
+                    company_name = row[0].strip()
+                    website = row[1].strip() if len(row) > 1 and row[1].strip() else None
+                    
+                    companies_to_process.append({
+                        'name': company_name,
+                        'website': website,
+                        'row_number': start_row + i
+                    })
+            
+            if not companies_to_process:
+                return jsonify({'error': 'No valid companies found in the specified range'}), 400
+            
+            # Generate job ID for tracking
+            import uuid
+            import time
+            job_id = f"batch_{int(time.time() * 1000)}_{str(uuid.uuid4())[:8]}"
+            
+            # Start processing companies in background
+            import threading
+            def process_batch():
+                process_companies_batch(job_id, companies_to_process, sheet_id, companies_sheet_name)
+            
+            thread = threading.Thread(target=process_batch)
+            thread.daemon = True
+            thread.start()
+            
+            return jsonify({
+                'success': True,
+                'job_id': job_id,
+                'companies_count': len(companies_to_process),
+                'start_row': start_row,
+                'end_row': end_row,
+                'message': f'Started batch processing {len(companies_to_process)} companies'
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'error': 'Failed to read sheet data',
+                'details': str(e)
+            }), 500
+        
+    except Exception as e:
+        return jsonify({'error': f'Batch processing failed: {str(e)}'}), 500
+
+def process_companies_batch(job_id, companies, sheet_id, sheet_name):
+    """Process a batch of companies in the background and write results to Google Sheet"""
+    from src.progress_logger import progress_logger
+    from pathlib import Path
+    from src.sheets_integration.google_sheets_service_client import GoogleSheetsServiceClient
+    import sys
+    sys.path.append('config')
+    from sheets_column_mapping import company_data_to_sheet_row, calculate_llm_cost, format_llm_calls_breakdown
+    
+    # Initialize batch progress
+    progress_logger.start_batch_job(job_id, len(companies))
+    
+    # Initialize Google Sheets client
+    service_account_file = Path('config/credentials/theodore-service-account.json')
+    sheets_client = GoogleSheetsServiceClient(service_account_file)
+    
+    successful_companies = []
+    failed_companies = []
+    
+    for i, company in enumerate(companies):
+        try:
+            progress_logger.update_batch_progress(job_id, i, f"Processing {company['name']}...")
+            
+            # Process company using the same logic as single company processing
+            company_data = pipeline.process_single_company(
+                company_name=company['name'],
+                website=company['website']
+            )
+            
+            if company_data and company_data.scrape_status == "success":
+                # Get LLM calls breakdown for accurate cost calculation
+                llm_calls = getattr(company_data, 'llm_calls_breakdown', [])
+                
+                # Calculate total cost and tokens from actual LLM calls (more accurate)
+                total_cost = 0.0
+                total_input_tokens = 0
+                total_output_tokens = 0
+                
+                for call in llm_calls:
+                    # Use the cost from the call if available, otherwise calculate
+                    if 'cost_usd' in call:
+                        total_cost += call.get('cost_usd', 0.0)
+                    else:
+                        model = call.get('model', 'unknown')
+                        input_tokens = call.get('input_tokens', 0)
+                        output_tokens = call.get('output_tokens', 0)
+                        cost = calculate_llm_cost(model, input_tokens, output_tokens)
+                        total_cost += cost
+                    
+                    # Sum up tokens from actual calls
+                    total_input_tokens += call.get('input_tokens', 0)
+                    total_output_tokens += call.get('output_tokens', 0)
+                
+                # Update company data with calculated costs
+                company_data.total_cost_usd = total_cost
+                
+                # Convert to sheet row format
+                row_data = company_data_to_sheet_row(company_data)
+                
+                # Write to Google Sheet
+                try:
+                    # Prepare batch update data for this row
+                    row_number = company['row_number']
+                    updates = []
+                    
+                    for column_letter, value in row_data.items():
+                        if value:  # Only update non-empty values
+                            updates.append({
+                                'range': f'Details!{column_letter}{row_number}',
+                                'values': [[value]]
+                            })
+                    
+                    # Batch update the row
+                    if updates:
+                        body = {
+                            'valueInputOption': 'RAW',
+                            'data': updates
+                        }
+                        
+                        sheets_client.service.spreadsheets().values().batchUpdate(
+                            spreadsheetId=sheet_id,
+                            body=body
+                        ).execute()
+                        
+                        progress_logger.update_batch_progress(job_id, i + 1, f"✅ Completed and saved {company['name']} to row {row_number}")
+                    
+                except Exception as sheet_error:
+                    progress_logger.update_batch_progress(job_id, i + 1, f"⚠️ Processed {company['name']} but failed to save: {str(sheet_error)}")
+                
+                successful_companies.append({
+                    'name': company['name'],
+                    'row': company['row_number'],
+                    'status': 'success',
+                    'cost_usd': total_cost,
+                    'tokens': {
+                        'input': total_input_tokens,
+                        'output': total_output_tokens
+                    }
+                })
+                
+            else:
+                # Write failure status to sheet
+                try:
+                    error_msg = getattr(company_data, 'scrape_error', 'Unknown error') if company_data else 'Processing failed'
+                    updates = [
+                        {
+                            'range': f'Details!AC{company["row_number"]}',  # Scrape Status column
+                            'values': [['failed']]
+                        },
+                        {
+                            'range': f'Details!AD{company["row_number"]}',  # Scrape Error column  
+                            'values': [[error_msg]]
+                        },
+                        {
+                            'range': f'Details!AB{company["row_number"]}',  # Company Name column
+                            'values': [[company['name']]]
+                        },
+                        {
+                            'range': f'Details!AE{company["row_number"]}',  # Website column
+                            'values': [[company.get('website', '')]]
+                        }
+                    ]
+                    
+                    body = {
+                        'valueInputOption': 'RAW',
+                        'data': updates
+                    }
+                    
+                    sheets_client.service.spreadsheets().values().batchUpdate(
+                        spreadsheetId=sheet_id,
+                        body=body
+                    ).execute()
+                    
+                except Exception as sheet_error:
+                    pass  # Continue even if sheet write fails
+                
+                failed_companies.append({
+                    'name': company['name'],
+                    'row': company['row_number'],
+                    'error': getattr(company_data, 'scrape_error', 'Unknown error') if company_data else 'Processing failed'
+                })
+                progress_logger.update_batch_progress(job_id, i + 1, f"❌ Failed {company['name']}")
+                
+        except Exception as e:
+            # Write exception to sheet
+            try:
+                updates = [
+                    {
+                        'range': f'Details!AC{company["row_number"]}',  # Scrape Status
+                        'values': [['error']]
+                    },
+                    {
+                        'range': f'Details!AD{company["row_number"]}',  # Scrape Error
+                        'values': [[str(e)]]
+                    },
+                    {
+                        'range': f'Details!AB{company["row_number"]}',  # Company Name
+                        'values': [[company['name']]]
+                    }
+                ]
+                
+                body = {
+                    'valueInputOption': 'RAW',
+                    'data': updates
+                }
+                
+                sheets_client.service.spreadsheets().values().batchUpdate(
+                    spreadsheetId=sheet_id,
+                    body=body
+                ).execute()
+                
+            except Exception:
+                pass  # Continue even if sheet write fails
+            
+            failed_companies.append({
+                'name': company['name'],
+                'row': company['row_number'],
+                'error': str(e)
+            })
+            progress_logger.update_batch_progress(job_id, i + 1, f"❌ Error processing {company['name']}: {str(e)}")
+    
+    # Calculate total costs and tokens
+    total_cost = sum(c.get('cost_usd', 0) for c in successful_companies)
+    total_input_tokens = sum(c.get('tokens', {}).get('input', 0) for c in successful_companies)
+    total_output_tokens = sum(c.get('tokens', {}).get('output', 0) for c in successful_companies)
+    
+    # Complete batch processing
+    progress_logger.complete_batch_job(
+        job_id, 
+        len(successful_companies), 
+        len(failed_companies),
+        {
+            'successful': successful_companies, 
+            'failed': failed_companies,
+            'total_cost_usd': total_cost,
+            'total_input_tokens': total_input_tokens,
+            'total_output_tokens': total_output_tokens
+        }
+    )
+
+@app.route('/api/batch/progress/<job_id>', methods=['GET'])
+def get_batch_progress(job_id):
+    """Get progress of batch processing job"""
+    try:
+        from src.progress_logger import progress_logger
+        progress = progress_logger.get_batch_progress(job_id)
+        
+        if not progress:
+            return jsonify({'error': 'Job not found'}), 404
+        
+        return jsonify(progress)
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get progress: {str(e)}'}), 500
 
 @app.route('/api/classification/unclassified', methods=['GET'])
 def get_unclassified_companies():

@@ -456,15 +456,47 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="startRow" class="form-label">
+                                Start from Row
+                            </label>
+                            <div class="input-wrapper">
+                                <input 
+                                    type="number" 
+                                    id="startRow" 
+                                    name="start_row" 
+                                    class="form-input" 
+                                    placeholder="Enter starting row number..."
+                                    min="2"
+                                    max="10000"
+                                    value="2"
+                                    required
+                                >
+                            </div>
+                            <p class="form-help">
+                                Row number to start processing from (2 = first data row after headers).
+                            </p>
+                        </div>
+
+                        <div class="form-group">
                             <label for="batchSize" class="form-label">
                                 Number of Companies to Process
                             </label>
-                            <select id="batchSize" name="batch_size" class="form-input">
-                                <option value="5">5 companies (test)</option>
-                                <option value="10" selected>10 companies</option>
-                                <option value="25">25 companies</option>
-                                <option value="50">50 companies</option>
-                            </select>
+                            <div class="input-wrapper">
+                                <input 
+                                    type="number" 
+                                    id="batchSize" 
+                                    name="batch_size" 
+                                    class="form-input" 
+                                    placeholder="Enter number of companies..."
+                                    min="1"
+                                    max="1000"
+                                    value="10"
+                                    required
+                                >
+                            </div>
+                            <p class="form-help">
+                                Enter how many companies to process (1-1000). Start with 5-10 for testing.
+                            </p>
                         </div>
 
                         <div class="form-actions">

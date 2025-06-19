@@ -1413,6 +1413,7 @@ html {
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   overflow: hidden;
+  table-layout: fixed; /* Fixed layout to control column widths */
 }
 
 .companies-table th {
@@ -1423,6 +1424,9 @@ html {
   font-size: 13px;
   text-align: left;
   border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap; /* Prevent header text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .companies-table td {
@@ -1433,6 +1437,24 @@ html {
   vertical-align: top;
 }
 
+/* Apply text truncation only to specific columns that need it */
+.companies-table td:nth-child(1), /* Company */
+.companies-table td:nth-child(2), /* Website */
+.companies-table td:nth-child(3), /* Industry */
+.companies-table td:nth-child(4) { /* Business Model */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Allow multi-line content for classification and actions columns */
+.companies-table td:nth-child(5), /* Classification */
+.companies-table td:nth-child(6), /* Sales Intelligence */
+.companies-table td:nth-child(8) { /* Actions */
+  white-space: normal;
+  word-wrap: break-word;
+}
+
 .companies-table tr:last-child td {
   border-bottom: none;
 }
@@ -1441,6 +1463,26 @@ html {
   background: rgba(102, 126, 234, 0.05);
 }
 
+/* Column width specifications for better layout */
+.companies-table th:nth-child(1) { width: 18%; } /* Company */
+.companies-table th:nth-child(2) { width: 18%; } /* Website */
+.companies-table th:nth-child(3) { width: 12%; } /* Industry */
+.companies-table th:nth-child(4) { width: 12%; } /* Business Model */
+.companies-table th:nth-child(5) { width: 15%; } /* Classification */
+.companies-table th:nth-child(6) { width: 15%; } /* Sales Intelligence */
+.companies-table th:nth-child(7) { width: 10%; } /* Last Updated */
+.companies-table th:nth-child(8) { width: 10%; } /* Actions - ensure enough space */
+
+/* Apply same widths to table cells */
+.companies-table td:nth-child(1) { width: 18%; }
+.companies-table td:nth-child(2) { width: 18%; }
+.companies-table td:nth-child(3) { width: 12%; }
+.companies-table td:nth-child(4) { width: 12%; }
+.companies-table td:nth-child(5) { width: 15%; }
+.companies-table td:nth-child(6) { width: 15%; }
+.companies-table td:nth-child(7) { width: 10%; }
+.companies-table td:nth-child(8) { width: 10%; }
+
 /* Responsive table */
 @media (max-width: 1024px) {
   .companies-table {
@@ -1448,7 +1490,7 @@ html {
   }
   
   .companies-table table {
-    min-width: 800px;
+    min-width: 1000px; /* Increased to accommodate fixed column widths */
   }
   
   /* Modal content responsive handled below */

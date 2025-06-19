@@ -3490,8 +3490,8 @@ class TheodoreUI {
             if (response.ok) {
                 const data = await response.json();
                 const googleSheetUrlInput = document.getElementById('googleSheetUrl');
-                if (googleSheetUrlInput && data.google_sheet_url) {
-                    googleSheetUrlInput.value = data.google_sheet_url;
+                if (googleSheetUrlInput && data.google_sheets && data.google_sheets.sheet_url) {
+                    googleSheetUrlInput.value = data.google_sheets.sheet_url;
                 }
             }
         } catch (error) {
@@ -3504,6 +3504,7 @@ class TheodoreUI {
         const formData = new FormData(event.target);
         const googleSheetUrl = formData.get('google_sheet_url');
         const batchSize = parseInt(formData.get('batch_size'));
+        const startRow = parseInt(formData.get('start_row'));
         
         if (!googleSheetUrl) {
             this.showError('Please enter a Google Sheet URL');
@@ -3531,7 +3532,8 @@ class TheodoreUI {
                 },
                 body: JSON.stringify({
                     sheet_id: sheetId,
-                    batch_size: batchSize
+                    batch_size: batchSize,
+                    start_row: startRow
                 })
             });
             
@@ -3682,8 +3684,13 @@ class TheodoreUI {
         
         resultsContainer.classList.remove('hidden');
         
-        const successCount = results.filter(r => r.status === 'success').length;
-        const failureCount = results.filter(r => r.status === 'failed').length;
+        // Handle the correct data structure: results.successful and results.failed arrays
+        const successful = results.successful || [];
+        const failed = results.failed || [];
+        const successCount = successful.length;
+        const failureCount = failed.length;
+        const totalCost = results.total_cost_usd || 0;
+        const totalTokens = (results.total_input_tokens || 0) + (results.total_output_tokens || 0);
         
         const resultsHTML = `
             <div class="batch-summary">
@@ -3697,20 +3704,35 @@ class TheodoreUI {
                         <span class="stat-label">Failed</span>
                     </div>
                     <div class="summary-stat total">
-                        <span class="stat-number">${results.length}</span>
+                        <span class="stat-number">${successCount + failureCount}</span>
                         <span class="stat-label">Total</span>
+                    </div>
+                    <div class="summary-stat cost">
+                        <span class="stat-number">$${totalCost.toFixed(2)}</span>
+                        <span class="stat-label">Total Cost</span>
+                    </div>
+                    <div class="summary-stat tokens">
+                        <span class="stat-number">${totalTokens.toLocaleString()}</span>
+                        <span class="stat-label">Tokens</span>
                     </div>
                 </div>
             </div>
             <div class="batch-results-list">
-                ${results.map(result => `
-                    <div class="batch-result-item ${result.status}">
-                        <div class="result-company">${this.escapeHtml(result.company)}</div>
-                        <div class="result-status">
-                            ${result.status === 'success' ? '✅' : '❌'} ${result.status}
+                ${successful.map(result => `
+                    <div class="batch-result-item success">
+                        <div class="result-company">${this.escapeHtml(result.name)}</div>
+                        <div class="result-status">✅ Success (Row ${result.row})</div>
+                        <div class="result-details">
+                            Cost: $${result.cost_usd ? result.cost_usd.toFixed(3) : '0.000'} | 
+                            Tokens: ${result.tokens ? (result.tokens.input + result.tokens.output).toLocaleString() : '0'}
                         </div>
-                        ${result.products_count ? `<div class="result-details">${result.products_count} products/services extracted</div>` : ''}
-                        ${result.error ? `<div class="result-error">${this.escapeHtml(result.error)}</div>` : ''}
+                    </div>
+                `).join('')}
+                ${failed.map(result => `
+                    <div class="batch-result-item failure">
+                        <div class="result-company">${this.escapeHtml(result.name)}</div>
+                        <div class="result-status">❌ Failed (Row ${result.row})</div>
+                        <div class="result-error">${this.escapeHtml(result.error || 'Unknown error')}</div>
                     </div>
                 `).join('')}
             </div>
@@ -3718,7 +3740,7 @@ class TheodoreUI {
         
         resultsContent.innerHTML = resultsHTML;
         
-        this.showSuccess(`Batch processing completed: ${successCount}/${results.length} companies processed successfully`);
+        this.showSuccess(`Batch processing completed: ${successCount}/${successCount + failureCount} companies processed successfully. Total cost: $${totalCost.toFixed(2)}`);
     }
 
     // =============================================================================

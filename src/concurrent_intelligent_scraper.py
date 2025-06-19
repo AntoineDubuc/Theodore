@@ -521,11 +521,20 @@ class ConcurrentIntelligentScraper:
             
             # Extract sitemap URLs from robots.txt
             sitemaps = rp.site_maps() or []
-            for sitemap_url in sitemaps:
-                print(f"📍 Found sitemap in robots.txt: {sitemap_url}", flush=True)
-                progress_logger.add_to_progress_log(job_id, f"📍 Found sitemap: {sitemap_url}")
+            
+            # Filter sitemaps: prioritize main/US sitemaps, skip international variations
+            filtered_sitemaps = self._filter_us_sitemaps(sitemaps)
+            
+            for sitemap_url in filtered_sitemaps:
+                print(f"📍 Processing sitemap: {sitemap_url}", flush=True)
+                progress_logger.add_to_progress_log(job_id, f"📍 Processing sitemap: {sitemap_url}")
                 sitemap_links = await self._parse_sitemap(sitemap_url, job_id)
                 all_links.update(sitemap_links)
+            
+            if len(sitemaps) > len(filtered_sitemaps):
+                skipped_count = len(sitemaps) - len(filtered_sitemaps)
+                print(f"⏩ Skipped {skipped_count} international sitemaps (focusing on US/main content)", flush=True)
+                progress_logger.add_to_progress_log(job_id, f"⏩ Skipped {skipped_count} international sitemaps")
         except Exception as e:
             print(f"⚠️ robots.txt analysis failed: {e}", flush=True)
             progress_logger.add_to_progress_log(job_id, f"⚠️ robots.txt analysis failed: {e}")
@@ -573,6 +582,45 @@ class ConcurrentIntelligentScraper:
         except Exception as e:
             logger.debug(f"Sitemap parsing failed for {sitemap_url}: {e}")
         return []
+    
+    def _filter_us_sitemaps(self, sitemaps: List[str]) -> List[str]:
+        """Filter sitemaps to prioritize US/main content and skip international variations"""
+        if not sitemaps:
+            return []
+        
+        # International country/language codes to skip
+        international_patterns = [
+            '/ap/', '/au/', '/br/', '/ca/', '/de/', '/dk/', '/es/', '/fi/', '/fr/', 
+            '/fr-ca/', '/in/', '/it/', '/jp/', '/kr/', '/mx/', '/nl/', '/se/', 
+            '/sg/', '/uk/', '/cn/', '/tw/', '/hk/', '/ie/', '/no/', '/pl/', 
+            '/pt/', '/ru/', '/th/', '/tr/', '/za/', '/ar/', '/cl/', '/pe/',
+            '/co/', '/uy/', '/ec/', '/ve/', '/bo/', '/py/', '/gt/', '/cr/',
+            '/pa/', '/sv/', '/hn/', '/ni/', '/bz/', '/jm/', '/tt/', '/bb/',
+            '/gd/', '/lc/', '/vc/', '/dm/', '/ag/', '/kn/', '/ms/', '/vg/',
+            '/ai/', '/tc/', '/ky/', '/bm/', '/fk/', '/gs/', '/sh/', '/ac/',
+            '/ta/', '/pn/', '/nu/', '/tk/', '/to/', '/tv/', '/vu/', '/ws/',
+            '/as/', '/fm/', '/gu/', '/mh/', '/mp/', '/pw/', '/um/', '/vi/'
+        ]
+        
+        # Prioritize main sitemaps (no country/language code)
+        main_sitemaps = []
+        us_sitemaps = []
+        
+        for sitemap in sitemaps:
+            # Check if this is an international sitemap
+            is_international = any(pattern in sitemap.lower() for pattern in international_patterns)
+            
+            if not is_international:
+                # This is likely a main/US sitemap
+                main_sitemaps.append(sitemap)
+            elif '/us/' in sitemap.lower():
+                # Explicitly US sitemap
+                us_sitemaps.append(sitemap)
+        
+        # Return main sitemaps first, then US sitemaps, limit to 3 total to prevent overload
+        filtered = (main_sitemaps + us_sitemaps)[:3]
+        
+        return filtered if filtered else sitemaps[:1]  # At least process one sitemap
     
     async def _recursive_crawl_with_logging(self, start_url: str, job_id: str) -> List[str]:
         """Recursive crawling with detailed URL logging"""
@@ -710,36 +758,72 @@ Selected URLs:"""
             return self._heuristic_page_selection(discovered_links)
     
     async def _extract_content_with_logging(self, selected_urls: List[str], job_id: str) -> Dict[str, str]:
-        """Phase 3: Content extraction with detailed per-page logging"""
+        """Phase 3: Concurrent content extraction with detailed per-page logging"""
         scraped_content = {}
+        max_concurrent_pages = min(10, len(selected_urls))  # Limit concurrent pages to 10 or total URLs
+        semaphore = asyncio.Semaphore(max_concurrent_pages)
         
-        async with AsyncWebCrawler() as crawler:
-            for i, url in enumerate(selected_urls, 1):
-                print(f"📄 [{i}/{len(selected_urls)}] Extracting: {url}", flush=True)
-                progress_logger.add_to_progress_log(job_id, f"📄 [{i}/{len(selected_urls)}] Extracting: {url}")
+        print(f"📄 Starting concurrent extraction of {len(selected_urls)} pages (max {max_concurrent_pages} concurrent)", flush=True)
+        progress_logger.add_to_progress_log(job_id, f"📄 Starting concurrent extraction: {len(selected_urls)} pages ({max_concurrent_pages} concurrent)")
+        
+        async def extract_single_page(url: str, index: int) -> tuple:
+            """Extract content from a single page with semaphore limiting"""
+            async with semaphore:
+                page_start_time = time.time()
+                print(f"📄 [{index}/{len(selected_urls)}] Starting: {url}", flush=True)
+                progress_logger.add_to_progress_log(job_id, f"📄 [{index}/{len(selected_urls)}] Starting: {url}")
                 
                 try:
-                    result = await crawler.arun(
-                        url=url,
-                        config=CrawlerRunConfig(
-                            cache_mode=CacheMode.ENABLED,
-                            word_count_threshold=50
+                    async with AsyncWebCrawler() as crawler:
+                        result = await crawler.arun(
+                            url=url,
+                            config=CrawlerRunConfig(
+                                cache_mode=CacheMode.ENABLED,
+                                word_count_threshold=50
+                            )
                         )
-                    )
-                    
-                    if result.success and result.cleaned_html:
-                        content = result.cleaned_html[:5000]  # Limit content size
-                        scraped_content[url] = content
                         
-                        print(f"  ✅ [{i}/{len(selected_urls)}] Success: {len(content):,} characters", flush=True)
-                        progress_logger.add_to_progress_log(job_id, f"✅ Page {i}: {len(content):,} characters extracted")
-                    else:
-                        print(f"  ❌ [{i}/{len(selected_urls)}] Failed: No content", flush=True)
-                        progress_logger.add_to_progress_log(job_id, f"❌ Page {i}: No content extracted")
+                        page_duration = time.time() - page_start_time
+                        
+                        if result.success and result.cleaned_html:
+                            content = result.cleaned_html[:5000]  # Limit content size
+                            print(f"  ✅ [{index}/{len(selected_urls)}] Success: {len(content):,} chars in {page_duration:.1f}s", flush=True)
+                            progress_logger.add_to_progress_log(job_id, f"✅ Page {index}: {len(content):,} characters in {page_duration:.1f}s")
+                            return (url, content, True, None)
+                        else:
+                            print(f"  ❌ [{index}/{len(selected_urls)}] Failed: No content in {page_duration:.1f}s", flush=True)
+                            progress_logger.add_to_progress_log(job_id, f"❌ Page {index}: No content in {page_duration:.1f}s")
+                            return (url, None, False, "No content extracted")
                 
                 except Exception as e:
-                    print(f"  ❌ [{i}/{len(selected_urls)}] Error: {e}", flush=True)
-                    progress_logger.add_to_progress_log(job_id, f"❌ Page {i}: Error - {str(e)}")
+                    page_duration = time.time() - page_start_time
+                    error_msg = str(e)
+                    print(f"  ❌ [{index}/{len(selected_urls)}] Error: {error_msg} in {page_duration:.1f}s", flush=True)
+                    progress_logger.add_to_progress_log(job_id, f"❌ Page {index}: Error - {error_msg} in {page_duration:.1f}s")
+                    return (url, None, False, error_msg)
+        
+        # Create concurrent tasks for all pages
+        tasks = [extract_single_page(url, i) for i, url in enumerate(selected_urls, 1)]
+        
+        # Execute all tasks concurrently
+        extraction_start_time = time.time()
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        total_extraction_time = time.time() - extraction_start_time
+        
+        # Process results
+        successful_extractions = 0
+        for result in results:
+            if isinstance(result, Exception):
+                print(f"  ❌ Task exception: {result}", flush=True)
+                continue
+                
+            url, content, success, error = result
+            if success and content:
+                scraped_content[url] = content
+                successful_extractions += 1
+        
+        print(f"✅ Concurrent extraction complete: {successful_extractions}/{len(selected_urls)} pages in {total_extraction_time:.1f}s", flush=True)
+        progress_logger.add_to_progress_log(job_id, f"✅ Extraction complete: {successful_extractions}/{len(selected_urls)} pages in {total_extraction_time:.1f}s")
         
         return scraped_content
     
