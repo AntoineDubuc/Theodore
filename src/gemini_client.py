@@ -23,7 +23,7 @@ class GeminiClient:
     
     def __init__(self, config: CompanyIntelligenceConfig):
         self.config = config
-        self.model_name = "gemini-2.5-flash-preview-05-20"
+        self.model_name = "gemini-2.5-flash"
         
         if not GEMINI_AVAILABLE:
             raise ImportError("google-generativeai package not installed")
@@ -64,6 +64,86 @@ class GeminiClient:
         except Exception as e:
             logger.error(f"Gemini text generation error: {e}")
             return ""
+
+    def generate_text_with_usage(self, prompt: str, max_tokens: int = 4000) -> Dict[str, Any]:
+        """Generate text and return both response and usage statistics"""
+        try:
+            generation_config = genai.types.GenerationConfig(
+                max_output_tokens=max_tokens,
+                temperature=0.7,
+            )
+            
+            response = self.model.generate_content(
+                prompt,
+                generation_config=generation_config
+            )
+            
+            # Extract usage information
+            usage_data = self._extract_usage_from_response(response)
+            
+            response_text = ""
+            if response.text:
+                response_text = response.text
+                logger.debug(f"Gemini response generated: {len(response_text)} characters")
+            else:
+                logger.warning("Gemini returned empty response")
+            
+            return {
+                "text": response_text,
+                "usage": usage_data
+            }
+                
+        except Exception as e:
+            logger.error(f"Gemini text generation with usage error: {e}")
+            return {
+                "text": "",
+                "usage": {
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "total_tokens": 0,
+                    "cost_usd": 0.0,
+                    "model": self.model_name,
+                    "error": str(e)
+                }
+            }
+
+    def _extract_usage_from_response(self, response) -> Dict[str, Any]:
+        """Extract token usage and calculate cost from Gemini response"""
+        input_tokens = 0
+        output_tokens = 0
+        
+        # Extract usage from Gemini response
+        if hasattr(response, 'usage_metadata') and response.usage_metadata:
+            usage = response.usage_metadata
+            input_tokens = getattr(usage, 'prompt_token_count', 0)
+            output_tokens = getattr(usage, 'candidates_token_count', 0)
+        
+        total_tokens = input_tokens + output_tokens
+        
+        # Calculate cost based on Gemini pricing
+        cost_usd = self._calculate_cost(input_tokens, output_tokens)
+        
+        return {
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": total_tokens,
+            "cost_usd": cost_usd,
+            "model": self.model_name
+        }
+
+    def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        """Calculate cost in USD based on Gemini pricing"""
+        
+        # Gemini 2.5 Flash pricing (per 1M tokens as of Dec 2024)
+        # Input: $0.075 per 1M tokens
+        # Output: $0.30 per 1M tokens
+        input_rate_per_1m = 0.075
+        output_rate_per_1m = 0.30
+        
+        input_cost = (input_tokens / 1000000.0) * input_rate_per_1m
+        output_cost = (output_tokens / 1000000.0) * output_rate_per_1m
+        
+        return round(input_cost + output_cost, 6)  # Round to 6 decimal places
     
     def analyze_content(self, content: str) -> str:
         """

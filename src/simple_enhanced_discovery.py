@@ -5,8 +5,12 @@ Uses LLM for contextual discovery without async complications
 
 import logging
 import json
-from typing import List, Dict, Any, Optional
+import os
+import requests
+from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
+from urllib.parse import quote
+from bs4 import BeautifulSoup
 
 from src.models import CompanyData
 from src.bedrock_client import BedrockClient
@@ -26,7 +30,7 @@ class SimpleEnhancedDiscovery:
         self.logger = logging.getLogger(self.__class__.__name__)
     
     def discover_similar_companies(self, company_name: str, limit: int = 5) -> List[Dict[str, Any]]:
-        """Discover similar companies using LLM + Vector search"""
+        """Discover similar companies using LLM + Vector search + Google search"""
         self.logger.info(f"Starting enhanced discovery for: {company_name}")
         
         try:
@@ -53,6 +57,12 @@ class SimpleEnhancedDiscovery:
                 
                 # Format results
                 combined_results = self._format_llm_only_results(llm_results)
+            
+            # Step 5: If we have few or no results, enhance with Google search
+            if len(combined_results) < limit:
+                self.logger.info(f"Only {len(combined_results)} results found, enhancing with Google search")
+                google_results = self._google_search_discovery(company_name, limit - len(combined_results))
+                combined_results.extend(google_results)
             
             self.logger.info(f"Enhanced discovery complete: {len(combined_results)} results")
             return combined_results
@@ -426,86 +436,56 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
     
     def research_company_on_demand(self, company_suggestion: Dict[str, Any]) -> Dict[str, Any]:
         """Research a specific company suggestion on-demand via web scraping"""
-        print(f"🧬 RESEARCH: Starting on-demand research process")
-        print(f"🧬 RESEARCH: Input company suggestion: {company_suggestion}")
         
         self.logger.info(f"On-demand research for: {company_suggestion.get('name', 'unknown')}")
         
         if not self.scraper:
-            print(f"🧬 RESEARCH: ❌ No scraper available - returning original suggestion")
             self.logger.warning("No scraper available for on-demand research")
             return company_suggestion
         
         try:
-            print(f"🧬 RESEARCH: Extracting company details from suggestion...")
             company_name = company_suggestion.get('company_name', company_suggestion.get('name', '')).strip()
             company_website = company_suggestion.get('website', '').strip()
-            print(f"🧬 RESEARCH: Extracted name='{company_name}', website='{company_website}'")
             
             if not company_name or not company_website:
-                print(f"🧬 RESEARCH: ❌ Missing required data - name or website empty")
-                print(f"🧬 RESEARCH: ❌ Returning original suggestion unchanged")
                 self.logger.warning(f"Missing name or website for research: {company_suggestion}")
                 return company_suggestion
             
-            print(f"🧬 RESEARCH: Creating CompanyData object for scraping...")
             # Create temporary CompanyData object for scraping
             from src.models import CompanyData
             temp_company = CompanyData(
                 name=company_name,
                 website=company_website
             )
-            print(f"🧬 RESEARCH: CompanyData object created successfully")
             
-            print(f"🧬 RESEARCH: Initializing progress tracking system...")
             # Start progress tracking for research
             from src.progress_logger import start_company_processing
             job_id = start_company_processing(company_name)
-            print(f"🧬 RESEARCH: Progress tracking started with job_id: {job_id}")
             
-            print(f"🧬 RESEARCH: ===== STARTING SCRAPER =====")
-            print(f"🧬 RESEARCH: Calling scraper.scrape_company for '{company_name}'")
-            print(f"🧬 RESEARCH: Target website: {company_website}")
             
             # This should now work with the subprocess-based scraper
             scraped_company = self.scraper.scrape_company(temp_company, job_id)
             
-            print(f"🧬 RESEARCH: ===== SCRAPER COMPLETED =====")
-            print(f"🧬 RESEARCH: Final scrape status: {scraped_company.scrape_status}")
-            print(f"🧬 RESEARCH: Scrape error (if any): {scraped_company.scrape_error}")
-            print(f"🧬 RESEARCH: Pages crawled: {len(scraped_company.pages_crawled or [])}")
-            print(f"🧬 RESEARCH: Crawl duration: {scraped_company.crawl_duration}")
             
             if scraped_company.scrape_status == "success":
-                print(f"🧬 RESEARCH: ✅ Scraping successful! Starting LLM analysis...")
                 # Run scraped content through LLM analysis for intelligent extraction
                 self.logger.info(f"Analyzing scraped content with LLM for {company_name}")
-                print(f"🧬 RESEARCH: Calling AI client for content analysis...")
                 
                 analysis_result = self.ai_client.analyze_company_content(scraped_company)
-                print(f"🧬 RESEARCH: AI analysis completed")
-                print(f"🧬 RESEARCH: Analysis result keys: {list(analysis_result.keys()) if isinstance(analysis_result, dict) else 'Not a dict'}")
                 
                 # Apply LLM analysis to the scraped company data
                 if "error" not in analysis_result:
-                    print(f"🧬 RESEARCH: ✅ Applying AI analysis to company data...")
                     self._apply_analysis_to_company(scraped_company, analysis_result)
-                    print(f"🧬 RESEARCH: ✅ AI analysis applied successfully")
                     self.logger.info(f"LLM analysis completed for {company_name}")
                 else:
-                    print(f"🧬 RESEARCH: ❌ AI analysis failed: {analysis_result.get('error')}")
                     self.logger.warning(f"LLM analysis failed for {company_name}: {analysis_result.get('error')}")
                 
-                print(f"🧬 RESEARCH: Starting job listings research...")
                 # Execute job listings research
                 job_listings_data = self._execute_job_listings_research(company_name, company_website)
-                print(f"🧬 RESEARCH: Job listings research completed")
                 
-                print(f"🧬 RESEARCH: Marking job as completed in progress tracker...")
                 # Complete the job tracking
                 from src.progress_logger import complete_company_processing
                 complete_company_processing(job_id, True, summary=f"Research completed for {company_name}")
-                print(f"🧬 RESEARCH: Progress tracking completed")
                 
                 # Enhance the suggestion with analyzed scraped data
                 enhanced_suggestion = {
@@ -547,17 +527,12 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
                     'analysis_applied': "error" not in analysis_result
                 }
                 
-                print(f"🧬 RESEARCH: ===== RESEARCH COMPLETED SUCCESSFULLY =====")
-                print(f"🧬 RESEARCH: Enhanced suggestion created with comprehensive data")
                 self.logger.info(f"Successfully researched {company_name}")
                 return enhanced_suggestion
                 
             else:
-                print(f"🧬 RESEARCH: ❌ Scraping failed - status: {scraped_company.scrape_status}")
-                print(f"🧬 RESEARCH: ❌ Error: {scraped_company.scrape_error}")
                 
                 # Complete the job tracking with failure
-                print(f"🧬 RESEARCH: Marking job as failed in progress tracker...")
                 from src.progress_logger import complete_company_processing
                 complete_company_processing(job_id, False, error=scraped_company.scrape_error or 'Research failed')
                 
@@ -572,32 +547,25 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
                     'research_timestamp': self._get_timestamp()
                 })
                 
-                print(f"🧬 RESEARCH: ===== RESEARCH FAILED =====")
-                print(f"🧬 RESEARCH: Returning failed result with error info")
                 self.logger.warning(f"Research failed for {company_name}: {scraped_company.scrape_error}")
                 return enhanced_suggestion
             
         except Exception as e:
-            print(f"🧬 RESEARCH: ❌ CRITICAL ERROR during research: {e}")
-            print(f"🧬 RESEARCH: ❌ Exception type: {type(e).__name__}")
             
             import traceback
             traceback_str = traceback.format_exc()
-            print(f"🧬 RESEARCH: ❌ Full traceback:\n{traceback_str}")
             
             self.logger.error(f"Error in on-demand research for {company_suggestion.get('name', 'unknown')}: {e}")
             
             # Complete the job tracking with error (if job_id exists)
-            print(f"🧬 RESEARCH: Attempting to mark job as failed due to exception...")
             try:
                 if 'job_id' in locals():
                     from src.progress_logger import complete_company_processing
                     complete_company_processing(job_id, False, error=str(e))
-                    print(f"🧬 RESEARCH: Job marked as failed successfully")
                 else:
-                    print(f"🧬 RESEARCH: No job_id available for cleanup")
+                    pass
             except Exception as cleanup_error:
-                print(f"🧬 RESEARCH: ❌ Cleanup error: {cleanup_error}")
+                pass
             
             # Return original suggestion with error info
             error_suggestion = company_suggestion.copy()
@@ -609,8 +577,6 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
                 'research_error': str(e),
                 'research_timestamp': self._get_timestamp()
             })
-            print(f"🧬 RESEARCH: ===== RESEARCH ERROR =====")
-            print(f"🧬 RESEARCH: Returning error result with exception details")
             return error_suggestion
     
     def _get_timestamp(self) -> str:
@@ -773,3 +739,224 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
                 'details': {},
                 'raw_response': response[:200] if response else 'No response'
             }
+    
+    def _google_search_discovery(self, company_name: str, limit: int) -> List[Dict[str, Any]]:
+        """Use Google search to discover similar companies"""
+        self.logger.info(f"🔍 Starting Google search discovery for: {company_name}")
+        
+        try:
+            # First, use LLM to generate search queries for similar companies
+            search_queries = self._generate_similarity_search_queries(company_name)
+            
+            all_results = []
+            for query in search_queries[:3]:  # Limit to 3 queries
+                self.logger.info(f"🔍 Searching: {query}")
+                urls = self._google_search_api(query)
+                
+                for url in urls[:limit]:
+                    # Extract company name from URL/search result
+                    company_info = self._extract_company_from_url(url)
+                    if company_info:
+                        all_results.append({
+                            'company_name': company_info['name'],
+                            'website': url,
+                            'similarity_score': 0.75,  # Default score for Google results
+                            'confidence': 0.75,
+                            'reasoning': [f"Found via Google search: '{query}'"],
+                            'relationship_type': 'competitor',
+                            'discovery_method': 'Google Search',
+                            'business_context': f"Discovered as similar to {company_name}",
+                            'sources': ['google'],
+                            'requires_research': True
+                        })
+            
+            # Deduplicate by company name
+            unique_results = {}
+            for result in all_results:
+                name = result['company_name'].lower()
+                if name not in unique_results:
+                    unique_results[name] = result
+            
+            results = list(unique_results.values())[:limit]
+            self.logger.info(f"✅ Google search found {len(results)} unique companies")
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Google search discovery failed: {e}")
+            return []
+    
+    def _generate_similarity_search_queries(self, company_name: str) -> List[str]:
+        """Generate Google search queries to find similar companies"""
+        try:
+            prompt = f"""Generate 3 specific Google search queries to find companies similar to "{company_name}".
+
+For each query, think about:
+- Competitors in the same industry
+- Companies offering similar services
+- Alternative solutions to the same problem
+
+Return ONLY the 3 search queries, one per line. Make them specific and likely to return company websites.
+
+Example format:
+"CRM software companies like Salesforce"
+"Salesforce competitors enterprise"
+"cloud CRM platforms similar to Salesforce"
+
+Search queries for companies similar to {company_name}:"""
+
+            response = self.ai_client.analyze_content(prompt)
+            if response:
+                queries = [q.strip().strip('"') for q in response.strip().split('\n') if q.strip()]
+                return queries[:3]
+            
+            # Fallback queries
+            return [
+                f"companies similar to {company_name}",
+                f"{company_name} competitors",
+                f"alternatives to {company_name}"
+            ]
+            
+        except Exception as e:
+            self.logger.error(f"Failed to generate search queries: {e}")
+            return [f"{company_name} competitors"]
+    
+    def _google_search_api(self, query: str) -> List[str]:
+        """Perform actual Google search using multiple methods"""
+        self.logger.info(f"🔍 Searching Google for: '{query}'")
+        
+        try:
+            # Method 1: Try Google Custom Search API if available
+            google_api_key = os.getenv('GOOGLE_API_KEY')
+            google_cx = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
+            
+            if google_api_key and google_cx:
+                return self._google_custom_search_api(query, google_api_key, google_cx)
+            
+            # Method 2: Try SerpAPI if available
+            serpapi_key = os.getenv('SERPAPI_KEY')
+            if serpapi_key:
+                return self._serpapi_search(query, serpapi_key)
+            
+            # Method 3: DuckDuckGo as fallback
+            return self._duckduckgo_search(query)
+            
+        except Exception as e:
+            self.logger.error(f"Google search API failed: {e}")
+            return []
+    
+    def _google_custom_search_api(self, query: str, api_key: str, cx: str) -> List[str]:
+        """Use Google Custom Search API"""
+        try:
+            url = "https://www.googleapis.com/customsearch/v1"
+            params = {
+                'key': api_key,
+                'cx': cx,
+                'q': query,
+                'num': 5
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            data = response.json()
+            urls = []
+            
+            if 'items' in data:
+                for item in data['items']:
+                    urls.append(item['link'])
+                    
+            self.logger.info(f"✅ Google Custom Search found {len(urls)} results")
+            return urls
+            
+        except Exception as e:
+            self.logger.error(f"Google Custom Search API failed: {e}")
+            return []
+    
+    def _serpapi_search(self, query: str, api_key: str) -> List[str]:
+        """Use SerpAPI for Google search"""
+        try:
+            url = "https://serpapi.com/search"
+            params = {
+                'api_key': api_key,
+                'engine': 'google',
+                'q': query,
+                'num': 5
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            data = response.json()
+            urls = []
+            
+            if 'organic_results' in data:
+                for result in data['organic_results']:
+                    urls.append(result['link'])
+                    
+            self.logger.info(f"✅ SerpAPI found {len(urls)} results")
+            return urls
+            
+        except Exception as e:
+            self.logger.error(f"SerpAPI failed: {e}")
+            return []
+    
+    def _duckduckgo_search(self, query: str) -> List[str]:
+        """Use DuckDuckGo as fallback search"""
+        try:
+            search_url = f"https://duckduckgo.com/html/?q={quote(query)}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            }
+            
+            response = requests.get(search_url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            urls = []
+            
+            # Find result links
+            for result in soup.find_all('a', {'class': 'result__a'}):
+                href = result.get('href')
+                if href and href.startswith('http'):
+                    urls.append(href)
+                    if len(urls) >= 5:
+                        break
+            
+            self.logger.info(f"✅ DuckDuckGo found {len(urls)} results")
+            return urls
+            
+        except Exception as e:
+            self.logger.error(f"DuckDuckGo search failed: {e}")
+            return []
+    
+    def _extract_company_from_url(self, url: str) -> Optional[Dict[str, str]]:
+        """Extract company name from URL"""
+        try:
+            from urllib.parse import urlparse
+            
+            # Parse the URL
+            parsed = urlparse(url)
+            domain = parsed.netloc.lower()
+            
+            # Remove common prefixes
+            domain = domain.replace('www.', '')
+            
+            # Extract company name from domain
+            company_name = domain.split('.')[0]
+            
+            # Clean up company name
+            company_name = company_name.replace('-', ' ').replace('_', ' ')
+            company_name = ' '.join(word.capitalize() for word in company_name.split())
+            
+            # Skip generic domains
+            if company_name.lower() in ['google', 'wikipedia', 'linkedin', 'facebook', 'twitter', 'youtube']:
+                return None
+            
+            return {
+                'name': company_name,
+                'domain': domain
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Failed to extract company from URL {url}: {e}")
+            return None

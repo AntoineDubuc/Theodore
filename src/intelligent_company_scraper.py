@@ -22,9 +22,11 @@ load_dotenv()
 
 try:
     import google.generativeai as genai
+    from google.generativeai import types as genai_types
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
+    genai_types = None
 
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig
 from crawl4ai.async_configs import CacheMode
@@ -44,6 +46,19 @@ class IntelligentCompanyScraper:
         self.bedrock_client = bedrock_client
         self.max_depth = 3  # Recursive crawl depth
         self.max_pages = 100  # Maximum pages to process
+        
+        # Will be adjusted per company during scraping
+        
+        # LLM and scraping tracking
+        self.llm_call_count = 0
+        self.scraped_pages = []
+        self.llm_call_log = []
+        
+        # Special handling for store locator sites
+        self.store_locator_patterns = [
+            'stores.', 'locations.', 'store-locator', 'find-store', 
+            'store/', 'location/', 'outlet', 'dealers'
+        ]
         self.concurrent_limit = 10  # Concurrent requests limit
         self.session_timeout = aiohttp.ClientTimeout(total=10)  # Reduced for fast research
         
@@ -54,10 +69,12 @@ class IntelligentCompanyScraper:
             if gemini_api_key and gemini_api_key.startswith("AIza"):
                 try:
                     genai.configure(api_key=gemini_api_key)
-                    self.gemini_client = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
-                    logger.info("Gemini 2.5 Flash Preview client initialized successfully")
+                    # Use the stable model that we know works
+                    self.gemini_client = genai.GenerativeModel('gemini-2.5-flash')
+                    logger.info("Gemini 2.5 Flash client initialized successfully")
                 except Exception as e:
-                    logger.warning(f"Failed to initialize Gemini client: {e}")
+                    logger.error(f"Failed to initialize Gemini client: {e}")
+                    self.gemini_client = None
             else:
                 logger.warning("GEMINI_API_KEY not found or invalid in environment variables")
         
@@ -72,33 +89,88 @@ class IntelligentCompanyScraper:
         if not job_id:
             job_id = start_company_processing(company_data.name)
         
-        logger.info(f"Starting intelligent scraping for {company_data.name} (job: {job_id})")
+        # Detect if this is a store locator site and adjust strategy
+        is_store_locator = any(pattern in base_url.lower() for pattern in self.store_locator_patterns)
+        if is_store_locator:
+            logger.info(f"Detected store locator site for {company_data.name}, using optimized strategy")
+            self.max_pages = 20  # More aggressive reduction for store locators
+            self.max_depth = 2   # Reduce depth for store locators
+            self.concurrent_limit = 5  # Reduce concurrent requests for store locators
+        
+        print(f"🔍 SCRAPING: {company_data.name} → {base_url}", flush=True)
+        print(f"📋 TARGET: Extract comprehensive business intelligence", flush=True)
+        
+        # Reduce depth for known large retailer sites to prevent timeout
+        retailer_domains = ['walmart.com', 'amazon.com', 'target.com', 'bestbuy.com', 'costco.com', 'homedepot.com']
+        if any(domain in base_url.lower() for domain in retailer_domains):
+            self.max_depth = 1  # Minimal depth for large retailers
+            logger.info(f"Reduced crawl depth to 1 for large retailer site: {company_data.name}")
+        
+        # Log to UI processing log
+        if job_id:
+            from src.progress_logger import progress_logger
+            progress_logger.add_to_progress_log(job_id, f"🔍 Starting intelligent scraping for {company_data.name}")
+            progress_logger.add_to_progress_log(job_id, f"🌐 Target website: {base_url}")
+            progress_logger.add_to_progress_log(job_id, f"⚙️ Configuration: max_pages={self.max_pages}, max_depth={self.max_depth}")
+        
+        print(f"⚙️ SCRAPER CONFIG: max_pages={self.max_pages}, max_depth={self.max_depth}, concurrent_limit={self.concurrent_limit}", flush=True)
         
         
         try:
             # Phase 1: Comprehensive Link Discovery
+            print(f"🔍 PHASE 1: Starting comprehensive link discovery...")
+            if job_id:
+                from src.progress_logger import progress_logger
+                progress_logger.add_to_progress_log(job_id, f"🔍 PHASE 1: Starting comprehensive link discovery")
+            
             log_processing_phase(job_id, "Link Discovery", "running", 
                                target_url=base_url, max_depth=self.max_depth)
             
-            all_links = await self._discover_all_links(base_url)
+            all_links = await self._discover_all_links(base_url, job_id)
+            
+            print(f"🔍 PHASE 1 COMPLETE: Discovered {len(all_links)} total links")
+            if job_id:
+                from src.progress_logger import progress_logger
+                progress_logger.add_to_progress_log(job_id, f"✅ Link discovery complete: {len(all_links)} links found")
             
             log_processing_phase(job_id, "Link Discovery", "completed", 
                                links_discovered=len(all_links), 
                                sources=["robots.txt", "sitemap.xml", "recursive_crawl"])
             
             # Phase 2: LLM-Driven Page Selection
+            print(f"🧠 PHASE 2: Starting LLM-driven page selection from {len(all_links)} links...")
+            if job_id:
+                from src.progress_logger import progress_logger
+                progress_logger.add_to_progress_log(job_id, f"🧠 PHASE 2: Starting LLM page selection from {len(all_links)} links")
+            
             log_processing_phase(job_id, "LLM Page Selection", "running",
                                total_links=len(all_links), max_pages=self.max_pages)
             
             selected_urls = await self._llm_select_promising_pages(
-                all_links, company_data.name, base_url
+                all_links, company_data.name, base_url, job_id
             )
+            
+            print(f"🧠 PHASE 2 COMPLETE: Selected {len(selected_urls)} promising pages")
+            if job_id:
+                from src.progress_logger import progress_logger
+                progress_logger.add_to_progress_log(job_id, f"✅ Page selection complete: {len(selected_urls)} pages selected")
             
             log_processing_phase(job_id, "LLM Page Selection", "completed",
                                pages_selected=len(selected_urls),
                                selection_ratio=f"{len(selected_urls)}/{len(all_links)}")
             
+            print(f"\n🎯 PAGES SELECTED ({len(selected_urls)}/{len(all_links)} links):")
+            for i, url in enumerate(selected_urls[:20], 1):  # Show first 20 selected
+                print(f"  {i:2d}. {url}")
+            if len(selected_urls) > 20:
+                print(f"  ... and {len(selected_urls) - 20} more pages")
+            
             # Phase 3: Parallel Content Extraction
+            print(f"\n📄 PHASE 3: Starting parallel content extraction from {len(selected_urls)} pages...", flush=True)
+            if job_id:
+                from src.progress_logger import progress_logger
+                progress_logger.add_to_progress_log(job_id, f"📄 PHASE 3: Starting content extraction from {len(selected_urls)} pages")
+            
             log_processing_phase(job_id, "Content Extraction", "running",
                                pages_to_extract=len(selected_urls),
                                concurrent_limit=self.concurrent_limit)
@@ -106,19 +178,33 @@ class IntelligentCompanyScraper:
             page_contents = await self._parallel_extract_content(selected_urls, job_id)
             
             total_content_chars = sum(len(page['content']) for page in page_contents)
+            print(f"📄 PHASE 3 COMPLETE: Extracted content from {len(page_contents)}/{len(selected_urls)} pages", flush=True)
+            print(f"📊 Total content extracted: {total_content_chars:,} characters", flush=True)
+            
+            if job_id:
+                progress_logger.add_to_progress_log(job_id, f"✅ Content extraction complete: {len(page_contents)} pages, {total_content_chars:,} chars")
+            
             log_processing_phase(job_id, "Content Extraction", "completed",
                                successful_extractions=len(page_contents),
                                failed_extractions=len(selected_urls) - len(page_contents),
                                total_content_chars=total_content_chars)
             
             # Phase 4: LLM Content Aggregation
+            print(f"\n🧠 PHASE 4: Starting LLM analysis of {total_content_chars:,} characters...", flush=True)
+            if job_id:
+                progress_logger.add_to_progress_log(job_id, f"🧠 PHASE 4: Starting sales intelligence generation from {total_content_chars:,} chars")
+            
             log_processing_phase(job_id, "Sales Intelligence Generation", "running",
                                content_pages=len(page_contents),
                                total_content_chars=total_content_chars)
             
             sales_intelligence = await self._llm_aggregate_sales_intelligence(
-                page_contents, company_data.name
+                page_contents, company_data.name, job_id
             )
+            
+            print(f"🧠 PHASE 4 COMPLETE: Generated {len(sales_intelligence):,} character sales intelligence", flush=True)
+            if job_id:
+                progress_logger.add_to_progress_log(job_id, f"✅ Sales intelligence complete: {len(sales_intelligence):,} characters generated")
             
             log_processing_phase(job_id, "Sales Intelligence Generation", "completed",
                                intelligence_length=len(sales_intelligence),
@@ -132,9 +218,29 @@ class IntelligentCompanyScraper:
             company_data.crawl_duration = time.time() - start_time
             company_data.scrape_status = "success"
             
-            # Complete job tracking
+            # Complete job tracking with detailed summary
             summary = f"Generated {len(sales_intelligence)} character sales intelligence from {len(page_contents)} pages"
             complete_company_processing(job_id, True, summary=summary)
+            
+            # Add summary to UI progress log
+            if job_id:
+                from src.progress_logger import progress_logger
+                progress_logger.add_to_progress_log(job_id, f"📄 CRAWLED {len(self.scraped_pages)} pages total:")
+                for i, page in enumerate(self.scraped_pages, 1):
+                    progress_logger.add_to_progress_log(job_id, f"   {i}. {page['url']} ({page['content_length']:,} chars)")
+                progress_logger.add_to_progress_log(job_id, f"🧠 MADE {len(self.llm_call_log)} LLM calls total")
+                progress_logger.add_to_progress_log(job_id, f"📝 GENERATED {len(sales_intelligence):,} characters final result")
+
+            # Print final summary
+            print(f"\n🎉 SCRAPING COMPLETE for {company_data.name}")
+            print(f"📄 PAGES SCRAPED: {len(self.scraped_pages)} pages")
+            for i, page in enumerate(self.scraped_pages, 1):
+                print(f"  {i}. {page['url']} ({page['content_length']:,} chars from {page['content_source']})")
+            print(f"🧠 LLM CALLS: {len(self.llm_call_log)} total")
+            for call in self.llm_call_log:
+                status = "✅" if call['success'] else "❌"
+                print(f"  {status} Call #{call['call_number']}: {call['model']} - {call['prompt_length']:,} chars in, {call['response_length']:,} chars out")
+            print(f"📝 FINAL RESULT: {len(sales_intelligence):,} characters generated\n")
             
             logger.info(f"Intelligent scraping completed for {company_data.name}")
             
@@ -150,43 +256,103 @@ class IntelligentCompanyScraper:
         
         return company_data
     
-    async def _discover_all_links(self, base_url: str) -> List[str]:
+    async def _discover_all_links(self, base_url: str, job_id: str = None) -> List[str]:
         """
-        Phase 1: Comprehensive link discovery with multiple sources
+        Phase 1: Comprehensive link discovery with multiple sources and safety limits
         """
         all_links = set()
         domain = urlparse(base_url).netloc
+        
+        print(f"🔍 LINK DISCOVERY: Finding pages on {base_url}")
+        start_time = time.time()
         
         async with aiohttp.ClientSession(timeout=self.session_timeout) as session:
             
             # 1. Robots.txt discovery
             try:
+                robots_url = urljoin(base_url, '/robots.txt')
+                print(f"🔍 Analyzing robots.txt: {robots_url}", flush=True)
+                if job_id:
+                    log_processing_phase(job_id, "Link Discovery", "running", 
+                                       current_url=robots_url, status_message="Analyzing robots.txt")
+                    progress_logger.add_to_progress_log(job_id, f"🔍 Analyzing robots.txt: {robots_url}")
+                
                 robots_links = await self._parse_robots_txt(session, base_url)
                 all_links.update(robots_links)
+                
+                print(f"✅ Found {len(robots_links)} links from robots.txt", flush=True)
                 logger.info(f"Found {len(robots_links)} links from robots.txt")
+                
+                if job_id and robots_links:
+                    progress_logger.add_to_progress_log(job_id, f"✅ robots.txt: {len(robots_links)} links discovered")
+                    
             except Exception as e:
+                print(f"❌ Failed to parse robots.txt: {e}", flush=True)
                 logger.warning(f"Failed to parse robots.txt: {e}")
+                if job_id:
+                    progress_logger.add_to_progress_log(job_id, f"❌ robots.txt failed: {e}")
             
             # 2. Sitemap.xml discovery
             try:
+                sitemap_url = urljoin(base_url, '/sitemap.xml')
+                print(f"🔍 Analyzing sitemap.xml: {sitemap_url}", flush=True)
+                if job_id:
+                    log_processing_phase(job_id, "Link Discovery", "running", 
+                                       current_url=sitemap_url, status_message="Analyzing sitemap.xml")
+                    progress_logger.add_to_progress_log(job_id, f"🔍 Analyzing sitemap.xml: {sitemap_url}")
+                
                 sitemap_links = await self._parse_sitemap(session, base_url)
                 all_links.update(sitemap_links)
+                
+                print(f"✅ Found {len(sitemap_links)} links from sitemap.xml", flush=True)
                 logger.info(f"Found {len(sitemap_links)} links from sitemap")
+                
+                if job_id and sitemap_links:
+                    progress_logger.add_to_progress_log(job_id, f"✅ sitemap.xml: {len(sitemap_links)} links discovered")
+                    
             except Exception as e:
+                print(f"❌ Failed to parse sitemap.xml: {e}", flush=True)
                 logger.warning(f"Failed to parse sitemap: {e}")
+                if job_id:
+                    progress_logger.add_to_progress_log(job_id, f"❌ sitemap.xml failed: {e}")
             
-            # 3. Recursive page crawling for navigation links
+            # 3. Recursive page crawling for navigation links (with timeout check)
             try:
-                crawled_links = await self._recursive_link_discovery(
-                    session, base_url, domain, max_depth=self.max_depth
-                )
-                all_links.update(crawled_links)
-                logger.info(f"Found {len(crawled_links)} links from recursive crawling")
+                elapsed = time.time() - start_time
+                if elapsed > 30:  # Maximum 30 seconds for link discovery
+                    print(f"⏰ Skipping recursive crawling - time limit reached ({elapsed:.1f}s)", flush=True)
+                    if job_id:
+                        progress_logger.add_to_progress_log(job_id, f"⏰ Skipping recursive crawling - time limit reached")
+                else:
+                    print(f"🔍 Starting recursive crawling from: {base_url}", flush=True)
+                    if job_id:
+                        log_processing_phase(job_id, "Link Discovery", "running", 
+                                           current_url=base_url, status_message="Recursive crawling")
+                        progress_logger.add_to_progress_log(job_id, f"🔍 Starting recursive crawling from: {base_url}")
+                    
+                    crawled_links = await self._recursive_link_discovery(
+                        session, base_url, domain, max_depth=self.max_depth, job_id=job_id
+                    )
+                    all_links.update(crawled_links)
+                    
+                    print(f"✅ Found {len(crawled_links)} links from recursive crawling", flush=True)
+                    logger.info(f"Found {len(crawled_links)} links from recursive crawling")
+                    
+                    if job_id and crawled_links:
+                        progress_logger.add_to_progress_log(job_id, f"✅ Recursive crawl: {len(crawled_links)} links discovered")
+                        
             except Exception as e:
+                print(f"❌ Failed recursive discovery: {e}", flush=True)
                 logger.warning(f"Failed recursive discovery: {e}")
+                if job_id:
+                    progress_logger.add_to_progress_log(job_id, f"❌ Recursive crawling failed: {e}")
         
         # Filter and normalize links
         filtered_links = self._filter_and_normalize_links(list(all_links), domain)
+        
+        # Summary
+        total_time = time.time() - start_time
+        # Link discovery completed
         
         return filtered_links[:1000]  # Limit to prevent overwhelming LLM
     
@@ -287,10 +453,11 @@ class IntelligentCompanyScraper:
         domain: str, 
         max_depth: int,
         visited: Optional[Set[str]] = None,
-        current_depth: int = 0
+        current_depth: int = 0,
+        job_id: str = None
     ) -> Set[str]:
         """
-        Recursively discover links by crawling pages
+        Recursively discover links by crawling pages with safety limits
         """
         if visited is None:
             visited = set()
@@ -298,16 +465,35 @@ class IntelligentCompanyScraper:
         if current_depth >= max_depth:
             return set()
         
+        # SAFETY: Limit total URLs processed to prevent infinite loops
+        if len(visited) >= 200:  # Maximum 200 URLs total
+            print(f"🛑 Recursive discovery hit 200 URL limit, stopping to prevent infinite loops")
+            return set()
+        
         discovered_links = set()
         
+        # SAFETY: Don't re-visit the same URL
+        if base_url in visited:
+            return set()
+        
+        visited.add(base_url)
+        
         try:
-            # Get page content
+            print(f"🕷️  Crawling page (depth {current_depth}): {base_url}", flush=True)
+            if job_id:
+                log_processing_phase(job_id, "Link Discovery", "running", 
+                                   current_url=base_url, 
+                                   status_message=f"Crawling depth {current_depth}")
+                progress_logger.add_to_progress_log(job_id, f"🕷️ Crawling depth {current_depth}: {base_url}")
+            
+            # Get page content with timeout
             async with session.get(base_url) as response:
                 if response.status == 200:
                     html_content = await response.text()
                     soup = BeautifulSoup(html_content, 'html.parser')
                     
                     # Extract all links
+                    links_found = 0
                     for link in soup.find_all('a', href=True):
                         href = link['href']
                         full_url = urljoin(base_url, href)
@@ -315,17 +501,22 @@ class IntelligentCompanyScraper:
                         # Only follow links on same domain
                         if urlparse(full_url).netloc == domain:
                             discovered_links.add(full_url)
+                            links_found += 1
+                            
+                            # SAFETY: Limit links per page to prevent explosion
+                            if links_found >= 50:  # Max 50 links per page
+                                break
                             
                             # Recursively crawl if not visited and within depth limit
                             if full_url not in visited and current_depth < max_depth - 1:
-                                visited.add(full_url)
                                 recursive_links = await self._recursive_link_discovery(
-                                    session, full_url, domain, max_depth, visited, current_depth + 1
+                                    session, full_url, domain, max_depth, visited, current_depth + 1, job_id
                                 )
                                 discovered_links.update(recursive_links)
                                 
-                                # Add small delay to avoid overwhelming server
+                                # SAFETY: Add delay and check total time
                                 await asyncio.sleep(0.1)
+                    
                                 
         except Exception as e:
             logger.warning(f"Error in recursive discovery for {base_url}: {e}")
@@ -379,17 +570,40 @@ class IntelligentCompanyScraper:
         self, 
         all_links: List[str], 
         company_name: str, 
-        base_url: str
+        base_url: str,
+        job_id: str = None
     ) -> List[str]:
         """
         Phase 2: Use LLM to select most promising pages for sales intelligence
         """
+        import sys
+        
         if not self.bedrock_client:
             # Fallback: Use heuristic selection
+            print(f"🧠 Bedrock client not available, using heuristic page selection", flush=True)
             return self._heuristic_page_selection(all_links)
         
-        # Prepare links for LLM analysis (reduced for faster processing)
-        links_text = "\n".join([f"- {link}" for link in all_links[:100]])  # Reduced from 500 to 100 for speed
+        # CRITICAL FIX: Limit links to prevent infinite LLM processing
+        max_links_for_llm = 25  # Reduced to 25 to prevent timeout issues
+        limited_links = all_links[:max_links_for_llm]
+        
+        print(f"🧠 LLM Page Selection: Processing {len(limited_links)} links (from {len(all_links)} total)", flush=True)
+        if job_id:
+            from src.progress_logger import progress_logger
+            progress_logger.add_to_progress_log(job_id, f"🧠 Processing {len(limited_links)} links (from {len(all_links)} total)")
+        
+        # Prepare links for LLM analysis
+        print(f"🧠 Preparing {len(limited_links)} links for LLM analysis...", flush=True)
+        links_text = "\n".join([f"- {link}" for link in limited_links])
+        
+        print(f"🧠 Links being sent to LLM for analysis:", flush=True)
+        for i, link in enumerate(limited_links, 1):
+            print(f"  {i:2d}. {link}", flush=True)
+            if job_id:
+                progress_logger.add_to_progress_log(job_id, f"📋 Link {i}: {link}")
+        
+        if job_id:
+            progress_logger.add_to_progress_log(job_id, f"🧠 Sending {len(limited_links)} links to LLM for intelligent selection...")
         
         prompt = f"""You are a data extraction specialist analyzing {company_name}'s website to find specific missing information.
 
@@ -397,7 +611,7 @@ Given these discovered links for {company_name} (base URL: {base_url}):
 
 {links_text}
 
-Select up to 50 pages that are MOST LIKELY to contain these CRITICAL missing data points:
+Select up to 25 pages that are MOST LIKELY to contain these CRITICAL missing data points:
 
 🔴 HIGHEST PRIORITY (Currently missing from our database):
 1. **Contact & Location**: Physical address, headquarters location
@@ -436,24 +650,142 @@ Return ONLY a JSON array of the most promising URLs for data extraction:
 Select pages with STRUCTURED DATA we can extract, not blog posts or general content."""
 
         try:
-            response = await self._call_llm_async(prompt)
+            print(f"🧠 LLM Page Selection: Calling LLM with {len(prompt)} chars...", flush=True)
+            print(f"🧠 PROMPT PREVIEW (first 500 chars):", flush=True)
+            print(f"{'='*60}", flush=True)
+            print(prompt[:500] + "..." if len(prompt) > 500 else prompt, flush=True)
+            print(f"{'='*60}", flush=True)
             
-            # Parse JSON response
+            if job_id:
+                progress_logger.add_to_progress_log(job_id, f"🧠 Sending prompt to LLM ({len(prompt)} chars)")
+            
+            # Add timeout to prevent infinite hanging
+            response = await asyncio.wait_for(
+                self._call_llm_async(prompt, job_id),
+                timeout=60  # 60 second timeout for page selection
+            )
+            
+            print(f"🧠 LLM Page Selection: Received response ({len(response)} chars)", flush=True)
+            print(f"🧠 RESPONSE PREVIEW (first 500 chars):", flush=True)
+            print(f"{'='*60}", flush=True)
+            print(response[:500] + "..." if len(response) > 500 else response, flush=True)
+            print(f"{'='*60}", flush=True)
+            
+            if job_id:
+                progress_logger.add_to_progress_log(job_id, f"🧠 Received LLM response ({len(response)} chars)")
+            
+            # Track LLM page selection
+            
+            # Parse JSON response (handle markdown code blocks)
             try:
-                selected_urls = json.loads(response.strip())
+                # Clean the response to extract JSON from markdown code blocks
+                cleaned_response = response.strip()
+                
+                # Remove markdown code block markers if present
+                if cleaned_response.startswith('```json'):
+                    cleaned_response = cleaned_response[7:]  # Remove ```json
+                elif cleaned_response.startswith('```'):
+                    cleaned_response = cleaned_response[3:]   # Remove ```
+                
+                if cleaned_response.endswith('```'):
+                    cleaned_response = cleaned_response[:-3]  # Remove trailing ```
+                
+                cleaned_response = cleaned_response.strip()
+                
+                print(f"🐛 DEBUG: Cleaned response (first 200 chars): {cleaned_response[:200]}")
+                
+                selected_urls = json.loads(cleaned_response)
                 if isinstance(selected_urls, list):
                     # Validate URLs and limit to max_pages
                     valid_urls = [url for url in selected_urls if url in all_links]
-                    return valid_urls[:self.max_pages]
+                    final_selection = valid_urls[:self.max_pages]
+                    
+                    # Update debug file with successful parse
+                    try:
+                        debug_data["parse_success"] = True
+                        debug_data["cleaned_response"] = cleaned_response
+                        debug_data["llm_recommended_count"] = len(selected_urls)
+                        debug_data["valid_urls_count"] = len(valid_urls)
+                        debug_data["final_selection_count"] = len(final_selection)
+                        debug_data["final_selection"] = final_selection
+                        with open(debug_filename, 'w') as f:
+                            json.dump(debug_data, f, indent=2, default=str)
+                        print(f"🐛 DEBUG: Successful parse logged to debug file")
+                    except:
+                        pass
+
+                    # 🎯 DETAILED LLM SELECTION LOGGING
+                    print(f"\n🧠 LLM PAGE SELECTION RESULTS for {company_name}:")
+                    print(f"📊 Total links discovered: {len(all_links)}")
+                    print(f"🤖 LLM recommended: {len(selected_urls)} pages")
+                    print(f"✅ Valid URLs from LLM: {len(valid_urls)}")
+                    print(f"🎯 Final selection (max {self.max_pages}): {len(final_selection)} pages")
+                    print(f"\n📋 LLM SELECTED PAGES:")
+                    for i, url in enumerate(final_selection, 1):
+                        print(f"  {i:2d}. {url}")
+                    
+                    # Show categorization of selected pages
+                    contact_pages = [url for url in final_selection if any(keyword in url.lower() for keyword in ['contact', 'get-in-touch'])]
+                    about_pages = [url for url in final_selection if any(keyword in url.lower() for keyword in ['about', 'company', 'our-story', 'history'])]
+                    team_pages = [url for url in final_selection if any(keyword in url.lower() for keyword in ['team', 'leadership', 'people', 'management'])]
+                    career_pages = [url for url in final_selection if any(keyword in url.lower() for keyword in ['careers', 'jobs', 'join'])]
+                    product_pages = [url for url in final_selection if any(keyword in url.lower() for keyword in ['products', 'services', 'solutions', 'offerings'])]
+                    
+                    print(f"\n📂 PAGE CATEGORIES SELECTED:")
+                    if contact_pages: print(f"📞 Contact/Location pages: {len(contact_pages)}")
+                    if about_pages: print(f"🏢 About/Company pages: {len(about_pages)}")
+                    if team_pages: print(f"👥 Team/Leadership pages: {len(team_pages)}")
+                    if career_pages: print(f"💼 Careers/Jobs pages: {len(career_pages)}")
+                    if product_pages: print(f"🛍️ Products/Services pages: {len(product_pages)}")
+                    other_pages = len(final_selection) - len(contact_pages) - len(about_pages) - len(team_pages) - len(career_pages) - len(product_pages)
+                    if other_pages > 0: print(f"🔗 Other pages: {other_pages}")
+                    print(f"")
+                    
+                    return final_selection
                 else:
+                    print(f"🧠 LLM response was not a JSON array, falling back to heuristic selection")
+                    print(f"🐛 Response type: {type(selected_urls)}")
+                    print(f"🐛 Response content: {selected_urls}")
+                    
+                    # Update debug file with type error details
+                    try:
+                        debug_data["response_type_error"] = f"Expected list, got {type(selected_urls)}"
+                        debug_data["parsed_response"] = selected_urls
+                        with open(debug_filename, 'w') as f:
+                            json.dump(debug_data, f, indent=2, default=str)
+                        print(f"🐛 DEBUG: Updated debug file with type error details")
+                    except:
+                        pass
+                    
                     logger.warning("LLM response was not a JSON array, falling back to heuristic")
                     return self._heuristic_page_selection(all_links)
                     
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                print(f"🧠 Failed to parse LLM response as JSON, falling back to heuristic selection")
+                print(f"🐛 JSON Parse Error: {e}")
+                print(f"🐛 Response preview (first 500 chars): {response[:500]}")
+                print(f"🐛 Response preview (last 500 chars): {response[-500:]}")
+                
+                # Update debug file with parse error details
+                try:
+                    debug_data["json_parse_error"] = str(e)
+                    debug_data["response_preview_start"] = response[:500]
+                    debug_data["response_preview_end"] = response[-500:]
+                    with open(debug_filename, 'w') as f:
+                        json.dump(debug_data, f, indent=2, default=str)
+                    print(f"🐛 DEBUG: Updated debug file with parse error details")
+                except:
+                    pass
+                
                 logger.warning("Failed to parse LLM response as JSON, falling back to heuristic")
                 return self._heuristic_page_selection(all_links)
                 
+        except asyncio.TimeoutError:
+            print(f"🧠 LLM Page Selection: TIMEOUT after 60 seconds, falling back to heuristic selection")
+            logger.warning("LLM page selection timed out, using heuristic fallback")
+            return self._heuristic_page_selection(all_links)
         except Exception as e:
+            print(f"🧠 LLM page selection failed: {e}, falling back to heuristic selection")
             logger.error(f"LLM page selection failed: {e}, falling back to heuristic")
             return self._heuristic_page_selection(all_links)
     
@@ -493,7 +825,19 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
         
         # Sort by score and return top pages
         scored_links.sort(key=lambda x: x[1], reverse=True)
-        return [link for link, score in scored_links[:self.max_pages]]
+        selected_pages = [link for link, score in scored_links[:self.max_pages]]
+        
+        # 🎯 HEURISTIC SELECTION LOGGING
+        print(f"\n🔧 HEURISTIC PAGE SELECTION (LLM not available):")
+        print(f"📊 Total links discovered: {len(all_links)}")
+        print(f"🎯 Selected by heuristic: {len(selected_pages)} pages")
+        print(f"\n📋 HEURISTIC SELECTED PAGES:")
+        for i, link in enumerate(selected_pages, 1):
+            score = next(score for url, score in scored_links if url == link)
+            print(f"  {i:2d}. {link} (score: {score})")
+        print(f"")
+        
+        return selected_pages
     
     async def _parallel_extract_content(self, urls: List[str], job_id: str = None) -> List[Dict[str, str]]:
         """
@@ -511,7 +855,19 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
                     current_page = page_counter["count"]
                     
                     # Log current page being scraped
-                    print(f"🔍 [{current_page}/{total_pages}] Starting: {url}")
+                    print(f"📄 [{current_page}/{total_pages}] Extracting content from: {url}", flush=True)
+                    
+                    # Update progress logger with current URL
+                    if job_id:
+                        from src.progress_logger import progress_logger
+                        progress_logger.add_to_progress_log(job_id, f"📄 [{current_page}/{total_pages}] Extracting: {url}")
+                        progress_logger.log_page_scraping(
+                            job_id=job_id,
+                            page_url=url,
+                            content_preview="",
+                            page_number=current_page,
+                            total_pages=total_pages
+                        )
                     
                     async with AsyncWebCrawler(
                         headless=True,
@@ -520,53 +876,84 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
                     ) as crawler:
                         
                         config = CrawlerRunConfig(
-                            # Clean content extraction
+                            # Improved content extraction
                             only_text=True,
                             remove_forms=True,
-                            word_count_threshold=50,
-                            excluded_tags=['nav', 'footer', 'aside', 'script', 'style'],
-                            css_selector='main, article, .content, .main-content',
+                            word_count_threshold=20,  # Lower threshold to capture more content
+                            excluded_tags=['nav', 'footer', 'aside', 'script', 'style', 'header', 'menu'],
+                            # More comprehensive CSS selectors for better content extraction
+                            css_selector='main, article, .content, .main-content, .page-content, .entry-content, .post-content, section, .container, .wrapper, body',
                             
                             # Performance optimization
                             cache_mode=CacheMode.ENABLED,
                             wait_until="domcontentloaded",
-                            page_timeout=20000,
+                            page_timeout=15000,  # Reduced from 30s to 15s to prevent individual page timeouts
                             verbose=False
                         )
                         
                         result = await crawler.arun(url=url, config=config)
                         
-                        if result.success and result.cleaned_html:
-                            content = result.cleaned_html[:10000]  # Limit content length
+                        if result.success:
+                            # Try to get the best available content
+                            content = None
+                            content_source = None
                             
-                            # Log successful extraction with content preview
-                            content_preview = content[:200] + "..." if len(content) > 200 else content
-                            print(f"✅ [{current_page}/{total_pages}] Success: {url}")
-                            print(f"📄 Content preview: {content_preview}")
+                            # First try cleaned HTML
+                            if result.cleaned_html and len(result.cleaned_html.strip()) > 50:
+                                content = result.cleaned_html[:10000]
+                                content_source = "cleaned_html"
+                            # Fallback to markdown content
+                            elif hasattr(result, 'markdown') and result.markdown and len(result.markdown.strip()) > 50:
+                                content = result.markdown[:10000]
+                                content_source = "markdown"
+                            # Final fallback to extracted text
+                            elif hasattr(result, 'extracted_content') and result.extracted_content and len(result.extracted_content.strip()) > 50:
+                                content = result.extracted_content[:10000]
+                                content_source = "extracted_content"
                             
-                            # Update progress logger if job_id provided
-                            if job_id:
-                                progress_logger.log_page_scraping(
-                                    job_id, url, content, current_page, total_pages
-                                )
-                            
-                            return {
-                                'url': url,
-                                'content': content
-                            }
+                            if content:
+                                # Track scraped page
+                                page_info = {
+                                    "url": url,
+                                    "content_length": len(content),
+                                    "content_source": content_source,
+                                    "page_number": current_page
+                                }
+                                self.scraped_pages.append(page_info)
+                                
+                                print(f"✅ [{current_page}/{total_pages}] Success: {len(content)} chars from {content_source} - {url}", flush=True)
+                                if job_id:
+                                    progress_logger.add_to_progress_log(job_id, f"✅ [{current_page}/{total_pages}] Success: {len(content)} chars - {url}")
+                                
+                                
+                                # Update progress logger if job_id provided
+                                if job_id:
+                                    progress_logger.log_page_scraping(
+                                        job_id, url, content, current_page, total_pages
+                                    )
+                                
+                                return {
+                                    'url': url,
+                                    'content': content
+                                }
+                            else:
+                                print(f"❌ [{current_page}/{total_pages}] No content extracted - {url}", flush=True)
+                                if job_id:
+                                    progress_logger.add_to_progress_log(job_id, f"❌ [{current_page}/{total_pages}] No content - {url}")
+                                return None
                         else:
-                            print(f"❌ [{current_page}/{total_pages}] Failed: {url} - No content extracted")
-                            logger.warning(f"Failed to extract content from {url}")
+                            print(f"❌ [{current_page}/{total_pages}] Crawl failed - {url}", flush=True)
+                            if job_id:
+                                progress_logger.add_to_progress_log(job_id, f"❌ [{current_page}/{total_pages}] Crawl failed - {url}")
                             return None
                             
                 except Exception as e:
-                    print(f"❌ [{page_counter['count']}/{total_pages}] Error: {url} - {str(e)}")
-                    logger.warning(f"Error extracting from {url}: {e}")
+                    print(f"❌ [{current_page}/{total_pages}] Exception: {str(e)} - {url}", flush=True)
+                    if job_id:
+                        progress_logger.add_to_progress_log(job_id, f"❌ [{current_page}/{total_pages}] Exception: {str(e)} - {url}")
                     return None
         
         # Execute parallel extraction
-        logger.info(f"Starting parallel extraction of {len(urls)} pages...")
-        print(f"🚀 Starting parallel extraction of {total_pages} pages...")
         
         tasks = [extract_single_page(url) for url in urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -580,14 +967,14 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
                 logger.warning(f"Extraction task failed: {result}")
         
         success_count = len(successful_extractions)
-        print(f"🎉 Extraction complete: {success_count}/{total_pages} pages successful")
-        logger.info(f"Successfully extracted content from {success_count} pages")
+        total_content_chars = sum(len(page.get('content', '')) for page in successful_extractions)
         return successful_extractions
     
     async def _llm_aggregate_sales_intelligence(
         self, 
         page_contents: List[Dict[str, str]], 
-        company_name: str
+        company_name: str,
+        job_id: str = None
     ) -> str:
         """
         Phase 4: Use LLM to aggregate all content into sales intelligence paragraphs
@@ -597,11 +984,17 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
         
         # Prepare content for LLM analysis
         content_summary = []
-        for page in page_contents:
+        total_chars = 0
+        print(f"\n📄 PAGES CRAWLED ({len(page_contents)} pages):")
+        for i, page in enumerate(page_contents, 1):
             url_path = urlparse(page['url']).path
-            content_summary.append(f"=== Page: {url_path} ===\n{page['content'][:5000]}")  # Limit per page
+            content_chunk = page['content'][:5000]  # Limit per page
+            content_summary.append(f"=== Page: {url_path} ===\n{content_chunk}")
+            total_chars += len(content_chunk)
+            print(f"  {i:2d}. {page['url']} ({len(content_chunk):,} chars)")
         
         combined_content = "\n\n".join(content_summary)
+        print(f"\n📊 CONTENT SUMMARY: {total_chars:,} chars from {len(page_contents)} pages")
         
         # Use Gemini 2.5 Pro with 1M token context if available, otherwise fallback
         prompt = f"""You are a sales intelligence analyst. Analyze all the extracted content from {company_name}'s website and write 2-3 focused paragraphs that provide everything a salesperson needs to know for an effective sales conversation.
@@ -631,7 +1024,11 @@ Focus on factual information that helps with sales qualification and conversatio
 Write in a professional, concise style suitable for sales team consumption."""
 
         try:
-            response = await self._call_llm_async(prompt)
+            print(f"\n🧠 LLM ANALYSIS:")
+            print(f"   INPUT: {len(combined_content):,} characters → LLM")
+            response = await self._call_llm_async(prompt, job_id)
+            print(f"   OUTPUT: {len(response):,} characters ← LLM")
+            print(f"   RESULT: {response[:200]}..." if len(response) > 200 else f"   RESULT: {response}")
             return response.strip()
             
         except Exception as e:
@@ -639,29 +1036,111 @@ Write in a professional, concise style suitable for sales team consumption."""
             # Fallback: Simple content summary
             return f"Content extracted from {len(page_contents)} pages for {company_name}. Manual analysis required."
     
-    async def _call_llm_async(self, prompt: str) -> str:
+    async def _call_llm_async(self, prompt: str, job_id: str = None) -> str:
         """
         Call LLM asynchronously - supports Gemini, Bedrock, and fallback options
         """
+        # Track LLM call
+        self.llm_call_count += 1
+        call_info = {
+            "call_number": self.llm_call_count,
+            "model": None,
+            "prompt_length": len(prompt),
+            "response_length": 0,
+            "success": False
+        }
+        
         # Try Gemini first (1M token context, faster)
         if self.gemini_client:
             try:
-                logger.info("Using Gemini 2.0 Flash for LLM analysis")
-                response = await asyncio.get_event_loop().run_in_executor(
-                    None, lambda: self.gemini_client.generate_content(prompt)
-                )
+                call_info["model"] = "Gemini 2.0 Flash"
+                print(f"🧠 LLM CALL #{self.llm_call_count}: Using Gemini 2.0 Flash ({len(prompt):,} chars prompt)", flush=True)
+                
+                # Log to UI progress if job_id provided
+                if job_id:
+                    from src.progress_logger import progress_logger
+                    progress_logger.log_llm_call(job_id, self.llm_call_count, "Gemini 2.0 Flash", len(prompt))
+                    progress_logger.add_to_progress_log(job_id, f"🧠 Calling Gemini with {len(prompt):,} character prompt...")
+                
+                print(f"🧠 About to make Gemini API call...", flush=True)
+                try:
+                    # Add timeout for Gemini call with proper configuration
+                    generation_config = genai_types.GenerationConfig(
+                        max_output_tokens=1000,  # Reasonable limit for JSON response
+                        temperature=0.7,
+                        candidate_count=1,
+                    )
+                    
+                    # Safety settings to prevent blocks
+                    safety_settings = [
+                        {
+                            "category": "HARM_CATEGORY_HARASSMENT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HATE_SPEECH", 
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            "threshold": "BLOCK_NONE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                            "threshold": "BLOCK_NONE"
+                        }
+                    ]
+                    
+                    response = await asyncio.wait_for(
+                        asyncio.get_event_loop().run_in_executor(
+                            None, 
+                            lambda: self.gemini_client.generate_content(
+                                prompt,
+                                generation_config=generation_config,
+                                safety_settings=safety_settings
+                            )
+                        ),
+                        timeout=30  # 30 second timeout for LLM calls
+                    )
+                    print(f"🧠 Gemini API call completed! Response length: {len(response.text)} chars", flush=True)
+                except asyncio.TimeoutError:
+                    print(f"❌ Gemini API call timed out after 30 seconds", flush=True)
+                    logger.error(f"Gemini API timeout for {company_data.name}")
+                    raise Exception("LLM timeout - API not responding")
+                
+                call_info["response_length"] = len(response.text)
+                call_info["success"] = True
+                self.llm_call_log.append(call_info)
+                
+                # Log completion to UI progress
+                if job_id:
+                    progress_logger.log_llm_call(job_id, self.llm_call_count, "Gemini 2.0 Flash", len(prompt), len(response.text))
+                    progress_logger.add_to_progress_log(job_id, f"✅ Gemini response received: {len(response.text)} characters")
+                
+                print(f"🧠 Returning Gemini response preview: {response.text[:200]}...", flush=True)
                 return response.text
             except Exception as e:
-                logger.warning(f"Gemini LLM call failed: {e}, falling back to Bedrock")
+                call_info["error"] = str(e)
+                self.llm_call_log.append(call_info)
         
         # Fallback to Bedrock
         if self.bedrock_client:
             try:
-                logger.info("Using Bedrock for LLM analysis")
+                if call_info["model"] is None:  # Direct Bedrock call
+                    call_info["model"] = "Bedrock"
+                    print(f"🧠 LLM CALL #{self.llm_call_count}: Using Bedrock ({len(prompt):,} chars prompt)")
+                else:  # Fallback from Gemini
+                    call_info["model"] = "Bedrock (fallback)"
+                    print(f"🧠 LLM CALL #{self.llm_call_count}: Fallback to Bedrock")
+                
                 response = self.bedrock_client.analyze_content(prompt)
+                call_info["response_length"] = len(response)
+                call_info["success"] = True
+                self.llm_call_log.append(call_info)
                 return response
             except Exception as e:
-                logger.error(f"Bedrock LLM call failed: {e}")
+                call_info["error"] = str(e)
+                self.llm_call_log.append(call_info)
                 raise
         
         raise ValueError("No LLM client available for content analysis (Gemini or Bedrock required)")
@@ -691,13 +1170,12 @@ class IntelligentCompanyScraperSync:
         Args:
             company_data: Company data to scrape
             job_id: Optional job ID for progress tracking
-            timeout: Optional timeout in seconds (defaults to 25)
+            timeout: Optional timeout in seconds (defaults to 60)
         """
         if timeout is None:
-            timeout = getattr(self.config, 'scraper_timeout', 25)
+            timeout = getattr(self.config, 'scraper_timeout', 120)  # Increased from 60 to 120 seconds
             
-        print(f"🔬 SCRAPER: Starting scrape for company '{company_data.name}' with website '{company_data.website}'")
-        print(f"🔬 SCRAPER: Job ID: {job_id}")
+        # Starting subprocess scrape
         
         try:
             import subprocess
@@ -706,13 +1184,9 @@ class IntelligentCompanyScraperSync:
             import os
             import sys
             
-            print(f"🔬 SCRAPER: All imports successful")
-            print(f"🔬 SCRAPER: Working directory: {os.getcwd()}")
-            print(f"🔬 SCRAPER: Python executable: {sys.executable}")
             
             # Ensure job_id is properly formatted for script
             safe_job_id = job_id if job_id else 'subprocess'
-            print(f"🔬 SCRAPER: Using job_id: {safe_job_id}")
             
             # Use the working test script instead of generating inline
             script_content = f'''#!/usr/bin/env python3
@@ -801,20 +1275,14 @@ if __name__ == "__main__":
 '''
             
             # Write script to temporary file
-            print(f"🔬 SCRAPER: Creating temporary script file...")
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
                 f.write(script_content)
                 script_path = f.name
-            print(f"🔬 SCRAPER: Temporary script created at: {script_path}")
             
             try:
-                print(f"🔬 SCRAPER: Starting subprocess for scraping...")
-                print(f"🔬 SCRAPER: Command: {sys.executable} {script_path}")
-                print(f"🔬 SCRAPER: Timeout: {timeout} seconds")
                 
                 # Update progress in main process before starting subprocess
                 if job_id:
-                    print(f"🔬 SCRAPER: Updating progress - starting intelligent scraping...")
                     from src.progress_logger import progress_logger
                     progress_logger.update_phase(job_id, "Intelligent Web Scraping", "running", {
                         "status": "Running intelligent web scraper in subprocess...",
@@ -838,16 +1306,8 @@ if __name__ == "__main__":
                 
                 end_time = time.time()
                 duration = end_time - start_time
-                print(f"🔬 SCRAPER: Subprocess completed in {duration:.2f} seconds")
                 
-                print(f"🔬 SCRAPER: Subprocess completed in {duration:.2f} seconds")
-                print(f"🔬 SCRAPER: Return code: {result.returncode}")
-                print(f"🔬 SCRAPER: Stdout length: {len(result.stdout)} characters")
-                print(f"🔬 SCRAPER: Stderr length: {len(result.stderr)} characters")
-                if result.stdout:
-                    print(f"🔬 SCRAPER: Stdout preview: {result.stdout[:500]}...")
-                if result.stderr:
-                    print(f"🔬 SCRAPER: Stderr preview: {result.stderr[:500]}...")
+                # Process subprocess output
                 
                 if result.returncode == 0:
                     # Parse JSON result - extract from end of stdout since debug prints contaminate it
@@ -869,14 +1329,10 @@ if __name__ == "__main__":
                         
                         if json_line:
                             result_data = json.loads(json_line)
-                            print(f"🔧 DEBUG: Parsed result data successfully from JSON line")
-                            print(f"🔧 DEBUG: Success flag: {result_data.get('success')}")
-                            print(f"🔧 DEBUG: Scrape status: {result_data.get('scrape_status')}")
                         else:
                             raise json.JSONDecodeError("No valid JSON found in subprocess output", result.stdout, 0)
                         
                         if result_data.get("success"):
-                            print(f"🔬 SCRAPER: Subprocess returned success! Applying results...")
                             
                             # Update progress - scraping phase completed
                             if job_id:
@@ -910,47 +1366,38 @@ if __name__ == "__main__":
                             # This allows downstream AI analysis to extract all the detailed fields
                             if result_data.get("raw_content"):
                                 company_data.raw_content = result_data.get("raw_content", "")
-                                print(f"🔬 SCRAPER: Populated raw_content with {len(company_data.raw_content)} chars")
                             elif result_data.get("company_description"):
                                 # Fallback if raw_content not provided
                                 company_data.raw_content = result_data.get("company_description", "")
-                                print(f"🔬 SCRAPER: Populated raw_content from company_description with {len(company_data.raw_content)} chars")
                             
-                            print(f"🔬 SCRAPER: Successfully applied all scraping results")
-                            print(f"🔬 SCRAPER: Pages crawled: {len(company_data.pages_crawled or [])}")
-                            print(f"🔬 SCRAPER: Crawl duration: {company_data.crawl_duration}")
-                            print(f"🔬 SCRAPER: Industry: {company_data.industry}")
-                            print(f"🔬 SCRAPER: AI Summary available: {bool(company_data.ai_summary)}")
                         else:
                             company_data.scrape_status = "failed" 
                             company_data.scrape_error = result_data.get("error", "Unknown subprocess error")
-                            print(f"🔬 SCRAPER: ❌ Subprocess reported failure: {company_data.scrape_error}")
-                            if result_data.get("traceback"):
-                                print(f"🔬 SCRAPER: ❌ Traceback: {result_data.get('traceback')}")
-                                
-                        print(f"🔬 SCRAPER: Final status: {company_data.scrape_status}")
+                            # Handle subprocess traceback if present
+                            pass
                             
                     except json.JSONDecodeError as e:
-                        print(f"🔬 SCRAPER: ❌ JSON parsing failed: {e}")
-                        print(f"🔬 SCRAPER: ❌ Raw stdout length: {len(result.stdout)}")
-                        print(f"🔬 SCRAPER: ❌ Raw stderr length: {len(result.stderr)}")
-                        print(f"🔬 SCRAPER: ❌ Subprocess stdout first 1000 chars: {result.stdout[:1000]}")
-                        print(f"🔬 SCRAPER: ❌ Subprocess stderr: {result.stderr}")
                         company_data.scrape_status = "failed"
                         company_data.scrape_error = f"Failed to parse scraper results: {e}"
+                        
+                        # Complete job tracking on JSON parsing failure
+                        if job_id:
+                            complete_company_processing(job_id, False, error=company_data.scrape_error)
                 else:
-                    print(f"🔬 SCRAPER: ❌ Subprocess failed with return code: {result.returncode}")
-                    print(f"🔬 SCRAPER: ❌ Subprocess stderr: {result.stderr}")
-                    print(f"🔬 SCRAPER: ❌ Subprocess stdout: {result.stdout}")
                     company_data.scrape_status = "failed"
                     company_data.scrape_error = f"Scraper subprocess failed (code {result.returncode}): {result.stderr}"
                     
+                    # Complete job tracking on subprocess failure
+                    if job_id:
+                        complete_company_processing(job_id, False, error=company_data.scrape_error)
+                    
             except subprocess.TimeoutExpired as e:
-                print(f"🔬 SCRAPER: ❌ TIMEOUT after {timeout} seconds for {company_data.name}")
-                print(f"🔬 SCRAPER: ❌ This indicates website complexity or network issues")
-                print(f"🔬 SCRAPER: ❌ Timeout details: {e}")
                 company_data.scrape_status = "failed"
                 company_data.scrape_error = f"Scraping timed out after {timeout} seconds - this may indicate a complex website or network issues"
+                
+                # CRITICAL: Complete job tracking on timeout to prevent restart loops
+                if job_id:
+                    complete_company_processing(job_id, False, error=company_data.scrape_error)
                 
             finally:
                 # Clean up temporary file

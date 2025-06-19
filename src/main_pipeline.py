@@ -15,7 +15,7 @@ from src.models import (
 )
 # Core modules only - experimental modules commented out
 # from src.experimental.crawl4ai_scraper import CompanyWebScraper
-from src.intelligent_company_scraper import IntelligentCompanyScraperSync
+from src.async_execution_manager import IntelligentCompanyScraperAsync
 from src.bedrock_client import BedrockClient
 from src.gemini_client import GeminiClient
 from src.pinecone_client import PineconeClient
@@ -43,8 +43,9 @@ class TheodoreIntelligencePipeline:
         # Initialize components
         self.bedrock_client = BedrockClient(config)  # Keep for embeddings
         self.gemini_client = GeminiClient(config)    # Use for analysis and similarity
-        # Use intelligent scraper for comprehensive sales intelligence
-        self.scraper = IntelligentCompanyScraperSync(config, self.bedrock_client)
+        # Use concurrent intelligent scraper with detailed URL logging and thread-safe LLM calls
+        from src.concurrent_intelligent_scraper import ConcurrentIntelligentScraperSync
+        self.scraper = ConcurrentIntelligentScraperSync(config, self.bedrock_client)
         # Legacy scraper removed - using intelligent scraper only
         # self.legacy_scraper = CompanyWebScraper(config, self.bedrock_client)
         self.pinecone_client = PineconeClient(
@@ -107,15 +108,15 @@ class TheodoreIntelligencePipeline:
         
         return job
     
-    def process_single_company(self, company_name: str, website: str) -> CompanyData:
+    def process_single_company(self, company_name: str, website: str, job_id: str = None) -> CompanyData:
         """Process a single company for testing/demo purposes"""
         logger.info(f"Processing single company: {company_name}")
         
         # Get existing company or create new one to prevent duplicates
         company = self._get_or_create_company(company_name, website)
         
-        # Scrape website
-        company = self.scraper.scrape_company(company)
+        # Scrape website with progress tracking
+        company = self.scraper.scrape_company(company, job_id=job_id)
         
         if company.scrape_status != "success":
             logger.warning(f"Scraping failed for {company_name}: {company.scrape_error}")
@@ -125,35 +126,62 @@ class TheodoreIntelligencePipeline:
         analysis_result = self.bedrock_client.analyze_company_content(company)
         self._apply_analysis_to_company(company, analysis_result)
         
-        # Apply enhanced extraction for missing fields
-        if company.raw_content:
-            logger.info(f"Applying enhanced extraction for {company_name}")
-            company = enhance_company_extraction(company, company.raw_content)
+        # Classify business model and category
+        try:
+            from src.classification.saas_classifier import SaaSBusinessModelClassifier
+            classifier = SaaSBusinessModelClassifier(self.bedrock_client)
+            classification_result = classifier.classify_company(company)
             
-            # Use Gemini for detailed extraction if still missing key fields
-            if not company.founding_year or not company.employee_count_range or not company.social_media:
-                try:
-                    detailed_result = self.gemini_client.analyze_content(
-                        ENHANCED_EXTRACTION_PROMPTS['detailed_extraction'] + f"\n\nContent:\n{company.raw_content[:5000]}"
-                    )
-                    # Parse and apply results
-                    import json
-                    import re
-                    json_match = re.search(r'\{.*\}', detailed_result, re.DOTALL)
-                    if json_match:
-                        extra_data = json.loads(json_match.group())
-                        if extra_data.get('founding_year') and not company.founding_year:
-                            company.founding_year = extra_data['founding_year']
-                        if extra_data.get('employee_count_range') and not company.employee_count_range:
-                            company.employee_count_range = extra_data['employee_count_range']
-                        if extra_data.get('social_media') and not company.social_media:
-                            company.social_media = extra_data['social_media']
-                        if extra_data.get('certifications'):
-                            company.certifications = extra_data['certifications']
-                        if extra_data.get('partnerships'):
-                            company.partnerships = extra_data['partnerships']
-                except Exception as e:
-                    logger.warning(f"Enhanced extraction failed: {e}")
+            # Apply classification results (classification_result is a ClassificationResult object)
+            if hasattr(classification_result, 'category'):
+                company.saas_classification = classification_result.category
+                company.classification_confidence = classification_result.confidence
+                company.classification_justification = classification_result.justification
+                company.is_saas = classification_result.is_saas
+                company.classification_timestamp = datetime.utcnow()
+            else:
+                # Handle dict format as fallback
+                company.saas_classification = classification_result.get('category', 'Unclassified')
+                company.classification_confidence = classification_result.get('confidence', 0.0)
+                company.classification_justification = classification_result.get('justification', '')
+                company.is_saas = classification_result.get('is_saas', None)
+                company.classification_timestamp = datetime.utcnow()
+            
+            logger.info(f"Classified {company_name}: {company.saas_classification} ({company.classification_confidence:.1%} confidence)")
+        except Exception as e:
+            logger.warning(f"Classification failed for {company_name}: {e}")
+            company.saas_classification = 'Unclassified'
+            company.is_saas = None
+        
+        # Apply enhanced extraction for missing fields (temporarily disabled)
+        # if company.raw_content:
+        #     logger.info(f"Applying enhanced extraction for {company_name}")
+        #     company = enhance_company_extraction(company, company.raw_content)
+        
+        # Use Gemini for detailed extraction if still missing key fields (temporarily disabled)
+        # if not company.founding_year or not company.employee_count_range or not company.social_media:
+        #     try:
+        #         detailed_result = self.gemini_client.analyze_content(
+        #             ENHANCED_EXTRACTION_PROMPTS['detailed_extraction'] + f"\n\nContent:\n{company.raw_content[:5000]}"
+        #         )
+        #         # Parse and apply results
+        #         import json
+        #         import re
+        #         json_match = re.search(r'\{.*\}', detailed_result, re.DOTALL)
+        #         if json_match:
+        #             extra_data = json.loads(json_match.group())
+        #             if extra_data.get('founding_year') and not company.founding_year:
+        #                 company.founding_year = extra_data['founding_year']
+        #             if extra_data.get('employee_count_range') and not company.employee_count_range:
+        #                 company.employee_count_range = extra_data['employee_count_range']
+        #             if extra_data.get('social_media') and not company.social_media:
+        #                 company.social_media = extra_data['social_media']
+        #             if extra_data.get('certifications'):
+        #                 company.certifications = extra_data['certifications']
+        #             if extra_data.get('partnerships'):
+        #                 company.partnerships = extra_data['partnerships']
+        #     except Exception as e:
+        #         logger.warning(f"Enhanced extraction failed: {e}")
         
         # Generate embedding
         embedding_text = self._prepare_embedding_text(company)

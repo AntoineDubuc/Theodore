@@ -2,7 +2,9 @@ Company Name;URL;Classification;Justification
 connatix.com;connatix.com;AdTech;Connatix provides an end-to-end video platform designed to optimize advertising campaigns for publishers and advertisers, leveraging technology and data analytics.
 jelli.com;jelli.com;AdTech;The company provides technology solutions for audio advertising, including monetization, measurement, and operations, which aligns with the AdTech vertical.
 Walmart;https://walmart.com;Retail;Walmart operates a chain of hypermarkets, discount department stores, and grocery stores, directly selling physical goods to consumers.
-IBM;https://ibm.com;IT Consulting Services;IBM provides a wide range of technology and consulting services, including AI, hybrid cloud solutions, and expert advisory services, which aligns with the definition of IT Consulting Services.
+IBM;https://ibm.com;IT Consulting Services;IBM provides a wid
+
+e range of technology and consulting services, including AI, hybrid cloud solutions, and expert advisory services, which aligns with the definition of IT Consulting Services.
 TestCorp Fresh Verification;https://testcorp.com;Unclassified;Classification error: 'CompanyData' object has no attribute 'business_intelligence'
 Pheronym;https://pheronym.com;Biopharma R&D;Pheronym specializes in pheromone-based solutions for agricultural pest management, indicating they provide outsourced scientific services in the biotechnology space.
 OpenAI;https://openai.com;Unclassified;Classification error: 'CompanyData' object has no attribute 'business_intelligence'

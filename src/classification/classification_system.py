@@ -33,9 +33,12 @@ class SaaSBusinessModelClassifier:
             Classification result with category, confidence, etc.
         """
         try:
-            # Import bedrock client
+            # Import bedrock client and config
             from src.bedrock_client import BedrockClient
-            client = BedrockClient()
+            from src.models import CompanyIntelligenceConfig
+            
+            config = CompanyIntelligenceConfig()
+            client = BedrockClient(config)
             
             # Prepare classification prompt
             prompt = self._build_classification_prompt(company_data)
@@ -43,8 +46,8 @@ class SaaSBusinessModelClassifier:
             # Get classification from Nova Pro
             response = client.generate_text(prompt, max_tokens=200)
             
-            if response and response.get('content'):
-                result = self._parse_classification_response(response['content'])
+            if response:
+                result = self._parse_classification_response(response)
                 if result:
                     result['success'] = True
                     return result

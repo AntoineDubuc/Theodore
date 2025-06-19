@@ -340,6 +340,141 @@ class BedrockClient:
         except Exception as e:
             logger.error(f"Error generating text: {e}")
             return ""
+
+    def generate_text_with_usage(self, prompt: str, max_tokens: int = 4000) -> Dict[str, Any]:
+        """Generate text and return both response and usage statistics"""
+        try:
+            # Check if using Nova (inference profile) or Anthropic model
+            if "nova" in self.analysis_model.lower():
+                # Nova API format
+                request_body = {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [{"text": prompt}]
+                        }
+                    ],
+                    "inferenceConfig": {
+                        "maxTokens": max_tokens,
+                        "temperature": 0.7
+                    }
+                }
+            else:
+                # Anthropic Claude API format
+                request_body = {
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": max_tokens,
+                    "temperature": 0.7,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                }
+            
+            response = self.bedrock_runtime.invoke_model(
+                modelId=self.config.bedrock_analysis_model,
+                body=json.dumps(request_body),
+                contentType="application/json",
+                accept="application/json"
+            )
+            
+            response_body = json.loads(response['body'].read())
+            
+            # Extract usage information
+            usage_data = self._extract_usage_from_response(response_body)
+            
+            # Handle different response formats for text
+            response_text = ""
+            if "nova" in self.analysis_model.lower():
+                # Nova response format
+                if response_body.get('output') and response_body['output'].get('message'):
+                    content = response_body['output']['message'].get('content', [])
+                    if content and len(content) > 0:
+                        response_text = content[0].get('text', '')
+            else:
+                # Anthropic response format
+                if response_body.get('content') and len(response_body['content']) > 0:
+                    response_text = response_body['content'][0].get('text', '')
+            
+            return {
+                "text": response_text,
+                "usage": usage_data
+            }
+            
+        except Exception as e:
+            logger.error(f"Error generating text with usage: {e}")
+            return {
+                "text": "",
+                "usage": {
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "total_tokens": 0,
+                    "cost_usd": 0.0,
+                    "model": self.analysis_model,
+                    "error": str(e)
+                }
+            }
+
+    def _extract_usage_from_response(self, response_body: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract token usage and calculate cost from response"""
+        input_tokens = 0
+        output_tokens = 0
+        
+        # Extract usage from different response formats
+        if "nova" in self.analysis_model.lower():
+            # Nova response format
+            if 'usage' in response_body:
+                input_tokens = response_body['usage'].get('inputTokens', 0)
+                output_tokens = response_body['usage'].get('outputTokens', 0)
+        else:
+            # Anthropic Claude response format
+            if 'usage' in response_body:
+                input_tokens = response_body['usage'].get('input_tokens', 0)
+                output_tokens = response_body['usage'].get('output_tokens', 0)
+        
+        total_tokens = input_tokens + output_tokens
+        
+        # Calculate cost based on model
+        cost_usd = self._calculate_cost(input_tokens, output_tokens)
+        
+        return {
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": total_tokens,
+            "cost_usd": cost_usd,
+            "model": self.analysis_model
+        }
+
+    def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        """Calculate cost in USD based on model pricing"""
+        
+        # Pricing as of Dec 2024 (per 1K tokens)
+        pricing = {
+            "amazon.nova-pro-v1:0": {
+                "input_rate": 0.0008,   # $0.80 per 1K input tokens
+                "output_rate": 0.0032   # $3.20 per 1K output tokens
+            },
+            "anthropic.claude-3-sonnet-20240229-v1:0": {
+                "input_rate": 0.003,    # $3.00 per 1K input tokens
+                "output_rate": 0.015    # $15.00 per 1K output tokens
+            },
+            "anthropic.claude-3-haiku-20240307-v1:0": {
+                "input_rate": 0.00025,  # $0.25 per 1K input tokens
+                "output_rate": 0.00125  # $1.25 per 1K output tokens
+            }
+        }
+        
+        model_pricing = pricing.get(self.analysis_model, {
+            "input_rate": 0.001,   # Default fallback
+            "output_rate": 0.005
+        })
+        
+        input_cost = (input_tokens / 1000.0) * model_pricing["input_rate"]
+        output_cost = (output_tokens / 1000.0) * model_pricing["output_rate"]
+        
+        return round(input_cost + output_cost, 6)  # Round to 6 decimal places
     
     # Wrapper methods for backward compatibility with other components
     def get_embeddings(self, text: str) -> Optional[List[float]]:

@@ -6,8 +6,12 @@ Beautiful, gradient-styled interface for company similarity discovery
 import os
 import json
 import asyncio
+import logging
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from datetime import datetime
+
+# Set up logging
+logger = logging.getLogger(__name__)
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -18,6 +22,7 @@ import sys
 sys.path.insert(0, 'src')
 from main_pipeline import TheodoreIntelligencePipeline, find_company_by_name
 from models import CompanyIntelligenceConfig, CompanySimilarity, CompanyData
+from typing import Optional
 from progress_logger import progress_logger, start_company_processing
 
 app = Flask(__name__)
@@ -103,7 +108,14 @@ def get_companies_details():
                 'job_listings_count': metadata.get('job_listings_count', 0),
                 'founding_year': metadata.get('founding_year', 'Unknown'),
                 'funding_status': metadata.get('funding_status', 'Unknown'),
-                'last_updated': metadata.get('last_updated', 'Unknown')
+                'last_updated': metadata.get('last_updated', 'Unknown'),
+                # Token usage and cost data
+                'scraped_urls_count': metadata.get('scraped_urls_count', 0),
+                'llm_interactions_count': metadata.get('llm_interactions_count', 0),
+                'total_input_tokens': metadata.get('total_input_tokens', 0),
+                'total_output_tokens': metadata.get('total_output_tokens', 0),
+                'total_cost_usd': metadata.get('total_cost_usd', 0.0),
+                'llm_calls_count': metadata.get('llm_calls_count', 0)
             }
             companies_with_details.append(company_detail)
         
@@ -269,36 +281,33 @@ def discover_similar_companies():
                 limit=limit
             )
             
+            logger.info(f"Discovery returned {len(enhanced_results)} results")
+            
             if not enhanced_results:
                 return jsonify({
                     "error": f"No similar companies found for '{company_name}'",
                     "suggestion": "Try processing the company first or check if it exists in our database",
-                    "companies": []
+                    "companies": [],
+                    "results": []
                 })
             
-            # Initialize research manager if not exists
-            if not hasattr(pipeline, 'research_manager'):
-                from src.legacy.research_manager import ResearchManager
-                pipeline.research_manager = ResearchManager(
-                    intelligent_scraper=pipeline.scraper,
-                    pinecone_client=pipeline.pinecone_client,
-                    bedrock_client=pipeline.gemini_client
-                )
-            
-            # Enhance results with research status
-            enhanced_companies = pipeline.research_manager.enhance_discovered_companies(enhanced_results)
-            
-            # Format response for UI
+            # Skip research manager enhancement for now - use results directly
+            # This avoids the data structure mismatch issue
             formatted_results = []
-            for company in enhanced_companies:
-                # Get classification data if available in database
+            
+            # Format response for UI - work directly with enhanced_results
+            for company_data in enhanced_results:
+                # Check if company exists in database for classification data
                 classification_data = {}
-                if company.in_database and company.database_id:
+                company_name = company_data.get('company_name', '')
+                existing_company = pipeline.pinecone_client.find_company_by_name(company_name)
+                
+                if existing_company:
                     try:
                         # Fetch classification from Pinecone metadata
-                        fetch_result = pipeline.pinecone_client.index.fetch(ids=[company.database_id])
-                        if fetch_result.vectors and company.database_id in fetch_result.vectors:
-                            metadata = fetch_result.vectors[company.database_id].metadata
+                        fetch_result = pipeline.pinecone_client.index.fetch(ids=[existing_company.id])
+                        if fetch_result.vectors and existing_company.id in fetch_result.vectors:
+                            metadata = fetch_result.vectors[existing_company.id].metadata
                             if metadata:
                                 classification_data = {
                                     "saas_classification": metadata.get('saas_classification'),
@@ -307,21 +316,21 @@ def discover_similar_companies():
                                     "is_saas": metadata.get('is_saas')
                                 }
                     except Exception as e:
-                        print(f"Warning: Could not fetch classification for {company.name}: {e}")
+                        logger.warning(f"Could not fetch classification for {company_name}: {e}")
                 
                 formatted_results.append({
-                    "company_name": company.name,
-                    "website": company.website,
-                    "similarity_score": round(company.similarity_score, 3),
-                    "confidence": round(company.confidence, 3),
-                    "reasoning": company.reasoning,
-                    "relationship_type": company.relationship_type,
-                    "discovery_method": company.discovery_method,
-                    "business_context": company.business_context,
-                    "sources": company.sources,
-                    "research_status": company.research_status.value,
-                    "in_database": company.in_database,
-                    "database_id": company.database_id,
+                    "company_name": company_data.get('company_name', ''),
+                    "website": company_data.get('website', ''),
+                    "similarity_score": round(company_data.get('similarity_score', 0.0), 3),
+                    "confidence": round(company_data.get('confidence', 0.0), 3),
+                    "reasoning": company_data.get('reasoning', []),
+                    "relationship_type": company_data.get('relationship_type', 'similar'),
+                    "discovery_method": company_data.get('discovery_method', 'Unknown'),
+                    "business_context": company_data.get('business_context', ''),
+                    "sources": company_data.get('sources', []),
+                    "research_status": 'completed' if existing_company else 'unknown',
+                    "in_database": bool(existing_company),
+                    "database_id": existing_company.id if existing_company else None,
                     **classification_data  # Include classification data if available
                 })
             
@@ -355,13 +364,15 @@ def discover_similar_companies():
                 } if (business_model_filter or category_filter) else None,
                 "discovery_method": "Enhanced Multi-Source Discovery",
                 "sources_used": list(set([s for r in enhanced_results for s in r.get("sources", [])])),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now().isoformat()
             }
             
             return jsonify(response)
             
         except Exception as discovery_error:
-            print(f"Enhanced discovery failed, falling back to basic similarity: {discovery_error}")
+            logger.error(f"Enhanced discovery failed: {discovery_error}")
+            import traceback
+            traceback.print_exc()
             
             # Fallback to basic similarity analysis
             insights = pipeline.analyze_company_similarity(company_name)
@@ -408,114 +419,139 @@ def discover_similar_companies():
 
 @app.route('/api/research', methods=['POST'])
 def research_company():
-    """Research a specific company suggestion on-demand"""
-    print(f"🐍 FLASK: ===== RESEARCH ENDPOINT CALLED =====")
-    print(f"🐍 FLASK: Request method: {request.method}")
-    print(f"🐍 FLASK: Request content type: {request.content_type}")
+    """Research a specific company using AsyncExecutionManager - DIRECT APPROACH"""
     
     try:
-        print(f"🐍 FLASK: Attempting to parse JSON request data...")
         data = request.get_json()
+        print(f"🐍 FLASK: ===== RESEARCH ENDPOINT CALLED =====")
+        print(f"🐍 FLASK: Request method: {request.method}")
+        print(f"🐍 FLASK: Request content type: {request.content_type}")
+        
+        # Parse request data
+        print(f"🐍 FLASK: Attempting to parse JSON request data...")
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
         print(f"🐍 FLASK: JSON parsed successfully")
-        print(f"🐍 FLASK: Request data keys: {list(data.keys()) if data else 'None'}")
+        print(f"🐍 FLASK: Request data keys: {list(data.keys())}")
         print(f"🐍 FLASK: Full request data: {data}")
         
         company_data = data.get('company', {})
         print(f"🐍 FLASK: Company data extracted: {company_data}")
-        print(f"🐍 FLASK: Company name: {company_data.get('name', 'MISSING')}")
-        print(f"🐍 FLASK: Company website: {company_data.get('website', 'MISSING')}")
         
         if not company_data or not company_data.get('name'):
-            print(f"🐍 FLASK: ❌ VALIDATION FAILED - Missing company data")
             error_response = {
                 "error": "Company data is required",
                 "company": {}
             }
-            print(f"🐍 FLASK: Returning 400 error: {error_response}")
             return jsonify(error_response), 400
+        
+        company_name = company_data.get('name')
+        company_website = company_data.get('website', '')
+        print(f"🐍 FLASK: Company name: {company_name}")
+        print(f"🐍 FLASK: Company website: {company_website}")
         
         # Check if pipeline is available
         print(f"🐍 FLASK: Checking pipeline availability...")
         if not pipeline:
-            print(f"🐍 FLASK: ❌ CRITICAL ERROR - Pipeline not available")
             error_response = {
                 "error": "Theodore pipeline not available",
                 "company": {}
             }
-            print(f"🐍 FLASK: Returning 500 error: {error_response}")
             return jsonify(error_response), 500
-        
         print(f"🐍 FLASK: ✅ Pipeline available, proceeding with research")
-        print(f"🐍 FLASK: Pipeline components: scraper={bool(pipeline.scraper)}, bedrock={bool(pipeline.bedrock_client)}, pinecone={bool(pipeline.pinecone_client)}")
+        
+        # Verify pipeline components
+        has_scraper = hasattr(pipeline, 'scraper') and pipeline.scraper is not None
+        has_bedrock = hasattr(pipeline, 'bedrock_client') and pipeline.bedrock_client is not None  
+        has_pinecone = hasattr(pipeline, 'pinecone_client') and pipeline.pinecone_client is not None
+        print(f"🐍 FLASK: Pipeline components: scraper={has_scraper}, bedrock={has_bedrock}, pinecone={has_pinecone}")
         
         print(f"🐍 FLASK: ===== STARTING RESEARCH PROCESS =====")
-        company_name = company_data.get('name')
         print(f"🐍 FLASK: Research target: {company_name}")
         
-        
         try:
-            print(f"🐍 FLASK: Step 1 - Importing SimpleEnhancedDiscovery...")
-            from src.simple_enhanced_discovery import SimpleEnhancedDiscovery
-            print(f"🐍 FLASK: ✅ Import successful!")
+            # Use the pipeline's process_single_company method
+            print(f"🐍 FLASK: Using pipeline.process_single_company method...")
+            from src.progress_logger import start_company_processing
             
-            print(f"🐍 FLASK: Step 2 - Initializing discovery system...")
-            enhanced_discovery = SimpleEnhancedDiscovery(
-                ai_client=pipeline.bedrock_client,
-                pinecone_client=pipeline.pinecone_client,
-                scraper=pipeline.scraper
-            )
-            print(f"🐍 FLASK: ✅ Discovery system initialized!")
+            print(f"🐍 FLASK: Step 1 - Starting progress tracking...")
+            # Start progress tracking
+            job_id = start_company_processing(company_name)
+            print(f"🐍 FLASK: ✅ Progress tracking started with job_id: {job_id}")
             
-            print(f"🐍 FLASK: Step 3 - Calling research_company_on_demand...")
-            print(f"🐍 FLASK: This will trigger the full research pipeline...")
+            print(f"🐍 FLASK: Step 2 - Using process_single_company method...")
+            print(f"🐍 FLASK: This will use the subprocess approach via IntelligentCompanyScraperSync...")
             
             import time
             start_time = time.time()
             
-            researched_company = enhanced_discovery.research_company_on_demand(company_data)
+            # Use the original process_single_company method which uses subprocess
+            scraped_company = pipeline.process_single_company(
+                company_name,
+                company_website,
+                job_id=job_id
+            )
             
             end_time = time.time()
             duration = end_time - start_time
             
-            print(f"🐍 FLASK: ===== RESEARCH COMPLETED =====")
-            print(f"🐍 FLASK: Total duration: {duration:.2f} seconds")
-            print(f"🐍 FLASK: Research status: {researched_company.get('research_status', 'unknown')}")
-            print(f"🐍 FLASK: Research error: {researched_company.get('research_error', 'none')}")
-            print(f"🐍 FLASK: Result keys: {list(researched_company.keys()) if isinstance(researched_company, dict) else 'Not a dict'}")
+            print(f"🐍 FLASK: ===== SCRAPING COMPLETED =====")
+            print(f"🐍 FLASK: Duration: {duration:.2f} seconds")
+            print(f"🐍 FLASK: Result type: {type(scraped_company)}")
+            print(f"🐍 FLASK: Company description length: {len(scraped_company.company_description or '') if hasattr(scraped_company, 'company_description') else 'N/A'}")
+            
+            # Save to Pinecone if scraping was successful
+            if scraped_company and hasattr(scraped_company, 'company_description') and scraped_company.company_description:
+                print(f"🐍 FLASK: Step 6 - Saving to Pinecone...")
+                try:
+                    # Generate embedding and save
+                    embedding = pipeline.bedrock_client.get_embeddings(scraped_company.company_description)
+                    scraped_company.embedding = embedding
+                    
+                    success = pipeline.pinecone_client.upsert_company(scraped_company)
+                    print(f"🐍 FLASK: ✅ Saved to Pinecone: {success}")
+                except Exception as save_error:
+                    print(f"🐍 FLASK: ⚠️ Failed to save to Pinecone: {save_error}")
+            
+            # Convert to dict for JSON response
+            if hasattr(scraped_company, 'to_dict'):
+                company_dict = scraped_company.to_dict()
+            else:
+                company_dict = scraped_company.__dict__ if hasattr(scraped_company, '__dict__') else {}
             
             success_response = {
                 "success": True,
-                "company": researched_company,
+                "company": company_dict,
                 "timestamp": datetime.utcnow().isoformat(),
-                "processing_time": duration
+                "processing_time": duration,
+                "method": "AsyncExecutionManager",
+                "job_id": job_id
             }
             
-            print(f"🐍 FLASK: Returning success response")
+            print(f"🐍 FLASK: ✅ Sending success response")
             return jsonify(success_response)
             
         except Exception as research_error:
-            print(f"🐍 FLASK: ❌ RESEARCH EXCEPTION: {research_error}")
-            print(f"🐍 FLASK: ❌ Exception type: {type(research_error).__name__}")
+            print(f"🐍 FLASK: ❌ Research failed: {research_error}")
             
             import traceback
             traceback_str = traceback.format_exc()
-            print(f"🐍 FLASK: ❌ Full traceback:\n{traceback_str}")
+            print(f"🐍 FLASK: ❌ Full traceback: {traceback_str}")
             
             error_response = {
-                "error": f"Research failed: {str(research_error)}",
+                "error": f"AsyncExecutionManager research failed: {str(research_error)}",
                 "company": company_data,
-                "exception_type": type(research_error).__name__
+                "exception_type": type(research_error).__name__,
+                "method": "AsyncExecutionManager"
             }
-            print(f"🐍 FLASK: Returning 500 error response: {error_response}")
             return jsonify(error_response), 500
             
     except Exception as endpoint_error:
-        print(f"🐍 FLASK: ❌ CRITICAL ENDPOINT ERROR: {endpoint_error}")
-        print(f"🐍 FLASK: ❌ Exception type: {type(endpoint_error).__name__}")
+        print(f"🐍 FLASK: ❌ Endpoint error: {endpoint_error}")
         
         import traceback
         traceback_str = traceback.format_exc()
-        print(f"🐍 FLASK: ❌ Full endpoint traceback:\n{traceback_str}")
+        print(f"🐍 FLASK: ❌ Full endpoint traceback: {traceback_str}")
         
         critical_error_response = {
             "error": f"Internal server error: {str(endpoint_error)}",
@@ -523,8 +559,6 @@ def research_company():
             "exception_type": type(endpoint_error).__name__
         }
         
-        print(f"🐍 FLASK: ===== CRITICAL ENDPOINT FAILURE =====")
-        print(f"🐍 FLASK: Returning 500 critical error: {critical_error_response}")
         return jsonify(critical_error_response), 500
 
 @app.route('/settings')
@@ -1118,6 +1152,72 @@ def add_sample_companies():
     except Exception as e:
         return jsonify({"error": f"Add sample companies failed: {str(e)}"}), 500
 
+def discover_company_domain(company_name: str) -> Optional[str]:
+    """Discover company domain using Google search when no URL provided"""
+    try:
+        import requests
+        from urllib.parse import quote
+        
+        # Use Google search to find company website
+        search_query = f"{company_name} official website"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        # Try DuckDuckGo first (no rate limiting)
+        try:
+            search_url = f"https://duckduckgo.com/html/?q={quote(search_query)}"
+            response = requests.get(search_url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                import re
+                # Extract URLs from DuckDuckGo results
+                url_pattern = r'href="([^"]*)"[^>]*>[^<]*' + re.escape(company_name.split()[0])
+                urls = re.findall(url_pattern, response.text, re.IGNORECASE)
+                
+                for url in urls[:3]:  # Check first 3 results
+                    if url.startswith('http') and not any(blocked in url for blocked in ['duckduckgo', 'wikipedia', 'linkedin', 'facebook', 'twitter']):
+                        return url
+        except Exception as e:
+            logger.warning(f"DuckDuckGo search failed: {e}")
+        
+        # Fallback: construct likely URLs
+        company_slug = company_name.lower().replace(' ', '').replace(',', '').replace('.', '')
+        potential_domains = [
+            f"https://www.{company_slug}.com",
+            f"https://{company_slug}.com", 
+            f"https://www.{company_slug}.ca",
+            f"https://{company_slug}.ca"
+        ]
+        
+        # Test which domain responds
+        for domain in potential_domains:
+            try:
+                test_response = requests.head(domain, timeout=5, allow_redirects=True)
+                if test_response.status_code < 400:
+                    return domain
+            except:
+                continue
+                
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error discovering domain for {company_name}: {e}")
+        return None
+
+def normalize_website_url(website: str) -> str:
+    """Normalize website URL by adding https:// prefix if needed"""
+    if not website:
+        return website
+        
+    website = website.strip()
+    
+    # Add https:// if missing
+    if not website.startswith(('http://', 'https://')):
+        website = f"https://{website}"
+    
+    return website
+
 @app.route('/api/process-company', methods=['POST'])
 def process_company():
     """Process a company with intelligent scraping and real-time progress tracking"""
@@ -1128,8 +1228,21 @@ def process_company():
     company_name = data.get('company_name', '').strip()
     website = data.get('website', '').strip()
     
-    if not company_name or not website:
-        return jsonify({'error': 'Company name and website are required'}), 400
+    if not company_name:
+        return jsonify({'error': 'Company name is required'}), 400
+    
+    # If no website provided, try to discover it
+    if not website:
+        logger.info(f"No website provided for {company_name}, attempting domain discovery...")
+        discovered_website = discover_company_domain(company_name)
+        if discovered_website:
+            website = discovered_website
+            logger.info(f"Discovered website for {company_name}: {website}")
+        else:
+            return jsonify({'error': f'Could not find website for {company_name}. Please provide a website URL.'}), 400
+    
+    # Normalize the website URL (add https:// if needed)
+    website = normalize_website_url(website)
     
     try:
         # Start processing with progress tracking
@@ -1141,38 +1254,127 @@ def process_company():
             website=website
         )
         
-        # Process company with intelligent scraper (includes progress logging)
-        result = pipeline.scraper.scrape_company(company_data, job_id)
+        # Process company using the main pipeline (same as research functionality)
+        result = pipeline.process_single_company(company_name, website, job_id=job_id)
         
-        # Store in Pinecone if successful
-        if result.scrape_status == "success" and result.company_description:
-            # Generate embeddings for the sales intelligence
-            embedding = pipeline.bedrock_client.get_embeddings(result.company_description)
-            result.embedding = embedding
+        # Check if processing was successful  
+        if result and result.company_description:
+            success = True  # process_single_company handles Pinecone storage internally
             
-            # Store in Pinecone
-            success = pipeline.pinecone_client.upsert_company(result)
+            # Mark job as completed (preserve existing results if concurrent scraper already set them)
+            from progress_logger import complete_company_processing, progress_logger
+            
+            # Check if concurrent scraper already set detailed results
+            existing_progress = progress_logger.get_progress(job_id)
+            existing_results = existing_progress.get('results', {}) if existing_progress else {}
+            
+            # If concurrent scraper set results, preserve them; otherwise use minimal results
+            if existing_results and existing_results.get('company'):
+                # Concurrent scraper already set detailed results, don't override
+                pass
+            else:
+                # Fallback results for non-concurrent path
+                complete_company_processing(
+                    job_id=job_id, 
+                    success=True, 
+                    summary=f"Successfully processed {company_name}",
+                    results={
+                        'company': result.dict(),
+                        'company_id': result.id, 
+                        'pages_processed': len(result.pages_crawled) if result.pages_crawled else 0,
+                        'success': True
+                    }
+                )
+            
+            # Prepare token usage and cost data
+            token_data = {
+                'total_input_tokens': getattr(result, 'total_input_tokens', 0),
+                'total_output_tokens': getattr(result, 'total_output_tokens', 0),
+                'total_cost_usd': round(getattr(result, 'total_cost_usd', 0.0), 6),
+                'llm_calls_count': len(getattr(result, 'llm_calls_breakdown', []))
+            }
             
             return jsonify({
                 'success': True,
                 'job_id': job_id,
+                'company_id': result.id,  # Include company ID for viewing details
                 'company_name': result.name,
                 'sales_intelligence': result.company_description,
                 'pages_processed': len(result.pages_crawled) if result.pages_crawled else 0,
                 'processing_time': result.crawl_duration,
                 'stored_in_pinecone': success,
+                'token_usage': token_data,
                 'timestamp': datetime.utcnow().isoformat()
             })
         else:
+            # Mark job as failed
+            from progress_logger import complete_company_processing
+            error_msg = result.scrape_error if result else 'Processing failed - no result returned'
+            complete_company_processing(
+                job_id=job_id, 
+                success=False, 
+                error=error_msg
+            )
+            
             return jsonify({
                 'success': False,
                 'job_id': job_id,
-                'error': result.scrape_error or 'Processing failed',
+                'error': error_msg,
                 'timestamp': datetime.utcnow().isoformat()
             }), 500
             
     except Exception as e:
+        # Mark job as failed due to exception
+        from progress_logger import complete_company_processing
+        complete_company_processing(
+            job_id=job_id, 
+            success=False, 
+            error=f'Processing failed: {str(e)}'
+        )
         return jsonify({'error': f'Processing failed: {str(e)}'}), 500
+
+@app.route('/api/cancel-current-job', methods=['POST'])
+def cancel_current_job():
+    """Cancel the currently running processing job"""
+    try:
+        print(f"🛑 CANCEL: Cancel request received")
+        
+        # Get current job info
+        current_job = progress_logger.get_current_job_progress()
+        
+        if current_job:
+            job_id = current_job.get('job_id')
+            company_name = current_job.get('company_name')
+            print(f"🛑 CANCEL: Found current job {job_id} for {company_name}")
+            
+            # Mark the job as failed/cancelled
+            progress_logger.complete_job(
+                job_id=job_id,
+                success=False,
+                error="Cancelled by user",
+                result_summary="Processing was cancelled by the user"
+            )
+            
+            print(f"🛑 CANCEL: Job {job_id} marked as cancelled")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Successfully cancelled processing for {company_name}',
+                'cancelled_job': job_id
+            })
+        else:
+            print(f"🛑 CANCEL: No current job found to cancel")
+            return jsonify({
+                'success': True,
+                'message': 'No active job found to cancel'
+            })
+            
+    except Exception as e:
+        print(f"🛑 CANCEL: Error cancelling job: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to cancel job: {str(e)}'
+        }), 500
 
 @app.route('/api/search', methods=['GET'])
 def search_companies():
@@ -1266,28 +1468,23 @@ def get_job_progress(job_id):
 @app.route('/api/progress/current')
 def get_current_progress():
     """Get progress for currently running job"""
-    print(f"🔧 PROGRESS: Current progress endpoint called")
     
     try:
         job_id = request.args.get('job_id')
-        print(f"🔧 PROGRESS: Requested job_id: {job_id}")
         
         if job_id:
             # Get specific job progress
-            print(f"🔧 PROGRESS: Getting progress for specific job: {job_id}")
             progress_data = progress_logger.get_progress(job_id)
         else:
             # Get current job progress
-            print(f"🔧 PROGRESS: Getting current job progress")
             progress_data = progress_logger.get_current_job_progress()
             
             # If no current job, check for recently failed jobs
             if not progress_data:
-                print(f"🔧 PROGRESS: No current job, checking for recent failed jobs...")
                 all_progress = progress_logger.get_progress()
                 recent_failed_jobs = []
                 
-                # Look for jobs that failed in the last 5 minutes
+                # Look for jobs that failed in the last 30 seconds (much shorter window)
                 import time
                 current_time = time.time()
                 
@@ -1295,7 +1492,7 @@ def get_current_progress():
                     if job_data.get("status") == "failed" and job_data.get("end_time"):
                         try:
                             end_time = datetime.fromisoformat(job_data["end_time"]).timestamp()
-                            if current_time - end_time < 300:  # 5 minutes
+                            if current_time - end_time < 30:  # Only 30 seconds for failed jobs
                                 recent_failed_jobs.append((job_id_key, job_data))
                         except:
                             pass
@@ -1304,8 +1501,6 @@ def get_current_progress():
                     # Return the most recent failed job
                     recent_failed_jobs.sort(key=lambda x: x[1].get("end_time", ""), reverse=True)
                     most_recent_failed = recent_failed_jobs[0][1]
-                    print(f"🔧 PROGRESS: Found recent failed job: {most_recent_failed.get('company_name')}")
-                    print(f"🔧 PROGRESS: Failed job error: {most_recent_failed.get('error')}")
                     
                     return jsonify({
                         "status": "recent_failure",
@@ -1315,10 +1510,8 @@ def get_current_progress():
                     })
         
         if not progress_data:
-            print(f"🔧 PROGRESS: No progress data found")
             
             # Check for recently completed jobs in the last 30 seconds
-            print(f"🔧 PROGRESS: Checking for recently completed jobs...")
             all_progress = progress_logger.get_progress()
             recent_completed_jobs = []
             
@@ -1331,16 +1524,13 @@ def get_current_progress():
                         end_time = datetime.fromisoformat(job_data["end_time"]).timestamp()
                         if current_time - end_time < 30:  # Within last 30 seconds
                             recent_completed_jobs.append((job_id_key, job_data))
-                            print(f"🔧 PROGRESS: Found recent job: {job_data.get('company_name')} - {job_data.get('status')}")
                     except Exception as e:
-                        print(f"🔧 PROGRESS: Error parsing job time: {e}")
                         pass
             
             if recent_completed_jobs:
                 # Return the most recent completed job
                 recent_completed_jobs.sort(key=lambda x: x[1].get("end_time", ""), reverse=True)
                 most_recent_completed = recent_completed_jobs[0][1]
-                print(f"🔧 PROGRESS: Returning most recent completed job: {most_recent_completed.get('company_name')}")
                 
                 return jsonify({
                     "status": "recent_completion",
@@ -1349,15 +1539,11 @@ def get_current_progress():
                     "timestamp": datetime.utcnow().isoformat()
                 })
             
-            print(f"🔧 PROGRESS: No recent jobs found either")
             return jsonify({
                 "status": "no_active_job", 
                 "message": "No active processing job found"
             })
         
-        print(f"🔧 PROGRESS: Returning progress data for job: {progress_data.get('company_name')}")
-        print(f"🔧 PROGRESS: Job status: {progress_data.get('status')}")
-        print(f"🔧 PROGRESS: Job error: {progress_data.get('error')}")
         
         return jsonify({
             "status": "success",
@@ -1366,7 +1552,6 @@ def get_current_progress():
         })
         
     except Exception as e:
-        print(f"🔧 PROGRESS: ❌ Error getting progress: {e}")
         return jsonify({
             "status": "error",
             "error": str(e)
@@ -1534,12 +1719,78 @@ def get_company_details(company_id):
                 'has_job_listings': bool(safe_int_convert(metadata.get('job_listings_count', 0)) > 0),
                 'job_listings_count': safe_int_convert(metadata.get('job_listings_count', 0)),
                 'job_listings_details': split_field(metadata.get('job_listings_details', '')),
-                'job_listings': metadata.get('job_listings', 'Job data unavailable')
+                'job_listings': metadata.get('job_listings', 'Job data unavailable'),
+                
+                # SaaS Classification fields
+                'saas_classification': metadata.get('saas_classification'),
+                'is_saas': metadata.get('is_saas'),
+                'classification_confidence': metadata.get('classification_confidence'),
+                'classification_justification': metadata.get('classification_justification'),
+                'classification_timestamp': metadata.get('classification_timestamp'),
+                
+                # Scraping details (basic info from metadata)
+                'scraped_urls_count': len(split_field(metadata.get('scraped_urls', ''))),
+                'llm_interactions_count': metadata.get('llm_interactions_count', 0)
             }
         })
         
     except Exception as e:
         return jsonify({'error': f'Failed to get company details: {str(e)}'}), 500
+
+@app.route('/api/company/<company_id>/scraping-details')
+def get_company_scraping_details(company_id):
+    """Get detailed scraping information including URLs, LLM prompts, and vector content"""
+    if not pipeline:
+        return jsonify({'error': 'Theodore pipeline not initialized'}), 500
+    
+    try:
+        # Fetch from Pinecone 
+        result = pipeline.pinecone_client.index.fetch(ids=[company_id])
+        
+        if company_id not in result.vectors:
+            return jsonify({'error': 'Company not found'}), 404
+        
+        vector_data = result.vectors[company_id]
+        metadata = vector_data.metadata
+        
+        # Helper function to parse JSON fields safely  
+        def parse_json_field(value):
+            if isinstance(value, str) and value.strip():
+                try:
+                    import json
+                    return json.loads(value)
+                except:
+                    return value
+            return value if value else {}
+        
+        # Helper function to split comma-separated strings
+        def split_field(value):
+            if isinstance(value, str) and value.strip():
+                return [item.strip() for item in value.split(',') if item.strip()]
+            return value if isinstance(value, list) else []
+        
+        return jsonify({
+            'success': True,
+            'company_id': company_id,
+            'company_name': metadata.get('company_name', 'Unknown'),
+            'scraping_details': {
+                'scraped_urls': split_field(metadata.get('scraped_urls', '')),
+                'scraped_urls_count': metadata.get('scraped_urls_count', 0),
+                'llm_interactions_count': metadata.get('llm_interactions_count', 0),
+                'crawl_duration': metadata.get('crawl_duration', 0),
+                'scrape_status': metadata.get('scrape_status', 'unknown'),
+                'pages_crawled': metadata.get('pages_crawled', []),
+                # Token usage and cost data
+                'total_input_tokens': metadata.get('total_input_tokens', 0),
+                'total_output_tokens': metadata.get('total_output_tokens', 0),
+                'total_cost_usd': metadata.get('total_cost_usd', 0.0),
+                'llm_calls_count': metadata.get('llm_calls_count', 0)
+            },
+            'note': 'Full vector content with LLM prompts and scraped content is stored in the vector embedding. Use the main company endpoint for basic details.'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to get scraping details: {str(e)}'}), 500
 
 @app.route('/api/research/start', methods=['POST'])
 def start_research():

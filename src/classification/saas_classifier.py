@@ -211,8 +211,8 @@ class SaaSBusinessModelClassifier:
         Returns:
             Basic classification result
         """
-        # Simple heuristic: check for SaaS indicators in business intelligence
-        business_intel = (company_data.business_intelligence or "").lower()
+        # Simple heuristic: check for SaaS indicators in company description
+        business_intel = (company_data.company_description or company_data.ai_summary or "").lower()
         
         is_saas = any(indicator in business_intel for indicator in [
             "saas", "software as a service", "subscription", "platform", 

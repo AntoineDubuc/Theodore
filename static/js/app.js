@@ -8,23 +8,22 @@ class TheodoreUI {
         this.initializeDatabaseBrowser();
         this.activeResearchJobs = new Map(); // Track active research jobs
         this.pollingIntervals = new Map(); // Track polling intervals
+        this.currentPollingInterval = null; // Track main progress polling
     }
 
     initializeEventListeners() {
         // Main search form
         const searchForm = document.getElementById('searchForm');
         if (searchForm) {
-            console.log('✅ Search form found, attaching event listener'); // Debug log
             searchForm.addEventListener('submit', this.handleDiscovery.bind(this));
-            console.log('✅ Event listener attached to search form'); // Debug log
         } else {
-            console.log('❌ Search form NOT found!'); // Debug log
         }
 
         // Process company form
         const processForm = document.getElementById('processForm');
         if (processForm) {
             processForm.addEventListener('submit', this.handleProcessing.bind(this));
+        } else {
         }
 
         // Real-time search
@@ -142,16 +141,12 @@ class TheodoreUI {
     }
 
     async handleDiscovery(event) {
-        console.log('🚀 handleDiscovery called'); // Debug log
-        console.log('📝 Event object:', event); // Debug log
         event.preventDefault();
-        console.log('🛑 Default prevented'); // Debug log
         
         const formData = new FormData(event.target);
         const companyName = formData.get('company_name');
         const limit = formData.get('limit') || 5;
         
-        console.log('Discovery request:', { companyName, limit }); // Debug log
 
         if (!companyName.trim()) {
             this.showError('Please enter a company name');
@@ -184,16 +179,13 @@ class TheodoreUI {
             const data = await response.json();
 
             if (response.ok) {
-                console.log('🎉 Discovery successful! Results:', data); // Debug log
                 
                 // Handle both success and error response structures
                 const results = data.results || data.companies || [];
-                console.log('📊 Companies found:', results); // Debug log
                 
                 if (results.length > 0) {
                     // Log each company to console for debugging
                     results.forEach((company, index) => {
-                        console.log(`${index + 1}. ${company.company_name} (${(company.similarity_score * 100).toFixed(0)}% match)`);
                     });
                     
                     // Ensure data has the results in the expected format
@@ -209,7 +201,6 @@ class TheodoreUI {
                     this.showSuccess(`Found ${normalizedData.total_found} similar companies for ${normalizedData.target_company}`);
                 } else {
                     // Handle no results case
-                    console.log('📭 No results found'); // Debug log
                     this.hideDiscoveryProgress();
                     this.displayResults({ results: [], total_found: 0, target_company: data.target_company || 'Unknown' });
                     
@@ -223,7 +214,6 @@ class TheodoreUI {
                     }
                 }
             } else {
-                console.log('❌ Discovery failed:', data); // Debug log
                 this.hideDiscoveryProgress();
                 this.showError(data.error || 'Discovery failed');
                 if (data.suggestion) {
@@ -246,20 +236,45 @@ class TheodoreUI {
         const formData = new FormData(event.target);
         const companyName = formData.get('company_name');
         const website = formData.get('website');
+        
 
-        if (!companyName.trim() || !website.trim()) {
-            this.showError('Please enter both company name and website');
+        if (!companyName.trim()) {
+            this.showError('Please enter a company name');
             return;
+        }
+        
+        // Apply frontend URL normalization and domain discovery
+        let normalizedWebsite = website ? website.trim() : '';
+        
+        // Add https:// if missing
+        if (normalizedWebsite && !normalizedWebsite.startsWith('http://') && !normalizedWebsite.startsWith('https://')) {
+            normalizedWebsite = `https://${normalizedWebsite}`;
+        }
+
+        // Show helpful message if no website provided
+        if (!normalizedWebsite) {
+            this.showInfo(`🔍 No website provided for ${companyName.trim()}. Theodore will attempt to discover the company website automatically and generate a fallback URL if needed.`);
         }
 
         // Start processing with progress display
-        this.startProcessing(companyName.trim(), website.trim());
+        this.startProcessing(companyName.trim(), normalizedWebsite);
     }
 
     async startProcessing(companyName, website) {
+        
         // Show progress container and hide results
-        document.getElementById('processResults').style.display = 'none';
-        document.getElementById('progressContainer').style.display = 'block';
+        const resultsEl = document.getElementById('processResults');
+        const progressEl = document.getElementById('progressContainer');
+        
+        
+        if (resultsEl) {
+            resultsEl.style.display = 'none';
+        }
+        
+        if (progressEl) {
+            progressEl.style.display = 'block';
+        } else {
+        }
         
         // Update progress title
         document.getElementById('progressTitle').textContent = `Processing ${companyName}...`;
@@ -273,6 +288,10 @@ class TheodoreUI {
         processButton.innerHTML = '<span>⏳</span> Processing...';
         
         this.clearMessages();
+        
+        // Start progress polling immediately
+        const progressContainer = document.getElementById('progressContainer');
+        this.pollCurrentJobProgress(progressContainer, companyName);
         
         try {
             const response = await fetch('/api/process-company', {
@@ -291,6 +310,11 @@ class TheodoreUI {
             if (data.success) {
                 this.showProcessingResults(data);
                 this.showSuccess(`Successfully processed ${companyName}! Generated ${data.sales_intelligence.length} character sales intelligence.`);
+                
+                // Clear the form after successful processing
+                setTimeout(() => {
+                    document.getElementById('processForm').reset();
+                }, 3000); // Clear after 3 seconds to allow user to see success message
             } else {
                 this.showProcessingError(data.error || 'Processing failed');
                 this.showError(`Failed to process ${companyName}: ${data.error}`);
@@ -301,6 +325,9 @@ class TheodoreUI {
             this.showProcessingError(`Network error: ${error.message}`);
             this.showError(`Failed to process ${companyName}: ${error.message}`);
         } finally {
+            // Stop progress polling
+            this.stopProgressPolling(companyName);
+            
             // Re-enable form
             processButton.disabled = false;
             processButton.innerHTML = '<span>🧠</span> Generate Sales Intelligence';
@@ -353,6 +380,9 @@ class TheodoreUI {
         document.getElementById('progressContainer').style.display = 'none';
         document.getElementById('processResults').style.display = 'block';
         
+        // Store company ID for details button
+        window.lastProcessedCompanyId = result.company_id;
+        
         // Update summary stats
         const pagesEl = document.getElementById('resultPages');
         const timeEl = document.getElementById('resultTime');
@@ -361,6 +391,25 @@ class TheodoreUI {
         if (pagesEl) pagesEl.textContent = result.pages_processed || 0;
         if (timeEl) timeEl.textContent = `${(result.processing_time || 0).toFixed(1)}s`;
         if (lengthEl) lengthEl.textContent = `${result.sales_intelligence.length} chars`;
+        
+        // Update token usage and cost stats
+        if (result.token_usage) {
+            const tokensEl = document.getElementById('resultTokens');
+            const costEl = document.getElementById('resultCost');
+            const llmCallsEl = document.getElementById('resultLLMCalls');
+            
+            if (tokensEl) {
+                const totalTokens = (result.token_usage.total_input_tokens || 0) + (result.token_usage.total_output_tokens || 0);
+                tokensEl.textContent = `${totalTokens.toLocaleString()} tokens`;
+            }
+            if (costEl) {
+                const cost = result.token_usage.total_cost_usd || 0;
+                costEl.textContent = `$${cost.toFixed(4)}`;
+            }
+            if (llmCallsEl) {
+                llmCallsEl.textContent = `${result.token_usage.llm_calls_count || 0} calls`;
+            }
+        }
         
         // Display sales intelligence
         const intelligenceEl = document.getElementById('salesIntelligence');
@@ -394,6 +443,7 @@ class TheodoreUI {
     }
 
     updatePhaseProgress(phaseName, status, details = '') {
+        
         const phaseMap = {
             'Link Discovery': 'phase-link-discovery',
             'LLM Page Selection': 'phase-page-selection', 
@@ -402,10 +452,16 @@ class TheodoreUI {
         };
         
         const phaseId = phaseMap[phaseName];
-        if (!phaseId) return;
+        
+        if (!phaseId) {
+            return;
+        }
         
         const element = document.getElementById(phaseId);
-        if (!element) return;
+        
+        if (!element) {
+            return;
+        }
         
         element.className = `phase-item ${status}`;
         
@@ -413,8 +469,44 @@ class TheodoreUI {
         const detailsEl = element.querySelector('.phase-details');
         const checkEl = element.querySelector('.phase-check');
         
-        if (statusEl) statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        if (detailsEl) detailsEl.textContent = details;
+        // Show user-friendly status
+        if (statusEl) {
+            const statusMap = {
+                'running': 'In Progress',
+                'completed': 'Completed',
+                'failed': 'Failed',
+                'pending': 'Pending'
+            };
+            statusEl.textContent = statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1);
+        }
+        
+        // Show user-friendly details
+        if (detailsEl) {
+            let detailsText = '';
+            if (details) {
+                if (typeof details === 'string') {
+                    detailsText = details;
+                } else if (typeof details === 'object') {
+                    // Convert object to meaningful text for phase details
+                    if (phaseName === 'Link Discovery' && details.target_url) {
+                        try {
+                            detailsText = `Analyzing ${new URL(details.target_url).hostname}`;
+                        } catch {
+                            detailsText = `Analyzing ${details.target_url}`;
+                        }
+                    } else if (phaseName === 'Content Extraction' && details.current_page) {
+                        try {
+                            detailsText = `Extracting: ${new URL(details.current_page).pathname}`;
+                        } catch {
+                            detailsText = `Extracting: ${details.current_page}`;
+                        }
+                    } else if (details.status_message) {
+                        detailsText = details.status_message;
+                    }
+                }
+            }
+            detailsEl.textContent = detailsText;
+        }
         
         // Update check icon
         const checkIcon = status === 'completed' ? '✅' : 
@@ -432,25 +524,58 @@ class TheodoreUI {
         
         const timestamp = new Date().toLocaleTimeString();
         
+        // Convert details to user-friendly text
+        let detailsText = '';
+        if (details) {
+            if (typeof details === 'string') {
+                detailsText = details;
+            } else if (typeof details === 'object') {
+                // Convert object to meaningful text based on phase
+                if (phaseName === 'Link Discovery' && details.target_url) {
+                    detailsText = `Analyzing ${details.target_url}`;
+                } else if (phaseName === 'LLM Page Selection' && details.pages_selected) {
+                    detailsText = `Selected ${details.pages_selected} promising pages`;
+                } else if (phaseName === 'Content Extraction' && details.current_page) {
+                    detailsText = `Extracting from ${details.current_page}`;
+                } else if (details.status_message) {
+                    detailsText = details.status_message;
+                } else {
+                    // Fallback: convert object to readable format
+                    const meaningfulKeys = ['status', 'target_url', 'current_page', 'pages_completed', 'total_pages'];
+                    const values = meaningfulKeys
+                        .filter(key => details[key] !== undefined && details[key] !== null)
+                        .map(key => `${key}: ${details[key]}`);
+                    detailsText = values.length > 0 ? values.join(', ') : '';
+                }
+            }
+        }
+        
         const logEntry = document.createElement('div');
         logEntry.className = 'log-entry';
         logEntry.innerHTML = `
             <span class="log-timestamp">[${timestamp}]</span>
-            <strong>${phaseName}</strong>: ${status} ${details ? `- ${details}` : ''}
+            <strong>${phaseName}</strong>: ${status}${detailsText ? ` - ${detailsText}` : ''}
         `;
         
         logContainer.appendChild(logEntry);
         logContainer.scrollTop = logContainer.scrollHeight;
     }
+    
+    stopProgressPolling(companyName) {
+        // Clear any polling intervals for this company
+        const intervalId = this.pollingIntervals.get(companyName);
+        if (intervalId) {
+            clearTimeout(intervalId);
+            this.pollingIntervals.delete(companyName);
+        }
+    }
 
     async handleRealTimeSearch(query, controller = null) {
-        console.log(`[${new Date().toLocaleTimeString()}] handleRealTimeSearch called with:`, query); // Debug log
         
         // Store current query to prevent showing stale results
         this.currentSearchQuery = query.trim().toLowerCase();
         
         if (!query.trim() || query.length < 2) {
-            console.log('Query too short, hiding suggestions'); // Debug log
             this.hideSearchSuggestions('query_too_short');
             return;
         }
@@ -474,15 +599,12 @@ class TheodoreUI {
             }
 
             if (response.ok && data.results.length > 0) {
-                console.log('Search API returned:', data.results); // Debug log
-                console.log('Current query:', this.currentSearchQuery); // Debug log
                 
                 // Filter results to only show matches that contain the search query
                 const filteredResults = data.results.filter(result => 
                     result.name.toLowerCase().includes(this.currentSearchQuery)
                 );
                 
-                console.log('Filtered results:', filteredResults); // Debug log
                 
                 if (filteredResults.length > 0) {
                     this.showSearchSuggestions(filteredResults);
@@ -537,21 +659,19 @@ class TheodoreUI {
         if (tabId === 'classificationTab') {
             this.loadClassificationAnalytics();
         }
+        
+        // REMOVED: Don't hide results when switching tabs - let users keep their work visible
+        // Results will persist until user manually processes another company
     }
 
     displayResults(data) {
-        console.log('📋 displayResults called with:', data); // Debug log
         
         const resultsContainer = document.getElementById('results');
         const resultsSection = document.getElementById('resultsSection');
         const resultsCountElement = document.getElementById('resultsCount');
 
-        console.log('📍 Results container found:', !!resultsContainer); // Debug log
-        console.log('📍 Results section found:', !!resultsSection); // Debug log
-        console.log('📍 Results count element found:', !!resultsCountElement); // Debug log
 
         if (!resultsContainer || !resultsSection) {
-            console.log('❌ Missing results container or section!'); // Debug log
             return;
         }
 
@@ -559,33 +679,25 @@ class TheodoreUI {
         const resultCount = data.results.length;
         if (resultsCountElement) {
             resultsCountElement.textContent = `${resultCount} found`;
-            console.log('🔢 Updated results count to:', resultCount); // Debug log
         }
 
         if (data.results.length === 0) {
-            console.log('📭 No results, showing empty state'); // Debug log
             resultsContainer.innerHTML = this.createEmptyState();
         } else {
-            console.log('🏗️ Creating HTML for', data.results.length, 'results'); // Debug log
             const resultCards = data.results.map(result => {
                 const cardHTML = this.createResultCard(result);
-                console.log('📄 Generated card HTML length:', cardHTML.length); // Debug log
                 return cardHTML;
             });
             
             const finalHTML = resultCards.join('');
-            console.log('🎯 Final HTML to insert (length:', finalHTML.length, '):', finalHTML.substring(0, 200) + '...'); // Debug log
             
             resultsContainer.innerHTML = finalHTML;
             
             // Check if HTML was actually set
             setTimeout(() => {
-                console.log('✅ Results container after insert:', resultsContainer.innerHTML.length, 'characters'); // Debug log
-                console.log('🔍 Child elements count:', resultsContainer.children.length); // Debug log
             }, 100);
         }
 
-        console.log('👁️ Showing results section'); // Debug log
         resultsSection.classList.remove('hidden');
         
         // Ensure results section is properly visible
@@ -594,7 +706,6 @@ class TheodoreUI {
         // Animate result cards
         setTimeout(() => {
             const cards = resultsContainer.querySelectorAll('.result-card');
-            console.log('🎯 Animating', cards.length, 'result cards'); // Debug log
             cards.forEach((card, index) => {
                 setTimeout(() => {
                     card.classList.add('fade-in-up');
@@ -604,7 +715,6 @@ class TheodoreUI {
     }
 
     createResultCard(result) {
-        console.log('🃏 Creating result card for:', result); // Debug log
         
         const scoreClass = result.similarity_score >= 0.8 ? 'high' : 
                           result.similarity_score >= 0.6 ? 'medium' : 'low';
@@ -808,7 +918,6 @@ class TheodoreUI {
     }
 
     showSearchSuggestions(results) {
-        console.log('showSearchSuggestions called with:', results); // Debug log
         
         // Record when suggestions were shown to prevent immediate hiding
         this.suggestionsShownAt = Date.now();
@@ -838,7 +947,6 @@ class TheodoreUI {
             </div>
         `).join('');
         
-        console.log('Setting suggestion HTML:', suggestionHTML); // Debug log
         suggestions.innerHTML = suggestionHTML;
 
         // Add click handlers with proper safeguards
@@ -847,10 +955,8 @@ class TheodoreUI {
         // Use mousedown instead of click to avoid conflicts, and add delay
         setTimeout(() => {
             suggestions.addEventListener('mousedown', (e) => {
-                console.log('Mousedown on suggestions:', e.target, 'isTrusted:', e.isTrusted); // Debug log
                 const suggestionItem = e.target.closest('.suggestion-item');
                 if (suggestionItem && e.isTrusted) { // Only handle real user interactions
-                    console.log('Real suggestion selected:', suggestionItem.dataset.name); // Debug log
                     e.preventDefault();
                     e.stopPropagation();
                     
@@ -871,11 +977,9 @@ class TheodoreUI {
     hideSearchSuggestions(reason = 'unknown') {
         // Prevent hiding if suggestions were just shown (within 200ms)
         if (this.suggestionsShownAt && (Date.now() - this.suggestionsShownAt) < 200) {
-            console.log('Ignoring hide request - suggestions just shown, reason:', reason);
             return;
         }
         
-        console.log('hideSearchSuggestions called, reason:', reason); // Debug log
         console.trace(); // Show stack trace to see what called this
         const suggestions = document.getElementById('searchSuggestions');
         if (suggestions) {
@@ -1286,10 +1390,6 @@ class TheodoreUI {
     }
 
     async startResearch(companyName, website) {
-        console.log(`🟦 JS: ===== RESEARCH STARTED =====`);
-        console.log(`🟦 JS: Company: ${companyName}`);
-        console.log(`🟦 JS: Website: ${website}`);
-        console.log(`🟦 JS: Timestamp: ${new Date().toISOString()}`);
         
         // Validate inputs
         if (!companyName || !website) {
@@ -1300,7 +1400,6 @@ class TheodoreUI {
             return;
         }
         
-        console.log(`🟦 JS: ✅ Input validation passed`);
         
         // Prepare request payload
         const requestPayload = {
@@ -1309,12 +1408,9 @@ class TheodoreUI {
                 website: website
             }
         };
-        console.log(`🟦 JS: Request payload prepared:`, requestPayload);
         
         // Update UI immediately
-        console.log(`🟦 JS: Step 1 - Updating UI state...`);
         this.updateResearchButton(companyName, 'researching');
-        console.log(`🟦 JS: ✅ Research button updated`);
         
         // Track this research job
         const jobData = {
@@ -1324,34 +1420,31 @@ class TheodoreUI {
             website: website
         };
         this.activeResearchJobs.set(companyName, jobData);
-        console.log(`🟦 JS: ✅ Job tracking started:`, jobData);
         
         try {
-            console.log(`🟦 JS: Step 2 - Setting up progress tracking...`);
-            const progressContainer = this.showResearchProgressContainer(companyName);
-            console.log(`🟦 JS: ✅ Progress container created`);
+            console.log(`🟦 JS: 📊 Starting research for ${companyName}`);
             
-            console.log(`🟦 JS: Starting progress polling immediately...`);
+            const progressContainer = this.showResearchProgressContainer(companyName);
+            
             // Start polling immediately, no delay
             this.pollCurrentJobProgress(progressContainer, companyName);
-            console.log(`🟦 JS: ✅ Progress polling started`);
             
-            console.log(`🟦 JS: Step 3 - Making API request...`);
-            console.log(`🟦 JS: URL: /api/research`);
-            console.log(`🟦 JS: Method: POST`);
-            console.log(`🟦 JS: Headers: Content-Type: application/json`);
-            console.log(`🟦 JS: Body:`, JSON.stringify(requestPayload, null, 2));
             
             const requestStartTime = Date.now();
             
             // Create abort controller for timeout
             const abortController = new AbortController();
-            const timeoutId = setTimeout(() => {
-                console.log(`🟦 JS: ⏰ Request timeout after 30 seconds, aborting...`);
-                abortController.abort();
-            }, 30000); // 30 second timeout
+            const timeoutDuration = 300000; // 5 minutes for large sites like Amazon
             
-            console.log(`🟦 JS: Sending fetch request with 30s timeout...`);
+            console.log(`🟦 JS: ✅ Created AbortController, signal aborted: ${abortController.signal.aborted}`);
+            
+            const timeoutId = setTimeout(() => {
+                console.log(`🟦 JS: ⏱️ Aborting request after ${timeoutDuration/1000} seconds`);
+                abortController.abort(new DOMException('Research timeout', 'TimeoutError'));
+            }, timeoutDuration);
+            
+            console.log(`🟦 JS: 🚀 Starting fetch request to /api/research`);
+            
             const response = await fetch('/api/research', {
                 method: 'POST',
                 headers: {
@@ -1367,47 +1460,24 @@ class TheodoreUI {
             const requestEndTime = Date.now();
             const requestDuration = requestEndTime - requestStartTime;
             
-            console.log(`🟦 JS: ===== API RESPONSE RECEIVED =====`);
-            console.log(`🟦 JS: Response status: ${response.status}`);
-            console.log(`🟦 JS: Response status text: ${response.statusText}`);
-            console.log(`🟦 JS: Response headers:`, Object.fromEntries(response.headers.entries()));
-            console.log(`🟦 JS: Request duration: ${requestDuration}ms`);
             
-            console.log(`🟦 JS: Parsing JSON response...`);
             const data = await response.json();
-            console.log(`🟦 JS: ✅ JSON parsed successfully`);
-            console.log(`🟦 JS: Response data keys:`, Object.keys(data));
-            console.log(`🟦 JS: Full response:`, data);
 
             if (response.ok && data.success) {
-                console.log(`🟦 JS: ===== RESEARCH SUCCESS =====`);
-                console.log(`🟦 JS: ✅ Research completed for ${companyName}`);
-                console.log(`🟦 JS: Processing time: ${data.processing_time}s`);
-                console.log(`🟦 JS: Enhanced company data keys:`, Object.keys(data.company || {}));
-                console.log(`🟦 JS: Research status: ${data.company?.research_status}`);
-                console.log(`🟦 JS: Full enhanced data:`, data.company);
                 
                 const enhancedCompany = data.company;
-                console.log(`🟦 JS: Step 4 - Updating UI with results...`);
                 
                 this.showSuccess(`Research completed for ${companyName}! Generated comprehensive business intelligence.`);
-                console.log(`🟦 JS: ✅ Success message shown`);
                 
                 // Update the result card with enhanced data
-                console.log(`🟦 JS: Updating result card...`);
                 this.updateResultCardWithResearch(companyName, enhancedCompany);
-                console.log(`🟦 JS: ✅ Result card updated`);
                 
                 // Hide progress container and cleanup
-                console.log(`🟦 JS: Cleaning up progress tracking...`);
                 this.hideResearchProgressContainer(companyName);
                 this.cleanupResearchJob(companyName);
-                console.log(`🟦 JS: ✅ Cleanup completed`);
                 
-                console.log(`🟦 JS: ===== RESEARCH FLOW COMPLETED SUCCESSFULLY =====`);
                 
             } else {
-                console.log(`🟦 JS: ===== RESEARCH FAILED =====`);
                 console.error(`🟦 JS: ❌ Response status: ${response.status}`);
                 console.error(`🟦 JS: ❌ Success flag: ${data.success}`);
                 console.error(`🟦 JS: ❌ Error message: ${data.error}`);
@@ -1415,21 +1485,16 @@ class TheodoreUI {
                 console.error(`🟦 JS: ❌ Full error data:`, data);
                 
                 const errorMessage = data.error || 'Failed to complete research';
-                console.log(`🟦 JS: Showing error message: ${errorMessage}`);
                 this.showError(errorMessage);
                 
                 // Reset button on error
-                console.log(`🟦 JS: Resetting research button state...`);
                 this.updateResearchButton(companyName, 'unknown');
                 
                 // Hide progress container and cleanup
-                console.log(`🟦 JS: Cleaning up after error...`);
                 this.hideResearchProgressContainer(companyName);
                 this.cleanupResearchJob(companyName);
-                console.log(`🟦 JS: ✅ Error cleanup completed`);
             }
         } catch (networkError) {
-            console.log(`🟦 JS: ===== NETWORK/EXCEPTION ERROR =====`);
             console.error(`🟦 JS: ❌ Exception caught:`, networkError);
             console.error(`🟦 JS: ❌ Error name: ${networkError.name}`);
             console.error(`🟦 JS: ❌ Error message: ${networkError.message}`);
@@ -1443,9 +1508,9 @@ class TheodoreUI {
             // Check if it's a specific type of error
             let errorMessage = 'Unexpected error during research';
             
-            if (networkError.name === 'AbortError') {
+            if (networkError.name === 'AbortError' || networkError.name === 'TimeoutError') {
                 console.error(`🟦 JS: ❌ Request was aborted (timeout or manual cancellation)`);
-                errorMessage = 'Research request timed out after 30 seconds';
+                errorMessage = `Research request timed out. Large sites like Amazon may take 3-5 minutes to analyze completely.`;
             } else if (networkError instanceof TypeError) {
                 console.error(`🟦 JS: ❌ This is a TypeError - likely network issue`);
                 errorMessage = 'Network error during research - check connection';
@@ -1460,20 +1525,15 @@ class TheodoreUI {
                 errorMessage = `Research failed: ${networkError.message}`;
             }
                 
-            console.log(`🟦 JS: Showing error message: ${errorMessage}`);
             this.showError(errorMessage);
             
             // Reset button on error  
-            console.log(`🟦 JS: Resetting research button due to exception...`);
             this.updateResearchButton(companyName, 'unknown');
             
             // Hide progress container and cleanup
-            console.log(`🟦 JS: Cleaning up after exception...`);
             this.hideResearchProgressContainer(companyName);
             this.cleanupResearchJob(companyName);
-            console.log(`🟦 JS: ✅ Exception cleanup completed`);
             
-            console.log(`🟦 JS: ===== RESEARCH FLOW FAILED WITH EXCEPTION =====`);
         }
     }
 
@@ -1487,11 +1547,8 @@ class TheodoreUI {
         const progressId = `progress-${companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}`;
         let progressContainer = document.getElementById(progressId);
         
-        console.log(`🔍 PROGRESS CONTAINER: Looking for container with ID: ${progressId}`);
-        console.log(`🔍 PROGRESS CONTAINER: Container exists: ${!!progressContainer}`);
         
         if (!progressContainer) {
-            console.log(`🔍 PROGRESS CONTAINER: Creating new container for ${companyName}`);
             
             // Create progress container
             progressContainer = document.createElement('div');
@@ -1522,31 +1579,22 @@ class TheodoreUI {
             const resultsSection = document.getElementById('resultsSection');
             const mainContent = document.querySelector('.main-content');
             
-            console.log(`🔍 PROGRESS CONTAINER: Results container found: ${!!resultsContainer}`);
-            console.log(`🔍 PROGRESS CONTAINER: Results section found: ${!!resultsSection}`);
-            console.log(`🔍 PROGRESS CONTAINER: Main content found: ${!!mainContent}`);
             
             if (resultsContainer) {
                 resultsContainer.appendChild(progressContainer);
-                console.log(`🔍 PROGRESS CONTAINER: ✅ Appended to results container`);
             } else if (resultsSection) {
                 resultsSection.appendChild(progressContainer);
-                console.log(`🔍 PROGRESS CONTAINER: ✅ Appended to results section`);
             } else if (mainContent) {
                 mainContent.appendChild(progressContainer);
-                console.log(`🔍 PROGRESS CONTAINER: ✅ Appended to main content`);
             } else {
                 document.body.appendChild(progressContainer);
-                console.log(`🔍 PROGRESS CONTAINER: ✅ Appended to body as fallback`);
             }
         } else {
-            console.log(`🔍 PROGRESS CONTAINER: Using existing container`);
         }
         
         // Ensure it's visible and scroll to it
         progressContainer.style.display = 'block';
         progressContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        console.log(`🔍 PROGRESS CONTAINER: ✅ Container is now visible and scrolled into view`);
         
         return progressContainer;
     }
@@ -1564,24 +1612,17 @@ class TheodoreUI {
 
     async pollCurrentJobProgress(progressContainer, companyName) {
         try {
-            console.log(`🔄 PROGRESS POLL: Checking progress for ${companyName}`);
-            console.log(`🔄 PROGRESS POLL: Progress container exists: ${!!progressContainer}`);
-            console.log(`🔄 PROGRESS POLL: Progress container visible: ${progressContainer ? progressContainer.style.display !== 'none' : false}`);
             
             const response = await fetch('/api/progress/current');
             const data = await response.json();
-            console.log(`📊 PROGRESS POLL: Server response:`, data);
             
             // FORCE SHOW the progress container in case it's hidden
             if (progressContainer) {
                 progressContainer.style.display = 'block';
-                console.log(`🔄 PROGRESS POLL: ✅ Forced progress container to be visible`);
             }
 
             // Handle different response statuses
             if (response.ok && data.status === 'recent_completion') {
-                console.log(`🔄 POLLING: Detected recent completion for ${companyName}`);
-                console.log(`🔄 POLLING: Completion message: ${data.message}`);
                 
                 // Show completion in progress container
                 const progressFill = progressContainer.querySelector('.progress-fill');
@@ -1604,7 +1645,6 @@ class TheodoreUI {
                 }
                 
                 // Show success message
-                console.log(`🔄 POLLING: Showing success message`);
                 this.showSuccess(`Research completed successfully for ${companyName}!`);
                 
                 // Stop polling and update button
@@ -1618,8 +1658,6 @@ class TheodoreUI {
                 
                 return; // Stop polling
             } else if (response.ok && data.status === 'recent_failure') {
-                console.log(`🔄 POLLING: Detected recent failure for ${companyName}`);
-                console.log(`🔄 POLLING: Failure reason: ${data.message}`);
                 
                 // Show failure in progress container
                 const progressFill = progressContainer.querySelector('.progress-fill');
@@ -1642,7 +1680,6 @@ class TheodoreUI {
                 }
                 
                 // Stop polling and show error
-                console.log(`🔄 POLLING: Stopping polling due to failure`);
                 this.showError(data.message);
                 this.updateResearchButton(companyName, 'unknown');
                 
@@ -1655,21 +1692,26 @@ class TheodoreUI {
                 return; // Stop polling
             }
             
-            // Check for any progress data that matches our company (running OR recently completed)
+            // Check for any progress data - prioritize current company, but accept any running job
             let relevantProgress = null;
-            if (response.ok && data.progress && data.progress.company_name === companyName) {
-                relevantProgress = data.progress;
+            if (response.ok && data.progress) {
+                // First priority: exact company name match
+                if (data.progress.company_name === companyName) {
+                    relevantProgress = data.progress;
+                }
+                // Second priority: any running job (for Add Company flow)
+                else if (data.progress.status === 'running') {
+                    relevantProgress = data.progress;
+                }
             } else if (response.ok && data.status === 'recent_failure' && data.progress && data.progress.company_name === companyName) {
                 relevantProgress = data.progress;
             }
             
             if (relevantProgress) {
                 const progress = relevantProgress;
-                console.log(`📊 Processing progress data:`, progress);
                 
                 // Check if job has failed
                 if (progress.status === 'failed') {
-                    console.log(`🔄 POLLING: Job failed - ${progress.error}`);
                     
                     const progressFill = progressContainer.querySelector('.progress-fill');
                     const progressText = progressContainer.querySelector('.progress-text');
@@ -1724,7 +1766,6 @@ class TheodoreUI {
                     }
                 }
                 
-                console.log(`🎯 Current phase data:`, currentPhaseData);
                 
                 if (progressFill) {
                     progressFill.style.width = `${Math.min(progressPercent, 100)}%`;
@@ -1735,7 +1776,6 @@ class TheodoreUI {
                 
                 if (currentPhaseData) {
                     statusText = `${currentPhaseData.name} (${currentPhase}/${totalPhases})`;
-                    console.log(`📝 Updated status text: ${statusText}`);
                     
                     // Add page-specific details for Content Extraction phase
                     if (currentPhaseData.name === 'Content Extraction') {
@@ -1754,12 +1794,7 @@ class TheodoreUI {
                             }
                             
                             // ENHANCED CONSOLE LOGGING - Show exactly what's being scraped
-                            console.log(`🔍 SCRAPING: Currently scraping page ${currentPhaseData.pages_completed}/${currentPhaseData.total_pages}`);
-                            console.log(`🔍 SCRAPING: Page URL: ${currentPhaseData.current_page}`);
                             if (currentPhaseData.scraped_content_preview) {
-                                console.log(`📄 SCRAPED CONTENT PREVIEW:`);
-                                console.log(`📄 ${currentPhaseData.scraped_content_preview.substring(0, 500)}...`);
-                                console.log(`📄 END OF CONTENT PREVIEW`);
                             }
                         }
                     }
@@ -1782,15 +1817,22 @@ class TheodoreUI {
                 
                 if (progressText) {
                     progressText.textContent = statusText;
-                    console.log(`✅ Updated progress text to: "${statusText}"`);
                 }
                 
                 if (progressDetails) {
                     progressDetails.textContent = detailsText;
                     progressDetails.style.display = detailsText ? 'block' : 'none';
                     if (detailsText) {
-                        console.log(`✅ Updated progress details to: "${detailsText}"`);
                     }
+                }
+
+                // Update static phase elements for "Add Company" form
+                
+                if (progress.phases && progress.phases.length > 0) {
+                    progress.phases.forEach(phase => {
+                        this.updatePhaseProgress(phase.name, phase.status, phase.details);
+                    });
+                } else {
                 }
 
                 // Continue polling if job is still running
@@ -1798,16 +1840,30 @@ class TheodoreUI {
                     const timeoutId = setTimeout(() => {
                         this.pollCurrentJobProgress(progressContainer, companyName);
                     }, 2000); // Poll every 2 seconds
-                    this.pollingIntervals.set(companyName, timeoutId);
+                    
+                    // Use different tracking for main processing vs research
+                    if (companyName && progressContainer.id !== 'progressContainer') {
+                        // This is research polling
+                        this.pollingIntervals.set(companyName, timeoutId);
+                    } else {
+                        // This is main processing polling
+                        this.currentPollingInterval = timeoutId;
+                    }
                 }
             } else {
-                console.log(`🔄 PROGRESS POLL: No matching job found, will retry in 1 second...`);
-                console.log(`🔄 PROGRESS POLL: Available jobs in response:`, data);
                 // No matching job found, poll again more frequently in case it hasn't started yet
                 const timeoutId = setTimeout(() => {
                     this.pollCurrentJobProgress(progressContainer, companyName);
                 }, 1000); // Poll every 1 second when waiting for job to start
-                this.pollingIntervals.set(companyName, timeoutId);
+                
+                // Use different tracking for main processing vs research
+                if (companyName && progressContainer.id !== 'progressContainer') {
+                    // This is research polling
+                    this.pollingIntervals.set(companyName, timeoutId);
+                } else {
+                    // This is main processing polling
+                    this.currentPollingInterval = timeoutId;
+                }
             }
         } catch (error) {
             console.error('Progress polling error:', error);
@@ -1815,12 +1871,19 @@ class TheodoreUI {
             const timeoutId = setTimeout(() => {
                 this.pollCurrentJobProgress(progressContainer, companyName);
             }, 5000); // Poll less frequently on error
-            this.pollingIntervals.set(companyName, timeoutId);
+            
+            // Use different tracking for main processing vs research
+            if (companyName && progressContainer.id !== 'progressContainer') {
+                // This is research polling
+                this.pollingIntervals.set(companyName, timeoutId);
+            } else {
+                // This is main processing polling
+                this.currentPollingInterval = timeoutId;
+            }
         }
     }
 
     cancelResearch(companyName) {
-        console.log(`🛑 Canceling research for: ${companyName}`);
         
         // Cleanup the research job
         this.cleanupResearchJob(companyName);
@@ -1835,6 +1898,73 @@ class TheodoreUI {
         this.showError(`Research canceled for ${companyName}`);
     }
 
+    cancelCurrentJob() {
+        
+        // Stop polling if active
+        if (this.currentPollingInterval) {
+            clearTimeout(this.currentPollingInterval);
+            this.currentPollingInterval = null;
+        }
+        
+        // Call backend to cancel the job
+        this.cancelJobOnServer();
+        
+        // Reset the process button
+        const processButton = document.getElementById('processButton');
+        if (processButton) {
+            processButton.disabled = false;
+            processButton.innerHTML = '<span>🔍</span> Add Company';
+        }
+        
+        // Hide progress container
+        const progressContainer = document.getElementById('progressContainer');
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+        
+        // Reset all phases to pending
+        this.resetProgressPhases();
+        
+        // Show user feedback
+        this.showError('Processing canceled by user');
+        
+    }
+
+    async cancelJobOnServer() {
+        try {
+            const response = await fetch('/api/cancel-current-job', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+            } else {
+            }
+        } catch (error) {
+            console.error('Error canceling job on server:', error);
+        }
+    }
+
+    resetProgressPhases() {
+        const phases = ['link-discovery', 'page-selection', 'content-extraction', 'ai-analysis'];
+        phases.forEach(phase => {
+            const phaseElement = document.getElementById(`phase-${phase}`);
+            if (phaseElement) {
+                const statusElement = phaseElement.querySelector('.phase-status');
+                const checkElement = phaseElement.querySelector('.phase-check');
+                const detailsElement = phaseElement.querySelector('.phase-details');
+                
+                if (statusElement) statusElement.textContent = 'Pending';
+                if (checkElement) checkElement.textContent = '⏳';
+                if (detailsElement) detailsElement.textContent = '';
+                
+                phaseElement.classList.remove('running', 'completed', 'failed');
+            }
+        });
+    }
+
     cleanupResearchJob(companyName) {
         // Remove from active jobs
         this.activeResearchJobs.delete(companyName);
@@ -1846,12 +1976,9 @@ class TheodoreUI {
             this.pollingIntervals.delete(companyName);
         }
         
-        console.log(`🧹 Cleaned up research job for: ${companyName}`);
     }
 
     updateResultCardWithResearch(companyName, researchedCompany) {
-        console.log(`🎯 Updating result card for: ${companyName}`);
-        console.log(`📋 Full researched company data:`, researchedCompany);
         
         // Find the result card for this company
         const resultCard = document.querySelector(`[data-company-name="${this.escapeHtml(companyName)}"]`);
@@ -1860,30 +1987,9 @@ class TheodoreUI {
             return;
         }
         
-        console.log(`✅ Found result card for ${companyName}`);
 
         // Update the card with enhanced research data
         if (researchedCompany.is_researched && researchedCompany.research_status === 'success') {
-            console.log(`📊 Research successful, extracting data fields:`);
-            console.log(`📋 Industry: "${researchedCompany.industry}"`);
-            console.log(`📋 Business Model: "${researchedCompany.business_model}"`);
-            console.log(`📋 Description: "${researchedCompany.company_description}"`);
-            console.log(`📋 Target Market: "${researchedCompany.target_market}"`);
-            console.log(`📋 Key Services:`, researchedCompany.key_services);
-            console.log(`📋 Location: "${researchedCompany.location}"`);
-            console.log(`📋 Tech Stack:`, researchedCompany.tech_stack);
-            console.log(`📋 Company Size: "${researchedCompany.company_size}"`);
-            console.log(`📋 Value Proposition: "${researchedCompany.value_proposition}"`);
-            console.log(`📋 Pain Points:`, researchedCompany.pain_points);
-            console.log(`📋 Job Listings: "${researchedCompany.job_listings}"`);
-            console.log(`📋 Job Listings Details:`, researchedCompany.job_listings_details);
-            console.log(`📋 Crawl Depth:`, researchedCompany.crawl_depth);
-            console.log(`📋 Pages Crawled:`, researchedCompany.pages_crawled);
-            console.log(`📋 Pages Crawled Type:`, typeof researchedCompany.pages_crawled);
-            console.log(`📋 Pages Crawled Length:`, researchedCompany.pages_crawled ? researchedCompany.pages_crawled.length : 'undefined');
-            console.log(`📋 Processing Time:`, researchedCompany.processing_time);
-            console.log(`📋 Processing Time Type:`, typeof researchedCompany.processing_time);
-            console.log(`📋 Research Timestamp:`, researchedCompany.research_timestamp);
             
             // Add research data sections
             const businessContextDiv = resultCard.querySelector('.business-context');
@@ -1954,14 +2060,11 @@ class TheodoreUI {
                 </div>
             `;
             
-            console.log(`🏗️ Generated research HTML:`, researchHTML);
 
             // Insert research data after business context or before meta
             if (businessContextDiv) {
-                console.log(`📍 Inserting research data after business context`);
                 businessContextDiv.insertAdjacentHTML('afterend', researchHTML);
             } else if (resultMetaDiv) {
-                console.log(`📍 Inserting research data before meta div`);
                 resultMetaDiv.insertAdjacentHTML('beforebegin', researchHTML);
             }
 
@@ -2006,7 +2109,6 @@ class TheodoreUI {
     }
 
     async startBulkResearch(companies) {
-        console.log(`🔬 Starting bulk research for ${companies.length} companies`);
         
         try {
             const response = await fetch('/api/research/bulk', {
@@ -2113,9 +2215,7 @@ class TheodoreUI {
 
                 // Console logging for developer visibility
                 if (currentPhaseData && currentPhaseData.current_page) {
-                    console.log(`🔍 Scraping: ${currentPhaseData.current_page}`);
                     if (currentPhaseData.scraped_content_preview) {
-                        console.log(`📄 Content preview: ${currentPhaseData.scraped_content_preview.substring(0, 200)}...`);
                     }
                 }
 
@@ -2184,7 +2284,6 @@ class TheodoreUI {
             if (!companyId || companyId === 'null' || companyId === 'undefined') {
                 if (companyName) {
                     // Search for company by name in database
-                    console.log(`Searching for company by name: ${companyName}`);
                     return await this.viewCompanyDetailsByName(companyName);
                 } else {
                     this.showError('Cannot load company details - no ID or name provided');
@@ -2421,7 +2520,7 @@ class TheodoreUI {
                 <!-- Crawling Information -->
                 <div class="detail-section">
                     <h4>🕷️ Data Collection</h4>
-                    <p><strong>Pages Crawled:</strong> ${displayNumber(company.pages_crawled ? company.pages_crawled.length : 0, '0')}</p>
+                    <p><strong>Pages Crawled:</strong> ${displayNumber(company.scraped_urls_count || (company.pages_crawled ? company.pages_crawled.length : 0), '0')}</p>
                     <p><strong>Crawl Depth:</strong> ${displayNumber(company.crawl_depth)}</p>
                     <p><strong>Crawl Duration:</strong> ${company.crawl_duration ? `${company.crawl_duration.toFixed(2)}s` : `<span style="color: #888; font-style: italic;">Not specified</span>`}</p>
                     <p><strong>Scrape Status:</strong> ${displayText(company.scrape_status)}</p>
@@ -2466,11 +2565,139 @@ class TheodoreUI {
                     <p><strong>Created:</strong> ${company.created_at ? new Date(company.created_at).toLocaleString() : `<span style="color: #888; font-style: italic;">Not specified</span>`}</p>
                     <p><strong>Last Updated:</strong> ${company.last_updated ? new Date(company.last_updated).toLocaleString() : `<span style="color: #888; font-style: italic;">Not specified</span>`}</p>
                 </div>
+                
+                <!-- Scraping Details Section -->
+                ${company.scraped_urls_count > 0 || company.llm_interactions_count > 0 ? `
+                    <div class="detail-section full-width" style="border: 2px solid rgba(102, 126, 234, 0.3); border-radius: 12px; padding: 20px; background: rgba(102, 126, 234, 0.05);">
+                        <h4 style="color: var(--primary-color); margin-bottom: 16px;">🔍 Scraping & AI Details</h4>
+                        
+                        ${company.scraped_urls_count > 0 || company.total_input_tokens || company.total_output_tokens ? `
+                            <div class="scraping-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                                ${company.scraped_urls_count > 0 ? `
+                                    <div class="stat-item" style="text-align: center; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);">${company.scraped_urls_count}</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-secondary);">URLs Scraped</div>
+                                    </div>
+                                ` : ''}
+                                ${company.llm_interactions_count ? `
+                                    <div class="stat-item" style="text-align: center; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--accent-color);">${company.llm_interactions_count}</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-secondary);">LLM Calls</div>
+                                    </div>
+                                ` : ''}
+                                ${(company.total_input_tokens || company.total_output_tokens) ? `
+                                    <div class="stat-item" style="text-align: center; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #6f42c1;">${((company.total_input_tokens || 0) + (company.total_output_tokens || 0)).toLocaleString()}</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-secondary);">Total Tokens</div>
+                                    </div>
+                                ` : ''}
+                                ${company.total_cost_usd ? `
+                                    <div class="stat-item" style="text-align: center; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                                        <div style="font-size: 1.5rem; font-weight: bold; color: #e83e8c;">$${(company.total_cost_usd || 0).toFixed(4)}</div>
+                                        <div style="font-size: 0.875rem; color: var(--text-secondary);">Total Cost</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="scraping-actions" style="text-align: center;">
+                            <button class="btn btn-secondary" style="background: var(--primary-gradient); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;" onclick="window.theodoreUI.viewScrapingDetails('${company.id}')">
+                                <span>📋</span>
+                                View Detailed Scraping Log
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         `;
         
         const modal = this.createModal('Company Details', modalContent);
         document.body.appendChild(modal);
+    }
+    
+    async viewScrapingDetails(companyId) {
+        try {
+            const response = await fetch(`/api/company/${companyId}/scraping-details`);
+            const data = await response.json();
+            
+            if (!data.success) {
+                this.showError('Failed to load scraping details');
+                return;
+            }
+            
+            const details = data.scraping_details;
+            
+            const modalContent = `
+                <div class="scraping-details">
+                    <h3>🔍 Scraping Details for ${this.escapeHtml(data.company_name)}</h3>
+                    
+                    <!-- Scraping Overview -->
+                    <div class="detail-section">
+                        <h4>📊 Scraping Overview</h4>
+                        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                            <div class="stat-card" style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                                <div class="stat-number" style="font-size: 1.8rem; font-weight: bold; color: var(--primary-color);">${details.scraped_urls_count}</div>
+                                <div class="stat-label" style="font-size: 0.875rem; color: var(--text-secondary);">URLs Scraped</div>
+                            </div>
+                            <div class="stat-card" style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                                <div class="stat-number" style="font-size: 1.8rem; font-weight: bold; color: var(--accent-color);">${details.llm_interactions_count}</div>
+                                <div class="stat-label" style="font-size: 0.875rem; color: var(--text-secondary);">LLM Calls</div>
+                            </div>
+                            <div class="stat-card" style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                                <div class="stat-number" style="font-size: 1.8rem; font-weight: bold; color: #28a745;">${Math.round(details.crawl_duration)}s</div>
+                                <div class="stat-label" style="font-size: 0.875rem; color: var(--text-secondary);">Duration</div>
+                            </div>
+                            ${details.total_input_tokens || details.total_output_tokens ? `
+                                <div class="stat-card" style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                                    <div class="stat-number" style="font-size: 1.8rem; font-weight: bold; color: #6f42c1;">${((details.total_input_tokens || 0) + (details.total_output_tokens || 0)).toLocaleString()}</div>
+                                    <div class="stat-label" style="font-size: 0.875rem; color: var(--text-secondary);">Total Tokens</div>
+                                </div>
+                                <div class="stat-card" style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                                    <div class="stat-number" style="font-size: 1.8rem; font-weight: bold; color: #e83e8c;">$${(details.total_cost_usd || 0).toFixed(4)}</div>
+                                    <div class="stat-label" style="font-size: 0.875rem; color: var(--text-secondary);">Total Cost</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <p><strong>Status:</strong> <span style="color: ${details.scrape_status === 'success' ? '#28a745' : '#dc3545'};">${details.scrape_status}</span></p>
+                    </div>
+                    
+                    <!-- Scraped URLs -->
+                    ${details.scraped_urls && details.scraped_urls.length > 0 ? `
+                        <div class="detail-section">
+                            <h4>🌐 Scraped URLs (${details.scraped_urls.length})</h4>
+                            <div class="urls-list" style="max-height: 300px; overflow-y: auto; background: var(--bg-tertiary); border-radius: 8px; padding: 16px;">
+                                ${details.scraped_urls.map((url, index) => `
+                                    <div class="url-item" style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 12px;">
+                                        <span style="background: var(--primary-color); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">${index + 1}</span>
+                                        <a href="${this.escapeHtml(url)}" target="_blank" style="color: var(--primary-color); text-decoration: none; flex: 1; word-break: break-all;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                            ${this.escapeHtml(url)}
+                                        </a>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Note about vector content -->
+                    <div class="detail-section">
+                        <h4>📝 Additional Data</h4>
+                        <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 16px;">
+                            <p style="margin: 0; color: var(--text-secondary);">
+                                <strong>Note:</strong> Detailed LLM prompts, responses, and scraped content are stored in the vector embedding 
+                                for this company. This data is used for similarity analysis and can be accessed through the vector database.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modal = this.createModal('Scraping Details', modalContent);
+            document.body.appendChild(modal);
+            
+        } catch (error) {
+            console.error('Error fetching scraping details:', error);
+            this.showError('Failed to load scraping details');
+        }
     }
 
     async previewResearch(companyName, website) {
@@ -2513,11 +2740,9 @@ class TheodoreUI {
     }
     
     viewResearchDetails(companyName) {
-        console.log(`👁️ Viewing research details for: ${companyName}`);
         
         // Find the result card to get research data
         const resultCard = document.querySelector(`[data-company-name="${this.escapeHtml(companyName)}"]`);
-        console.log(`🎯 Found result card:`, resultCard);
         
         if (!resultCard) {
             console.error(`❌ Cannot find result card for ${companyName}`);
@@ -2527,8 +2752,6 @@ class TheodoreUI {
         
         // Extract research data from the card (look for .research-data sections)
         const researchData = resultCard.querySelector('.research-data');
-        console.log(`📊 Found research data element:`, researchData);
-        console.log(`📝 Research data innerHTML:`, researchData ? researchData.innerHTML : 'null');
         
         if (!researchData) {
             console.error(`❌ No research data element found for ${companyName}`);
@@ -2537,31 +2760,18 @@ class TheodoreUI {
         }
         
         // Build modal content from the research data
-        console.log(`🔍 Extracting research fields...`);
         const industry = this.extractResearchField(researchData, 'Industry') || 'Unknown';
-        console.log(`📋 Extracted Industry: "${industry}"`);
         const businessModel = this.extractResearchField(researchData, 'Business Model') || 'Unknown';
-        console.log(`📋 Extracted Business Model: "${businessModel}"`);
         const description = this.extractResearchField(researchData, 'Description') || 'No description available';
-        console.log(`📋 Extracted Description: "${description}"`);
         const targetMarket = this.extractResearchField(researchData, 'Target Market') || 'Unknown';
-        console.log(`📋 Extracted Target Market: "${targetMarket}"`);
         const keyServices = this.extractResearchField(researchData, 'Key Services') || 'None listed';
-        console.log(`📋 Extracted Key Services: "${keyServices}"`);
         const location = this.extractResearchField(researchData, 'Location') || 'Unknown';
-        console.log(`📋 Extracted Location: "${location}"`);
         const companySize = this.extractResearchField(researchData, 'Company Size') || 'Unknown';
-        console.log(`📋 Extracted Company Size: "${companySize}"`);
         const techStack = this.extractResearchField(researchData, 'Tech Stack') || 'Not available';
-        console.log(`📋 Extracted Tech Stack: "${techStack}"`);
         const valueProposition = this.extractResearchField(researchData, 'Value Proposition') || 'Not available';
-        console.log(`📋 Extracted Value Proposition: "${valueProposition}"`);
         const painPoints = this.extractResearchField(researchData, 'Pain Points') || 'Not available';
-        console.log(`📋 Extracted Pain Points: "${painPoints}"`);
         const researchInfo = this.extractResearchField(researchData, 'Research Info') || 'Research metadata unavailable';
-        console.log(`📋 Extracted Research Info: "${researchInfo}"`);
         const jobListings = this.extractResearchField(researchData, 'Job Listings') || 'Not available';
-        console.log(`📋 Extracted Job Listings: "${jobListings}"`);
         
         const modalContent = `
             <div class="research-details">
@@ -2646,39 +2856,29 @@ class TheodoreUI {
         setTimeout(() => {
             const modalElement = modal.querySelector('.modal');
             const contentElement = modal.querySelector('.modal-content');
-            console.log('📏 Modal height:', modalElement.offsetHeight);
-            console.log('📏 Content height:', contentElement.scrollHeight);
-            console.log('📏 Modal scrollable:', modalElement.scrollHeight > modalElement.offsetHeight);
-            console.log('📏 Content scrollable:', contentElement.scrollHeight > contentElement.offsetHeight);
         }, 100);
         
         document.body.appendChild(modal);
     }
     
     extractResearchField(researchElement, fieldName) {
-        console.log(`🔍 Looking for field: "${fieldName}"`);
         // Look for a research section with the given field name
         const sections = researchElement.querySelectorAll('.research-section');
-        console.log(`📊 Found ${sections.length} research sections`);
         
         for (const section of sections) {
             const strongElement = section.querySelector('strong');
             if (strongElement) {
-                console.log(`📝 Section strong text: "${strongElement.textContent}"`);
                 if (strongElement.textContent.includes(fieldName)) {
                     // Extract text after the strong element
                     const text = section.textContent.replace(strongElement.textContent, '').trim();
-                    console.log(`✅ Found "${fieldName}": "${text}"`);
                     return text;
                 }
             }
         }
-        console.log(`❌ Field "${fieldName}" not found`);
         return null;
     }
     
     async saveToDatabase(companyName, website) {
-        console.log(`Saving ${companyName} to database...`);
         
         if (!confirm(`Save ${companyName} to the database? This will store the research data permanently.`)) {
             return;
@@ -2739,7 +2939,6 @@ class TheodoreUI {
     }
 
     async loadDatabaseBrowser() {
-        console.log('Loading database browser...');
         
         const tableContainer = document.getElementById('companiesTable');
         const totalElement = document.getElementById('totalCompanies');
@@ -2756,17 +2955,14 @@ class TheodoreUI {
             let data = await response.json();
 
             if (response.ok && data.success) {
-                console.log('Using new companies API:', data);
                 this.updateDatabaseStats({ total_companies: data.total });
                 this.updateCompaniesTable(data.companies);
             } else {
                 // Fallback to old database endpoint
-                console.log('Trying fallback database endpoint...');
                 response = await fetch('/api/database');
                 data = await response.json();
                 
                 if (response.ok) {
-                    console.log('Using fallback database API:', data);
                     this.updateDatabaseStats(data);
                     this.updateCompaniesTable(data.companies || []);
                 } else {
@@ -2871,13 +3067,11 @@ class TheodoreUI {
     }
 
     async refreshDatabase() {
-        console.log('Refreshing database...');
         await this.loadDatabaseBrowser();
         this.showSuccess('Database refreshed');
     }
 
     async addSampleCompanies() {
-        console.log('Adding sample companies...');
         
         const addButton = document.querySelector('button[onclick="addSampleCompanies()"]');
         if (addButton) {
@@ -2899,9 +3093,7 @@ class TheodoreUI {
                 
                 // Show results if available
                 if (data.results) {
-                    console.log('Sample company results:', data.results);
                     data.results.forEach(result => {
-                        console.log(' -', result);
                     });
                 }
                 
@@ -2928,7 +3120,6 @@ class TheodoreUI {
             return;
         }
         
-        console.log('Clearing database...');
         
         const clearButton = document.querySelector('button[onclick="clearDatabase()"]');
         if (clearButton) {
@@ -3210,7 +3401,6 @@ class TheodoreUI {
 
     // Batch Processing Methods
     initializeBatchProcessing() {
-        console.log('Initializing batch processing...');
         
         // Set up form submission handler
         const batchForm = document.getElementById('batchProcessForm');
@@ -3233,7 +3423,6 @@ class TheodoreUI {
                 }
             }
         } catch (error) {
-            console.log('Could not load saved Google Sheet URL:', error);
         }
     }
 
@@ -3466,7 +3655,6 @@ class TheodoreUI {
 
     async loadClassificationAnalytics() {
         try {
-            console.log('📊 Loading classification analytics...');
             
             // Load stats, categories, and unclassified count in parallel
             const [statsResponse, categoriesResponse, unclassifiedResponse] = await Promise.all([
@@ -3487,7 +3675,6 @@ class TheodoreUI {
             this.updateTopCategories(categories.categories.slice(0, 10)); // Top 10 categories
             this.updateUnclassifiedCount(unclassified.total_unclassified);
             
-            console.log('✅ Classification analytics loaded successfully');
             
         } catch (error) {
             console.error('❌ Failed to load classification analytics:', error);
@@ -3552,7 +3739,6 @@ class TheodoreUI {
             const includeUnclassified = document.getElementById('includeUnclassified').checked;
             const url = `/api/classification/export?format=${format}&include_unclassified=${includeUnclassified}`;
             
-            console.log(`📊 Exporting classification data as ${format.toUpperCase()}...`);
             
             if (format === 'csv') {
                 // For CSV, trigger a download
@@ -3603,7 +3789,6 @@ class TheodoreUI {
 
     async loadUnclassifiedCompanies() {
         try {
-            console.log('🔄 Refreshing unclassified companies count...');
             
             const response = await fetch('/api/classification/unclassified');
             if (!response.ok) {
@@ -3627,7 +3812,6 @@ class TheodoreUI {
             const forceReclassify = document.getElementById('forceReclassify').checked;
             const startBtn = document.getElementById('startBatchClassificationBtn');
             
-            console.log(`🏷️ Starting batch classification: ${batchSize} companies, force: ${forceReclassify}`);
             
             // Disable button and show progress
             startBtn.disabled = true;
@@ -3790,13 +3974,28 @@ function validateGoogleSheet() {
     ui.validateGoogleSheet();
 }
 
+// Test function for debugging progress indicator
+function testProgressIndicator() {
+    
+    const progressEl = document.getElementById('progressContainer');
+    
+    if (progressEl) {
+        progressEl.style.display = 'block';
+        
+        // Scroll into view to make sure it's visible
+        progressEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+        console.error('🔧 Progress container not found!');
+    }
+}
+
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🏁 DOM loaded, initializing Theodore UI...');
     try {
         window.theodoreUI = new TheodoreUI();
-        console.log('✅ Theodore UI initialized successfully');
-        console.log('🔍 Available functions:', Object.getOwnPropertyNames(window.theodoreUI.__proto__));
+        
+        // Make test function available globally
+        window.testProgressIndicator = testProgressIndicator;
     } catch (error) {
         console.error('❌ Failed to initialize Theodore UI:', error);
     }
@@ -4022,6 +4221,34 @@ function resetProcessForm() {
     document.getElementById('processResults').style.display = 'none';
 }
 
+async function viewProcessedCompanyDetails() {
+    // View details of the just-processed company using the proper detailed modal
+    if (window.lastProcessedCompanyId) {
+        try {
+            const response = await fetch(`/api/company/${window.lastProcessedCompanyId}`);
+            const data = await response.json();
+            
+            if (data.success && data.company) {
+                // Use the proper detailed modal function
+                if (window.theodoreUI) {
+                    window.theodoreUI.showCompanyDetailsModal(data.company);
+                } else {
+                    console.error('Theodore UI not available');
+                    alert('Unable to show company details. Please try again.');
+                }
+            } else {
+                alert('Company details not available.');
+            }
+        } catch (error) {
+            console.error('Error fetching company details:', error);
+            alert('Failed to load company details.');
+        }
+    } else {
+        console.error('No processed company ID available');
+        alert('Company details not available. Please try again.');
+    }
+}
+
 function switchToDiscoveryTab() {
     // Switch to discovery tab
     document.querySelector('.tab-button[data-tab="discoveryTab"]').click();
@@ -4055,7 +4282,7 @@ async function viewSalesIntelligence(companyId) {
                         </div>
                         <div class="modal-stats" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
                             <div class="stat-row">
-                                <strong>Pages Processed:</strong> ${data.company.pages_crawled ? data.company.pages_crawled.length : 0}
+                                <strong>Pages Processed:</strong> ${data.company.scraped_urls_count || (data.company.pages_crawled ? data.company.pages_crawled.length : 0)}
                             </div>
                             <div class="stat-row">
                                 <strong>Processing Time:</strong> ${data.company.processing_time ? data.company.processing_time.toFixed(1) + 's' : 'Unknown'}

@@ -472,6 +472,33 @@ class PineconeClient:
             "company_size": safe_get(company.company_size or company.employee_count_range)
         }
         
+        # Add SaaS classification data
+        if hasattr(company, 'saas_classification') and company.saas_classification:
+            metadata["saas_classification"] = safe_get(company.saas_classification)
+            metadata["is_saas"] = company.is_saas
+            metadata["classification_confidence"] = company.classification_confidence
+            metadata["classification_justification"] = safe_get(company.classification_justification)
+            if hasattr(company, 'classification_timestamp') and company.classification_timestamp:
+                metadata["classification_timestamp"] = company.classification_timestamp.isoformat()
+        
+        # Add scraping details to metadata 
+        if hasattr(company, 'scraped_urls') and company.scraped_urls:
+            metadata["scraped_urls"] = safe_join(company.scraped_urls)  # Store all URLs in metadata for API access
+            metadata["scraped_urls_count"] = len(company.scraped_urls)
+        
+        if hasattr(company, 'llm_prompts_sent') and company.llm_prompts_sent:
+            metadata["llm_interactions_count"] = len(company.llm_prompts_sent)
+        
+        # Add token usage and cost tracking
+        if hasattr(company, 'total_input_tokens'):
+            metadata["total_input_tokens"] = company.total_input_tokens
+        if hasattr(company, 'total_output_tokens'):
+            metadata["total_output_tokens"] = company.total_output_tokens
+        if hasattr(company, 'total_cost_usd'):
+            metadata["total_cost_usd"] = round(company.total_cost_usd, 6)
+        if hasattr(company, 'llm_calls_breakdown') and company.llm_calls_breakdown:
+            metadata["llm_calls_count"] = len(company.llm_calls_breakdown)
+        
         # Add confidence scores if available
         confidence_fields = ['stage_confidence', 'tech_confidence', 'industry_confidence']
         for field in confidence_fields:
@@ -544,6 +571,33 @@ class PineconeClient:
         # Add AI summary if available
         if company.ai_summary:
             content_parts.append(f"AI Analysis: {safe_get(company.ai_summary)}")
+        
+        # Add scraping details
+        if company.scraped_urls:
+            content_parts.append(f"Scraped URLs ({len(company.scraped_urls)}):")
+            for i, url in enumerate(company.scraped_urls[:20]):  # Limit to first 20 URLs
+                content_parts.append(f"  {i+1}. {url}")
+        
+        # Add scraped content samples
+        if company.scraped_content_details:
+            content_parts.append(f"Scraped Content Samples:")
+            for url, content in list(company.scraped_content_details.items())[:5]:  # First 5 pages
+                content_preview = content[:200] + "..." if len(content) > 200 else content
+                content_parts.append(f"  {url}: {content_preview}")
+        
+        # Add LLM interaction details
+        if company.llm_prompts_sent:
+            content_parts.append(f"LLM Interactions ({len(company.llm_prompts_sent)}):")
+            for interaction in company.llm_prompts_sent:
+                content_parts.append(f"  Task: {interaction.get('task_id', 'Unknown')}")
+                content_parts.append(f"  Processing Time: {interaction.get('processing_time', 0):.2f}s")
+        
+        # Add key prompts used
+        if company.page_selection_prompt:
+            content_parts.append(f"Page Selection Prompt (first 300 chars): {company.page_selection_prompt[:300]}...")
+        
+        if company.content_analysis_prompt:
+            content_parts.append(f"Content Analysis Prompt (first 300 chars): {company.content_analysis_prompt[:300]}...")
         
         return "\n".join(content_parts)
     
@@ -856,7 +910,7 @@ class PineconeClient:
                                      industry_filter: str = None) -> List[Dict[str, Any]]:
         """Find similar companies using enhanced similarity algorithm"""
         try:
-            from src.similarity_engine import SimilarityEngine
+            from src.experimental.similarity_engine import SimilarityEngine
             
             # Get target company
             target_company = self.get_full_company_data(company_id)

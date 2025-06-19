@@ -1,0 +1,54 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    89    0     0  100    89      0     73  0:00:01  0:00:01 --:--:--    73100    89    0     0  100    89      0     40  0:00:02  0:00:02 --:--:--    40100    89    0     0  100    89      0     27  0:00:03  0:00:03 --:--:--    27100    89    0     0  100    89      0     21  0:00:04  0:00:04 --:--:--    21100    89    0     0  100    89      0     17  0:00:05  0:00:05 --:--:--    17100    89    0     0  100    89      0     14  0:00:06  0:00:06 --:--:--     0100    89    0     0  100    89      0     12  0:00:07  0:00:07 --:--:--     0100    89    0     0  100    89      0     10  0:00:08  0:00:08 --:--:--     0100    89    0     0  100    89      0      9  0:00:09  0:00:09 --:--:--     0100    89    0     0  100    89      0      8  0:00:11  0:00:10  0:00:01     0100    89    0     0  100    89      0      7  0:00:12  0:00:11  0:00:01     0100    89    0     0  100    89      0      7  0:00:12  0:00:12 --:--:--     0100    89    0     0  100    89      0      6  0:00:14  0:00:13  0:00:01     0100    89    0     0  100    89      0      6  0:00:14  0:00:14 --:--:--     0100    89    0     0  100    89      0      5  0:00:17  0:00:15  0:00:02     0100    89    0     0  100    89      0      5  0:00:17  0:00:16  0:00:01     0100    89    0     0  100    89      0      5  0:00:17  0:00:17 --:--:--     0100    89    0     0  100    89      0      4  0:00:22  0:00:18  0:00:04     0100    89    0     0  100    89      0      4  0:00:22  0:00:19  0:00:03     0100    89    0     0  100    89      0      4  0:00:22  0:00:20  0:00:02     0100    89    0     0  100    89      0      4  0:00:22  0:00:21  0:00:01     0100    89    0     0  100    89      0      3  0:00:29  0:00:22  0:00:07     0100    89    0     0  100    89      0      3  0:00:29  0:00:23  0:00:06     0100    89    0     0  100    89      0      3  0:00:29  0:00:24  0:00:05     0100    89    0     0  100    89      0      3  0:00:29  0:00:25  0:00:04     0100    89    0     0  100    89      0      3  0:00:29  0:00:26  0:00:03     0100    89    0     0  100    89      0      3  0:00:29  0:00:27  0:00:02     0100    89    0     0  100    89      0      3  0:00:29  0:00:28  0:00:01     0100    89    0     0  100    89      0      3  0:00:29  0:00:29 --:--:--     0100    89    0     0  100    89      0      2  0:00:44  0:00:30  0:00:14     0100    89    0     0  100    89      0      2  0:00:44  0:00:31  0:00:13     0100    89    0     0  100    89      0      2  0:00:44  0:00:32  0:00:12     0100    89    0     0  100    89      0      2  0:00:44  0:00:33  0:00:11     0100    89    0     0  100    89      0      2  0:00:44  0:00:34  0:00:10     0100    89    0     0  100    89      0      2  0:00:44  0:00:35  0:00:09     0100    89    0     0  100    89      0      2  0:00:44  0:00:36  0:00:08     0100    89    0     0  100    89      0      2  0:00:44  0:00:37  0:00:07     0100    89    0     0  100    89      0      2  0:00:44  0:00:38  0:00:06     0100    89    0     0  100    89      0      2  0:00:44  0:00:39  0:00:05     0100    89    0     0  100    89      0      2  0:00:44  0:00:40  0:00:04     0100    89    0     0  100    89      0      2  0:00:44  0:00:41  0:00:03     0100    89    0     0  100    89      0      2  0:00:44  0:00:42  0:00:02     0100    89    0     0  100    89      0      2  0:00:44  0:00:43  0:00:01     0100    89    0     0  100    89      0      2  0:00:44  0:00:44 --:--:--     0100    89    0     0  100    89      0      1  0:01:29  0:00:45  0:00:44     0100    89    0     0  100    89      0      1  0:01:29  0:00:46  0:00:43     0100    89    0     0  100    89      0      1  0:01:29  0:00:47  0:00:42     0100    89    0     0  100    89      0      1  0:01:29  0:00:48  0:00:41     0100    89    0     0  100    89      0      1  0:01:29  0:00:49  0:00:40     0100    89    0     0  100    89      0      1  0:01:29  0:00:50  0:00:39     0100    89    0     0  100    89      0      1  0:01:29  0:00:51  0:00:38     0100    89    0     0  100    89      0      1  0:01:29  0:00:52  0:00:37     0100  2047  100  1958  100    89     36      1  0:01:29  0:00:53  0:00:36   408100  2047  100  1958  100    89     36      1  0:01:29  0:00:53  0:00:36   516
+{
+  "company": {
+    "analysis_applied": true,
+    "business_context": "",
+    "business_model": "Freemium",
+    "company_description": "FreeConvert is a mature online file conversion service offering a versatile, secure, and accessible platform for converting over 1500 file formats across any device. It operates on a freemium model with a strong focus on security and quality, targeting individual users, prosumers, and small to medium-sized businesses.",
+    "company_name": "Test-FreeConvert-Clean",
+    "company_size": "SMB",
+    "confidence": 0.8,
+    "crawl_depth": 5,
+    "discovery_method": "LLM + On-Demand Research + AI Analysis",
+    "industry": "SaaS",
+    "is_researched": true,
+    "job_listings": "Research failed: No module named 'src.job_listings_crawler'",
+    "job_listings_details": {},
+    "key_services": [
+      "Online file conversion service"
+    ],
+    "location": "Unknown",
+    "pages_crawled": [
+      "https://www.freeconvert.com",
+      "https://www.freeconvert.com/3g2-converter",
+      "https://www.freeconvert.com/3g2-to-mp4",
+      "https://www.freeconvert.com/3ga-converter",
+      "https://www.freeconvert.com/3gp-converter"
+    ],
+    "pain_points": [
+      "Incompatible file formats"
+    ],
+    "processing_time": 49.56388020515442,
+    "reasoning": [
+      "LLM suggestion with web research & analysis"
+    ],
+    "relationship_type": "similar",
+    "research_status": "success",
+    "research_timestamp": "2025-06-18T04:33:37.417075",
+    "similarity_score": 0.8,
+    "sources": [
+      "llm",
+      "web_research",
+      "ai_analysis"
+    ],
+    "target_market": "Individual users, prosumers, and potentially small to medium-sized businesses or developers who require reliable and secure file conversion.",
+    "tech_stack": [],
+    "value_proposition": "",
+    "website": "https://www.freeconvert.com"
+  },
+  "processing_time": 53.15660905838013,
+  "success": true,
+  "timestamp": "2025-06-18T04:33:37.417340"
+}

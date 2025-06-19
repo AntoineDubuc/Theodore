@@ -6,6 +6,7 @@ Provides live updates during company processing
 import json
 import time
 import logging
+import os
 from typing import Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
@@ -31,12 +32,12 @@ class ProgressLogger:
         # Ensure logs directory exists
         Path(self.log_file).parent.mkdir(exist_ok=True)
         
-        # Initialize empty log file
-        self._save_progress()
+        # Load existing progress data or initialize empty
+        self._load_progress()
     
     def start_job(self, job_id: str, company_name: str, total_phases: int = 4) -> None:
         """Start tracking a new processing job"""
-        print(f"🔧 PROGRESS_LOGGER: Starting job {job_id} for {company_name}")
+        # Starting job tracking
         with self.lock:
             job_data = {
                 "job_id": job_id,
@@ -51,30 +52,27 @@ class ProgressLogger:
                 "result_summary": None
             }
             
-            print(f"🔧 PROGRESS_LOGGER: Created job data: {job_data}")
-            print(f"🔧 PROGRESS_LOGGER: Setting current_job to: {job_id}")
             
             self.progress_data["current_job"] = job_id
             self.progress_data["jobs"][job_id] = job_data
             self.progress_data["last_updated"] = datetime.now().isoformat()
             
-            print(f"🔧 PROGRESS_LOGGER: Jobs in memory after adding: {len(self.progress_data['jobs'])}")
-            print(f"🔧 PROGRESS_LOGGER: Current job set to: {self.progress_data['current_job']}")
             
             self._save_progress()
             
-            print(f"🔧 PROGRESS_LOGGER: Job {job_id} saved successfully")
             logger.info(f"Started processing job {job_id} for {company_name}")
     
     def update_phase(self, job_id: str, phase_name: str, status: str = "running", 
                     details: Optional[Dict] = None) -> None:
         """Update current phase progress"""
-        print(f"🔧 DEBUG: update_phase called - job_id: {job_id}, phase: {phase_name}, status: {status}")
         with self.lock:
             if job_id not in self.progress_data["jobs"]:
-                print(f"❌ DEBUG: Job {job_id} not found in jobs: {list(self.progress_data['jobs'].keys())}")
-                logger.warning(f"Job {job_id} not found for phase update")
-                return
+                # Try reloading progress data from file (subprocess case)
+                self._load_progress()
+                
+                if job_id not in self.progress_data["jobs"]:
+                    logger.warning(f"Job {job_id} not found for phase update")
+                    return
             
             job = self.progress_data["jobs"][job_id]
             
@@ -120,14 +118,13 @@ class ProgressLogger:
             if not phase_found:
                 job["phases"].append(phase_data)
                 job["current_phase"] = len(job["phases"])
-                print(f"✅ DEBUG: Added new phase '{phase_name}' to job {job_id}. Total phases: {len(job['phases'])}")
             else:
-                print(f"🔄 DEBUG: Updated existing phase '{phase_name}' for job {job_id}")
+                # Update current phase number for running phases
+                job["current_phase"] = len(job["phases"])
             
             self.progress_data["last_updated"] = datetime.now().isoformat()
             self._save_progress()
             
-            print(f"💾 DEBUG: Saved progress data for job {job_id}. Current phases: {[p['name'] for p in job['phases']]}")
             logger.info(f"Job {job_id}: {phase_name} - {status}")
     
     def complete_job(self, job_id: str, success: bool = True, 
@@ -175,61 +172,90 @@ class ProgressLogger:
     def get_current_job_progress(self) -> Optional[Dict]:
         """Get progress for currently running job"""
         with self.lock:
-            print(f"🔧 PROGRESS_LOGGER: Getting current job progress...")
             current_job_id = self.progress_data.get("current_job")
-            print(f"🔧 PROGRESS_LOGGER: Current job ID: {current_job_id}")
             
             all_jobs = self.progress_data.get("jobs", {})
-            print(f"🔧 PROGRESS_LOGGER: Total jobs in memory: {len(all_jobs)}")
-            print(f"🔧 PROGRESS_LOGGER: All job IDs: {list(all_jobs.keys())}")
             
             if current_job_id:
-                print(f"🔧 PROGRESS_LOGGER: Looking for job {current_job_id} in jobs...")
+                
+                # CRITICAL FIX: Always reload from file to get latest subprocess updates
+                self._load_progress()
+                all_jobs = self.progress_data.get("jobs", {})  # Update with fresh data
+                
+                # If subprocess is writing, retry once after a short delay
                 if current_job_id in all_jobs:
                     job_data = all_jobs[current_job_id]
-                    print(f"🔧 PROGRESS_LOGGER: Found current job: {job_data.get('company_name')}")
-                    print(f"🔧 PROGRESS_LOGGER: Job status: {job_data.get('status')}")
-                    print(f"🔧 PROGRESS_LOGGER: Job phases: {len(job_data.get('phases', []))}")
-                    return self._build_phase_structure(job_data)
-                else:
-                    print(f"🔧 PROGRESS_LOGGER: ❌ Current job {current_job_id} not found in jobs!")
-            else:
-                print(f"🔧 PROGRESS_LOGGER: No current job set")
+                    if len(job_data.get('phases', [])) == 0 and job_data.get('status') == 'running':
+                        import time
+                        time.sleep(0.1)  # Brief delay for file sync
+                        self._load_progress()
+                        all_jobs = self.progress_data.get("jobs", {})
                 
-            # If no current job, look for any running jobs
+                if current_job_id in all_jobs:
+                    job_data = all_jobs[current_job_id]
+                    
+                    # If current job is no longer running, clear it
+                    if job_data.get('status') != 'running':
+                        self.progress_data["current_job"] = None
+                        self._save_progress()
+                    else:
+                        return self._build_phase_structure(job_data)
+                else:
+                    pass
+            else:
+                pass
+                
+            # If no current job, look for any running jobs (but clean up stale ones first)
             running_jobs = []
+            stale_jobs_cleaned = False
             for job_id, job_data in all_jobs.items():
                 if job_data.get("status") == "running":
-                    running_jobs.append((job_id, job_data))
+                    # Check if job is stale (running for more than 15 minutes for concurrent implementation)
+                    start_time_str = job_data.get("start_time")
+                    if start_time_str:
+                        try:
+                            from datetime import datetime, timedelta
+                            start_time = datetime.fromisoformat(start_time_str)
+                            if datetime.now() - start_time > timedelta(minutes=15):
+                                job_data["status"] = "failed"
+                                job_data["error"] = "Job timed out after 15 minutes"
+                                job_data["end_time"] = datetime.now().isoformat()
+                                stale_jobs_cleaned = True
+                                continue  # Skip this job
+                        except:
+                            pass  # If we can't parse the time, treat as valid
                     
-            print(f"🔧 PROGRESS_LOGGER: Found {len(running_jobs)} running jobs")
+                    running_jobs.append((job_id, job_data))
+            
+            # Save progress if we cleaned up stale jobs
+            if stale_jobs_cleaned:
+                self._save_progress()
+                    
             if running_jobs:
                 # Return the most recent running job
                 most_recent = max(running_jobs, key=lambda x: x[1].get("start_time", ""))
-                print(f"🔧 PROGRESS_LOGGER: Returning most recent running job: {most_recent[1].get('company_name')}")
                 return self._build_phase_structure(most_recent[1])
                 
-            print(f"🔧 PROGRESS_LOGGER: No active jobs found")
             return None
     
     def _build_phase_structure(self, job_data: Dict) -> Dict:
         """Build phase structure for frontend consumption"""
-        phases = {}
-        for phase in job_data.get("phases", []):
-            phases[phase["name"]] = phase
-        
+        # Keep phases as an array for JavaScript compatibility
         result = job_data.copy()
-        result["phases"] = phases
+        # JavaScript expects phases to be an array, not a dictionary
+        result["phases"] = job_data.get("phases", [])
         return result
     
     def log_page_scraping(self, job_id: str, page_url: str, content_preview: str, 
                          page_number: int, total_pages: int) -> None:
         """Log individual page scraping progress"""
-        print(f"🔧 DEBUG: log_page_scraping called - job_id: {job_id}, page: {page_url}, page_num: {page_number}/{total_pages}")
+        print(f"🔍 [{page_number}/{total_pages}] Scraping: {page_url}")
         with self.lock:
             if job_id not in self.progress_data["jobs"]:
-                print(f"❌ DEBUG: Job {job_id} not found for page scraping update")
                 return
+            
+            # Add to UI processing log
+            self.add_to_progress_log(job_id, f"🔍 Scraped page {page_number}/{total_pages}: {page_url} ({len(content_preview):,} chars)")
             
             # Update the current Content Extraction phase with page details
             job = self.progress_data["jobs"][job_id]
@@ -241,14 +267,47 @@ class ProgressLogger:
                     phase["total_pages"] = total_pages
                     phase["scraped_content_preview"] = content_preview[:500] + "..." if len(content_preview) > 500 else content_preview
                     phase_updated = True
-                    print(f"✅ DEBUG: Updated Content Extraction phase with page {page_url}")
                     break
             
             if not phase_updated:
                 print(f"⚠️ DEBUG: No running Content Extraction phase found to update")
+    
+    def add_to_progress_log(self, job_id: str, message: str):
+        """Add a message to the processing log for the UI"""
+        with self.lock:
+            if job_id in self.progress_data["jobs"]:
+                if "processing_log" not in self.progress_data["jobs"][job_id]:
+                    self.progress_data["jobs"][job_id]["processing_log"] = []
+                
+                # Check for duplicate messages to reduce spam
+                existing_logs = self.progress_data["jobs"][job_id]["processing_log"]
+                if existing_logs and existing_logs[-1]["message"] == message:
+                    return  # Skip duplicate message
+                
+                timestamp = datetime.now().strftime("%I:%M:%S %p")
+                self.progress_data["jobs"][job_id]["processing_log"].append({
+                    "timestamp": timestamp,
+                    "message": message
+                })
+                
+                # Keep only the last 50 log entries to prevent memory issues
+                if len(self.progress_data["jobs"][job_id]["processing_log"]) > 50:
+                    self.progress_data["jobs"][job_id]["processing_log"] = self.progress_data["jobs"][job_id]["processing_log"][-50:]
+                
+                self._save_progress()
+    
+    def log_llm_call(self, job_id: str, call_number: int, model: str, prompt_length: int, response_length: int = None):
+        """Log LLM call to UI processing log"""
+        with self.lock:
+            if job_id not in self.progress_data["jobs"]:
+                return
+            
+            if response_length:
+                self.add_to_progress_log(job_id, f"🧠 LLM Call #{call_number}: {model} - {prompt_length:,} chars in → {response_length:,} chars out")
+            else:
+                self.add_to_progress_log(job_id, f"🧠 LLM Call #{call_number}: {model} - sending {prompt_length:,} chars...")
             
             self.progress_data["last_updated"] = datetime.now().isoformat()
-            self._save_progress()
             
             # Console logging for immediate feedback
             print(f"🔍 [{page_number}/{total_pages}] Scraping: {page_url}")
@@ -258,11 +317,28 @@ class ProgressLogger:
             
             logger.info(f"Job {job_id}: Scraped page {page_number}/{total_pages} - {page_url}")
     
+    def _load_progress(self) -> None:
+        """Load progress data from JSON file"""
+        try:
+            if Path(self.log_file).exists():
+                with open(self.log_file, 'r') as f:
+                    self.progress_data = json.load(f)
+                    logger.info(f"Loaded existing progress data with {len(self.progress_data.get('jobs', {}))} jobs")
+            else:
+                # File doesn't exist, save empty data
+                self._save_progress()
+                logger.info("Created new progress data file")
+        except Exception as e:
+            logger.warning(f"Failed to load progress data: {e}, using empty data")
+            self._save_progress()
+    
     def _save_progress(self) -> None:
         """Save progress data to file (thread-safe)"""
         try:
             with open(self.log_file, 'w') as f:
                 json.dump(self.progress_data, f, indent=2, default=str)
+                f.flush()  # Force flush to disk
+                os.fsync(f.fileno())  # Force sync to disk
         except Exception as e:
             logger.error(f"Failed to save progress data: {e}")
     
@@ -298,13 +374,23 @@ progress_logger = ProgressLogger()
 
 def log_processing_phase(job_id: str, phase_name: str, status: str = "running", **details):
     """Convenience function for logging processing phases"""
-    print(f"🔧 DEBUG: log_processing_phase called - job_id: {job_id}, phase: {phase_name}, status: {status}, details: {details}")
     progress_logger.update_phase(job_id, phase_name, status, details)
 
 
 def start_company_processing(company_name: str) -> str:
     """Start tracking company processing, returns job_id"""
-    job_id = f"company_{int(time.time() * 1000)}"
+    import uuid
+    
+    # Check if there's already a running job for this company
+    with progress_logger.lock:
+        for job_data in progress_logger.progress_data["jobs"].values():
+            if (job_data.get("company_name") == company_name and 
+                job_data.get("status") == "running"):
+                logger.warning(f"Company {company_name} is already being processed in job {job_data.get('job_id')}")
+                return job_data.get('job_id')
+    
+    # Generate unique job ID using UUID to prevent collisions
+    job_id = f"company_{int(time.time() * 1000)}_{str(uuid.uuid4())[:8]}"
     progress_logger.start_job(job_id, company_name, total_phases=4)
     return job_id
 

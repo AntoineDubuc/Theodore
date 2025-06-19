@@ -154,6 +154,21 @@ class CompanyData(BaseModel):
     ai_summary: Optional[str] = Field(None, description="Bedrock-generated summary")
     embedding: Optional[List[float]] = Field(None, description="Vector embedding")
     
+    # Scraping details
+    scraped_urls: List[str] = Field(default_factory=list, description="URLs that were successfully scraped")
+    scraped_content_details: Dict[str, str] = Field(default_factory=dict, description="URL -> content mapping")
+    
+    # LLM interaction details
+    llm_prompts_sent: List[Dict[str, str]] = Field(default_factory=list, description="Prompts sent to LLM with responses")
+    page_selection_prompt: Optional[str] = Field(None, description="Prompt used for page selection")
+    content_analysis_prompt: Optional[str] = Field(None, description="Prompt used for content analysis")
+    
+    # Token usage and cost tracking
+    total_input_tokens: int = Field(default=0, description="Total input tokens used across all LLM calls")
+    total_output_tokens: int = Field(default=0, description="Total output tokens generated across all LLM calls")
+    total_cost_usd: float = Field(default=0.0, description="Total cost in USD for all LLM calls")
+    llm_calls_breakdown: List[Dict[str, Any]] = Field(default_factory=list, description="Detailed breakdown of each LLM call with tokens and cost")
+    
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_updated: datetime = Field(default_factory=datetime.utcnow)
