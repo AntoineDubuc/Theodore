@@ -25,8 +25,25 @@ from models import CompanyIntelligenceConfig, CompanySimilarity, CompanyData
 from typing import Optional
 from progress_logger import progress_logger, start_company_processing
 
+# Import authentication modules
+from auth_manager import AuthManager
+from auth_routes import auth_bp
+from auth_decorators import optional_auth, api_auth_optional
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'theodore-dev-key-2024')
+
+# Initialize authentication
+auth_manager = AuthManager()
+pinecone_api_key = os.getenv('PINECONE_API_KEY')
+if pinecone_api_key:
+    auth_manager.init_app(app, pinecone_api_key)
+    print("✅ Authentication system initialized")
+else:
+    print("⚠️ Warning: No Pinecone API key found - authentication disabled")
+
+# Register authentication blueprint
+app.register_blueprint(auth_bp)
 
 # Initialize Theodore pipeline
 config = CompanyIntelligenceConfig()
@@ -51,10 +68,14 @@ def init_pipeline():
 init_pipeline()
 
 @app.route('/')
+@optional_auth
 def index():
     """Main dashboard page"""
     import time
-    return render_template('index.html', timestamp=int(time.time()))
+    from flask_login import current_user
+    return render_template('index.html', 
+                         timestamp=int(time.time()),
+                         current_user=current_user)
 
 @app.route('/api/health')
 def health_check():
@@ -418,6 +439,7 @@ def discover_similar_companies():
         }), 500
 
 @app.route('/api/research', methods=['POST'])
+@api_auth_optional
 def research_company():
     """Research a specific company using AsyncExecutionManager - DIRECT APPROACH"""
     
@@ -1192,6 +1214,9 @@ def discover_company_domain(company_name: str) -> Optional[str]:
         import requests
         from urllib.parse import quote
         
+        # Configure SSL handling
+        requests.packages.urllib3.disable_warnings()
+        
         # Use Google search to find company website
         search_query = f"{company_name} official website"
         headers = {
@@ -1201,7 +1226,7 @@ def discover_company_domain(company_name: str) -> Optional[str]:
         # Try DuckDuckGo first (no rate limiting)
         try:
             search_url = f"https://duckduckgo.com/html/?q={quote(search_query)}"
-            response = requests.get(search_url, headers=headers, timeout=10)
+            response = requests.get(search_url, headers=headers, timeout=10, verify=False)
             
             if response.status_code == 200:
                 import re
@@ -1227,7 +1252,7 @@ def discover_company_domain(company_name: str) -> Optional[str]:
         # Test which domain responds
         for domain in potential_domains:
             try:
-                test_response = requests.head(domain, timeout=5, allow_redirects=True)
+                test_response = requests.head(domain, timeout=5, allow_redirects=True, verify=False)
                 if test_response.status_code < 400:
                     return domain
             except:
@@ -1609,49 +1634,125 @@ def get_all_progress_data():
 
 @app.route('/api/companies')
 def list_companies():
-    """List all processed companies with their sales intelligence"""
+    """List companies with search and pagination support"""
     if not pipeline:
         return jsonify({
             'success': False,
             'error': 'Theodore pipeline not initialized',
             'companies': [],
-            'total': 0
+            'total': 0,
+            'page': 1,
+            'page_size': 25,
+            'total_pages': 0
         }), 500
     
     try:
-        # Get all companies from Pinecone
-        # Note: This is a simplified version - in production you'd implement pagination
+        # Get query parameters
+        search_query = request.args.get('search', '').strip().lower()
+        industry_filter = request.args.get('industry', '').strip()
+        business_model_filter = request.args.get('business_model', '').strip()
+        company_size_filter = request.args.get('company_size', '').strip()
+        page = max(1, int(request.args.get('page', 1)))
+        page_size = min(100, max(1, int(request.args.get('page_size', 25))))
+        
+        # Get all companies from Pinecone (increase limit for filtering)
         companies = []
         
         # Query Pinecone for all vectors (using a dummy query)
         dummy_embedding = [0.0] * 1536  # Standard embedding size
         results = pipeline.pinecone_client.index.query(
             vector=dummy_embedding,
-            top_k=100,  # Adjust as needed
+            top_k=500,  # Increased for better search/filtering
             include_metadata=True
         )
         
+        # Extract and normalize company data
         for match in results.matches:
             metadata = match.metadata or {}
-            companies.append({
+            company = {
                 'id': match.id,
                 'name': metadata.get('company_name', 'Unknown'),
                 'website': metadata.get('website', ''),
                 'industry': metadata.get('industry', ''),
                 'business_model': metadata.get('business_model', ''),
+                'company_size': metadata.get('company_size', ''),
                 'last_updated': metadata.get('last_updated', ''),
                 'has_sales_intelligence': bool(metadata.get('has_description', False) or metadata.get('company_description', '')),
                 # Classification data
                 'saas_classification': metadata.get('saas_classification'),
                 'classification_confidence': metadata.get('classification_confidence'),
                 'classification_justification': metadata.get('classification_justification'),
-                'is_saas': metadata.get('is_saas')
-            })
+                'is_saas': metadata.get('is_saas'),
+                # Business Model Framework
+                'business_model_framework': metadata.get('business_model_framework', ''),
+                # Additional fields for better search
+                'value_proposition': metadata.get('value_proposition', ''),
+                'target_market': metadata.get('target_market', ''),
+                'company_description': metadata.get('company_description', '')
+            }
+            companies.append(company)
+        
+        # Apply search filter
+        if search_query:
+            filtered_companies = []
+            for company in companies:
+                # Search in multiple fields
+                searchable_text = ' '.join([
+                    company.get('name', ''),
+                    company.get('industry', ''),
+                    company.get('business_model', ''),
+                    company.get('saas_classification', ''),
+                    company.get('business_model_framework', ''),
+                    company.get('value_proposition', ''),
+                    company.get('target_market', ''),
+                    company.get('company_description', '')
+                ]).lower()
+                
+                if search_query in searchable_text:
+                    filtered_companies.append(company)
+            companies = filtered_companies
+        
+        # Apply industry filter
+        if industry_filter:
+            companies = [c for c in companies if c.get('industry', '').lower() == industry_filter.lower()]
+        
+        # Apply business model filter
+        if business_model_filter:
+            companies = [c for c in companies if c.get('business_model', '').lower() == business_model_filter.lower()]
+        
+        # Apply company size filter
+        if company_size_filter:
+            companies = [c for c in companies if c.get('company_size', '').lower() == company_size_filter.lower()]
+        
+        # Sort companies by name
+        companies.sort(key=lambda x: x.get('name', '').lower())
+        
+        # Calculate pagination
+        total_companies = len(companies)
+        total_pages = (total_companies + page_size - 1) // page_size
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        paginated_companies = companies[start_index:end_index]
+        
+        # Get unique industries for filter dropdown
+        unique_industries = sorted(list(set(c.get('industry', '') for c in companies if c.get('industry', ''))))
         
         return jsonify({
             'success': True,
-            'companies': companies,
-            'total': len(companies)
+            'companies': paginated_companies,
+            'total': total_companies,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': total_pages,
+            'showing_start': start_index + 1 if total_companies > 0 else 0,
+            'showing_end': min(end_index, total_companies),
+            'filters': {
+                'industries': unique_industries,
+                'current_search': search_query,
+                'current_industry': industry_filter,
+                'current_business_model': business_model_filter,
+                'current_company_size': company_size_filter
+            }
         })
         
     except Exception as e:
@@ -1659,7 +1760,10 @@ def list_companies():
             'success': False,
             'error': f'Failed to list companies: {str(e)}',
             'companies': [],
-            'total': 0
+            'total': 0,
+            'page': 1,
+            'page_size': 25,
+            'total_pages': 0
         }), 500
 
 @app.route('/api/company/<company_id>')
@@ -1825,6 +1929,71 @@ def get_company_scraping_details(company_id):
         
     except Exception as e:
         return jsonify({'error': f'Failed to get scraping details: {str(e)}'}), 500
+
+@app.route('/api/company/<company_id>/update', methods=['PUT'])
+def update_company(company_id):
+    """Update an existing company record"""
+    if not pipeline:
+        return jsonify({'error': 'Theodore pipeline not initialized'}), 500
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No update data provided'}), 400
+        
+        # First, fetch the existing company data
+        result = pipeline.pinecone_client.index.fetch(ids=[company_id])
+        
+        if company_id not in result.vectors:
+            return jsonify({'error': 'Company not found'}), 404
+        
+        vector_data = result.vectors[company_id]
+        existing_metadata = dict(vector_data.metadata)
+        
+        # Update metadata with new values
+        updatable_fields = [
+            'name', 'website', 'industry', 'business_model', 'company_size', 
+            'founding_year', 'location', 'employee_count_range', 'company_description',
+            'value_proposition', 'target_market', 'key_services', 'tech_stack',
+            'funding_status', 'geographic_scope'
+        ]
+        
+        updated_fields = []
+        for field in updatable_fields:
+            if field in data:
+                # Handle special field mappings
+                if field == 'name':
+                    existing_metadata['company_name'] = data[field]
+                    updated_fields.append('company_name')
+                elif field == 'key_services' and isinstance(data[field], list):
+                    existing_metadata['key_services'] = ', '.join(data[field])
+                    updated_fields.append('key_services')
+                elif field == 'tech_stack' and isinstance(data[field], list):
+                    existing_metadata['tech_stack'] = ', '.join(data[field])
+                    updated_fields.append('tech_stack')
+                else:
+                    existing_metadata[field] = data[field]
+                    updated_fields.append(field)
+        
+        # Add update timestamp
+        from datetime import datetime
+        existing_metadata['last_updated'] = datetime.utcnow().isoformat()
+        updated_fields.append('last_updated')
+        
+        # Update the vector in Pinecone (keeping the same embedding)
+        pipeline.pinecone_client.index.upsert(
+            vectors=[(company_id, vector_data.values, existing_metadata)]
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Company updated successfully',
+            'updated_fields': updated_fields,
+            'company_id': company_id
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to update company: {str(e)}'}), 500
 
 @app.route('/api/research/start', methods=['POST'])
 def start_research():
@@ -3205,6 +3374,424 @@ def get_unclassified_companies():
         
     except Exception as e:
         return jsonify({'error': f'Failed to get unclassified companies: {str(e)}'}), 500
+
+# User Prompt Management API Endpoints (Authenticated)
+@app.route('/api/prompts/library')
+@api_auth_optional
+def get_user_prompt_library():
+    """Get user's complete prompt library"""
+    try:
+        from src.user_prompt_service import UserPromptService
+        from flask_login import current_user
+        
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Initialize prompt service
+        prompt_service = UserPromptService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Get user's library
+        library = prompt_service.get_user_prompt_library(current_user.id)
+        
+        return jsonify({
+            'success': True,
+            'library': {
+                'user_id': library.user_id,
+                'total_prompts': library.total_prompts,
+                'total_usage': library.total_usage,
+                'avg_library_success_rate': library.avg_library_success_rate,
+                'prompts': [
+                    {
+                        'id': p.id,
+                        'prompt_type': p.prompt_type,
+                        'prompt_name': p.prompt_name,
+                        'prompt_content': p.prompt_content,
+                        'description': p.description,
+                        'is_active': p.is_active,
+                        'is_default': p.is_default,
+                        'usage_count': p.usage_count,
+                        'last_used': p.last_used.isoformat() if p.last_used else None,
+                        'avg_success_rate': p.avg_success_rate,
+                        'avg_processing_time': p.avg_processing_time,
+                        'avg_cost_per_use': p.avg_cost_per_use,
+                        'created_at': p.created_at.isoformat(),
+                        'updated_at': p.updated_at.isoformat()
+                    } for p in library.prompts
+                ]
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user prompt library: {e}")
+        return jsonify({'error': f'Failed to get prompt library: {str(e)}'}), 500
+
+
+@app.route('/api/prompts', methods=['POST'])
+@api_auth_optional
+def create_user_prompt():
+    """Create a new user prompt"""
+    try:
+        from src.user_prompt_service import UserPromptService
+        from flask_login import current_user
+        
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Validate required fields
+        required_fields = ['prompt_type', 'prompt_name', 'prompt_content']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Initialize prompt service
+        prompt_service = UserPromptService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Create new prompt
+        new_prompt = prompt_service.create_prompt(
+            user_id=current_user.id,
+            prompt_type=data['prompt_type'],
+            prompt_name=data['prompt_name'],
+            prompt_content=data['prompt_content'],
+            description=data.get('description'),
+            is_default=data.get('is_default', False)
+        )
+        
+        if new_prompt:
+            return jsonify({
+                'success': True,
+                'prompt': {
+                    'id': new_prompt.id,
+                    'prompt_type': new_prompt.prompt_type,
+                    'prompt_name': new_prompt.prompt_name,
+                    'prompt_content': new_prompt.prompt_content,
+                    'description': new_prompt.description,
+                    'is_default': new_prompt.is_default,
+                    'created_at': new_prompt.created_at.isoformat()
+                },
+                'message': 'Prompt created successfully'
+            })
+        else:
+            return jsonify({'error': 'Failed to create prompt'}), 500
+        
+    except Exception as e:
+        logger.error(f"Error creating user prompt: {e}")
+        return jsonify({'error': f'Failed to create prompt: {str(e)}'}), 500
+
+
+@app.route('/api/prompts/<prompt_id>', methods=['PUT'])
+@api_auth_optional
+def update_user_prompt(prompt_id):
+    """Update an existing user prompt"""
+    try:
+        from src.user_prompt_service import UserPromptService
+        from flask_login import current_user
+        
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Initialize prompt service
+        prompt_service = UserPromptService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Update prompt
+        updated_prompt = prompt_service.update_prompt(
+            user_id=current_user.id,
+            prompt_id=prompt_id,
+            **data
+        )
+        
+        if updated_prompt:
+            return jsonify({
+                'success': True,
+                'prompt': {
+                    'id': updated_prompt.id,
+                    'prompt_type': updated_prompt.prompt_type,
+                    'prompt_name': updated_prompt.prompt_name,
+                    'prompt_content': updated_prompt.prompt_content,
+                    'description': updated_prompt.description,
+                    'is_default': updated_prompt.is_default,
+                    'updated_at': updated_prompt.updated_at.isoformat()
+                },
+                'message': 'Prompt updated successfully'
+            })
+        else:
+            return jsonify({'error': 'Prompt not found or update failed'}), 404
+        
+    except Exception as e:
+        logger.error(f"Error updating user prompt: {e}")
+        return jsonify({'error': f'Failed to update prompt: {str(e)}'}), 500
+
+
+@app.route('/api/prompts/<prompt_id>', methods=['DELETE'])
+@api_auth_optional
+def delete_user_prompt(prompt_id):
+    """Delete a user prompt"""
+    try:
+        from src.user_prompt_service import UserPromptService
+        from flask_login import current_user
+        
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Initialize prompt service
+        prompt_service = UserPromptService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Delete prompt
+        success = prompt_service.delete_prompt(current_user.id, prompt_id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Prompt deleted successfully'
+            })
+        else:
+            return jsonify({'error': 'Prompt not found or deletion failed'}), 404
+        
+    except Exception as e:
+        logger.error(f"Error deleting user prompt: {e}")
+        return jsonify({'error': f'Failed to delete prompt: {str(e)}'}), 500
+
+
+@app.route('/api/prompts/<prompt_id>/set-default', methods=['POST'])
+@api_auth_optional
+def set_default_prompt(prompt_id):
+    """Set a prompt as default for its type"""
+    try:
+        from src.user_prompt_service import UserPromptService
+        from flask_login import current_user
+        
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Initialize prompt service
+        prompt_service = UserPromptService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Set as default
+        success = prompt_service.set_default_prompt(current_user.id, prompt_id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Default prompt updated successfully'
+            })
+        else:
+            return jsonify({'error': 'Failed to set default prompt'}), 500
+        
+    except Exception as e:
+        logger.error(f"Error setting default prompt: {e}")
+        return jsonify({'error': f'Failed to set default prompt: {str(e)}'}), 500
+
+
+@app.route('/api/prompts/type/<prompt_type>')
+@api_auth_optional
+def get_prompts_by_type(prompt_type):
+    """Get all user prompts of a specific type"""
+    try:
+        from src.user_prompt_service import UserPromptService
+        from flask_login import current_user
+        
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Initialize prompt service
+        prompt_service = UserPromptService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Get prompts by type
+        prompts = prompt_service.get_prompts_by_type(current_user.id, prompt_type)
+        
+        return jsonify({
+            'success': True,
+            'prompt_type': prompt_type,
+            'prompts': [
+                {
+                    'id': p.id,
+                    'prompt_name': p.prompt_name,
+                    'prompt_content': p.prompt_content,
+                    'description': p.description,
+                    'is_default': p.is_default,
+                    'usage_count': p.usage_count,
+                    'avg_success_rate': p.avg_success_rate,
+                    'created_at': p.created_at.isoformat()
+                } for p in prompts
+            ]
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting prompts by type: {e}")
+        return jsonify({'error': f'Failed to get prompts: {str(e)}'}), 500
+
+
+@app.route('/api/prompts/export')
+@api_auth_optional
+def export_user_prompts():
+    """Export user's prompts for backup/sharing"""
+    try:
+        from src.user_prompt_service import UserPromptService
+        from flask_login import current_user
+        
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Initialize prompt service
+        prompt_service = UserPromptService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Export prompts
+        export_data = prompt_service.export_user_prompts(current_user.id)
+        
+        return jsonify({
+            'success': True,
+            'export_data': export_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error exporting user prompts: {e}")
+        return jsonify({'error': f'Failed to export prompts: {str(e)}'}), 500
+
+
+@app.route('/api/prompts/import', methods=['POST'])
+@api_auth_optional
+def import_user_prompts():
+    """Import prompts from export data"""
+    try:
+        from src.user_prompt_service import UserPromptService
+        from flask_login import current_user
+        
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data or 'import_data' not in data:
+            return jsonify({'error': 'No import data provided'}), 400
+        
+        # Initialize prompt service
+        prompt_service = UserPromptService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Import prompts
+        success = prompt_service.import_user_prompts(current_user.id, data['import_data'])
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Prompts imported successfully'
+            })
+        else:
+            return jsonify({'error': 'Failed to import prompts'}), 500
+        
+    except Exception as e:
+        logger.error(f"Error importing user prompts: {e}")
+        return jsonify({'error': f'Failed to import prompts: {str(e)}'}), 500
+
+
+# Field Metrics API Endpoints
+@app.route('/api/field-metrics/summary')
+def get_field_metrics_summary():
+    """Get field extraction performance summary"""
+    try:
+        from src.field_metrics_service import FieldMetricsService
+        
+        # Initialize metrics service
+        metrics_service = FieldMetricsService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Get overall performance summary
+        summary = metrics_service.get_field_performance_summary()
+        
+        return jsonify({
+            'success': True,
+            'summary': summary,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting field metrics summary: {e}")
+        return jsonify({'error': f'Failed to get field metrics: {str(e)}'}), 500
+
+
+@app.route('/api/field-metrics/field/<field_name>')
+def get_field_metrics(field_name):
+    """Get detailed metrics for a specific field"""
+    try:
+        from src.field_metrics_service import FieldMetricsService
+        
+        # Initialize metrics service
+        metrics_service = FieldMetricsService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Get field-specific performance
+        field_summary = metrics_service.get_field_performance_summary(field_name)
+        
+        return jsonify({
+            'success': True,
+            'field_name': field_name,
+            'metrics': field_summary,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting metrics for field {field_name}: {e}")
+        return jsonify({'error': f'Failed to get metrics for {field_name}: {str(e)}'}), 500
+
+
+@app.route('/api/field-metrics/company/<company_id>/analysis')
+def analyze_company_field_extraction(company_id):
+    """Analyze field extraction success for a specific company"""
+    try:
+        from src.field_metrics_service import FieldMetricsService
+        
+        # Get company data
+        if not pipeline or not pipeline.pinecone_client:
+            return jsonify({'error': 'Pipeline not initialized'}), 500
+        
+        company = pipeline.pinecone_client.get_full_company_data(company_id)
+        if not company:
+            return jsonify({'error': 'Company not found'}), 404
+        
+        # Initialize metrics service and analyze
+        metrics_service = FieldMetricsService(pinecone_client=pipeline.pinecone_client)
+        analysis = metrics_service.analyze_company_extraction(company)
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error analyzing company {company_id} field extraction: {e}")
+        return jsonify({'error': f'Failed to analyze company field extraction: {str(e)}'}), 500
+
+
+@app.route('/api/field-metrics/export')
+def export_field_metrics():
+    """Export comprehensive field metrics report"""
+    try:
+        from src.field_metrics_service import FieldMetricsService
+        
+        # Initialize metrics service
+        metrics_service = FieldMetricsService(pinecone_client=pipeline.pinecone_client if pipeline else None)
+        
+        # Get export format from query params
+        format_type = request.args.get('format', 'json')
+        
+        # Generate report
+        report = metrics_service.export_metrics_report(format=format_type)
+        
+        return jsonify({
+            'success': True,
+            'report': report,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error exporting field metrics: {e}")
+        return jsonify({'error': f'Failed to export field metrics: {str(e)}'}), 500
+
 
 @app.route('/favicon.ico')
 def favicon():

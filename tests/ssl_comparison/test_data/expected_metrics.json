@@ -1,0 +1,60 @@
+{
+  "control_test_expectations": {
+    "description": "Expected results from current Theodore system (with SSL issues)",
+    "expected_outcomes": {
+      "link_discovery_success_rate": 0.1,
+      "average_links_discovered": 0.5,
+      "llm_page_selection_success_rate": 0.0,
+      "heuristic_fallback_usage_rate": 1.0,
+      "content_extraction_success_rate": 0.2,
+      "overall_processing_success_rate": 0.3,
+      "average_processing_time_seconds": 45,
+      "ssl_error_rate": 0.8
+    },
+    "expected_ssl_errors": [
+      "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate",
+      "robots.txt analysis failed",
+      "No links discovered during crawling",
+      "LLM page selection failed, falling back to heuristic"
+    ]
+  },
+  "treatment_test_expectations": {
+    "description": "Expected results with SSL fixes applied",
+    "expected_outcomes": {
+      "link_discovery_success_rate": 0.8,
+      "average_links_discovered": 25,
+      "llm_page_selection_success_rate": 0.7,
+      "heuristic_fallback_usage_rate": 0.3,
+      "content_extraction_success_rate": 0.8,
+      "overall_processing_success_rate": 0.9,
+      "average_processing_time_seconds": 35,
+      "ssl_error_rate": 0.1
+    },
+    "expected_improvements": {
+      "link_discovery": "16x improvement in links discovered",
+      "page_selection": "LLM-driven selection becomes functional",
+      "content_extraction": "4x improvement in successful extractions",
+      "overall_success": "3x improvement in company processing"
+    }
+  },
+  "success_criteria": {
+    "minimum_improvements": {
+      "link_discovery_increase": 5.0,
+      "llm_page_selection_functional": true,
+      "content_extraction_increase": 2.0,
+      "processing_success_increase": 1.5,
+      "ssl_error_reduction": 0.5
+    },
+    "test_passes_if": "Treatment test shows statistically significant improvements in all key metrics compared to control test"
+  },
+  "metrics_definitions": {
+    "link_discovery_success_rate": "Percentage of companies where >0 URLs were discovered",
+    "average_links_discovered": "Mean number of URLs discovered per company",
+    "llm_page_selection_success_rate": "Percentage of companies where LLM successfully selected pages",
+    "heuristic_fallback_usage_rate": "Percentage of companies that fell back to heuristic page selection",
+    "content_extraction_success_rate": "Percentage of selected pages with successful content extraction",
+    "overall_processing_success_rate": "Percentage of companies that completed processing without fatal errors",
+    "average_processing_time_seconds": "Mean time to process each company",
+    "ssl_error_rate": "Percentage of companies encountering SSL certificate errors"
+  }
+}

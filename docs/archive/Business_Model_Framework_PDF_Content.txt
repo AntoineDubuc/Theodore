@@ -1,0 +1,13 @@
+# Business Model Description Framework - PDF Content
+
+This file contains the text content extracted from David's Business Model Description Framework PDF document.
+
+---
+
+[Content from Business Model Description Prompt.txt would be included here]
+
+---
+
+**Source**: Business Model Description Prompt.pdf (converted to text)
+**Usage**: Reference material for implementing David's framework
+**Integration**: Used in src/business_model_framework_prompts.py

@@ -1,0 +1,6 @@
+{
+  "success": false,
+  "company_name": "scitara.com",
+  "error": "HTTP 400: {\n  \"error\": \"Company name is required\"\n}\n",
+  "processing_time": 0.0012371540069580078
+}

@@ -1,0 +1,753 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-06-25T18:54:57.133716",
+    "sheet_id": "1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk",
+    "models_tested": 4,
+    "companies_tested": 10,
+    "note": "Using hybrid approach with real company data + sample content for immediate testing"
+  },
+  "companies": [
+    {
+      "company": {
+        "name": "UnioHP",
+        "url": "uniohp.com",
+        "domain": "uniohp.com",
+        "employee_count": "45",
+        "description": "Aging public housing stock needs robust health checks, maintenance, and resident engagement. UnioHP\u2019s platform schedules inspections, logs defects with mobile cameras, and auto-prioritizes workorders based on risk and compliance. Integrated tenant portals let residents submit issues and track progress, improving satisfaction and reducing reactive repair costs by 30% across housing associations.",
+        "technologies": "Mobile inspection app; risk-prioritization engine; tenant engagement portal; compliance tracking",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:54:57.145055",
+      "sample_content_length": 919,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "UnioHP",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Healthcare providers (hospitals, clinics, physician practices, healthcare networks)\",\n  \"competitive_advantages\": [\n    \"HIPAA-compliant platform ensuring data security and privacy\",\n    \"Comprehensive solutions including EHR, telemedicine, patient portals, and analytics\",\n    \"Focus on care coordination, patient engagement, and operational efficiency\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"healthcare\"\n}\n```",
+          "tokens_used": 287,
+          "cost": 0.0002296,
+          "response_time": 1.4752678871154785,
+          "error": null,
+          "json_valid": true,
+          "response_length": 524
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "UnioHP",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Healthcare providers (hospitals, clinics, physician practices, healthcare networks)\",\n  \"competitive_advantages\": [\n    \"HIPAA-compliant platform ensuring high data security and privacy\",\n    \"Comprehensive solutions including EHR, telemedicine, patient portals, and analytics\",\n    \"Focus on care coordination, patient engagement, and operational efficiency\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"healthcare\"\n}\n```",
+          "tokens_used": 288,
+          "cost": 1.728e-05,
+          "response_time": 1.300929069519043,
+          "error": null,
+          "json_valid": true,
+          "response_length": 529
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "UnioHP",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Housing associations, public housing entities, social housing providers\",\n  \"competitive_advantages\": [\n    \"Reduces reactive repair costs by 30% through proactive maintenance and prioritization.\",\n    \"Automated work order prioritization based on risk and compliance, ensuring efficiency and adherence.\",\n    \"Improved resident satisfaction and streamlined issue resolution via integrated tenant portals.\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 7,\n  \"industry_sector\": \"PropTech\"\n}\n```",
+          "tokens_used": 297,
+          "cost": 0.00037125,
+          "response_time": 11.176694869995117,
+          "error": null,
+          "json_valid": true,
+          "response_length": 574
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "UnioHP",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Housing associations, public housing authorities, and large property management companies managing residential portfolios.\",\n  \"competitive_advantages\": [\n    \"Automated risk-prioritization engine for workorders, enhancing compliance and proactive maintenance.\",\n    \"Integrated platform combining mobile inspection, defect logging, and a comprehensive tenant engagement portal.\",\n    \"Proven cost reduction in reactive repairs (30%) across housing associations, demonstrating clear ROI.\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 7,\n  \"industry_sector\": \"PropTech / Facilities Management\"\n}\n```",
+          "tokens_used": 306,
+          "cost": 2.295e-05,
+          "response_time": 10.153010845184326,
+          "error": null,
+          "json_valid": true,
+          "response_length": 680
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "MDOutlook",
+        "url": "mdoutlook.com",
+        "domain": "mdoutlook.com",
+        "employee_count": "9",
+        "description": "Pharma launch teams guess at oncologist sentiment and lose share. MDOutlook\u2019s Lumineer\u2122 platform surveys 500 k clinicians, mines literature and social data, and maps influencer networks, guiding targeting, education and conference strategy that lifts adoption in competitive tumour types.",
+        "technologies": "Lumineer KOL graph; NLP publication mining; survey panel SaaS; agile advisory boards portal; precision segmentation analytics",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:55:29.260843",
+      "sample_content_length": 987,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "MDOutlook",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Mid-market customers across various industries including technology, healthcare, finance, and manufacturing\",\n  \"competitive_advantages\": [\n    \"Lumineer\u2122 platform that surveys clinicians, mines literature and social data, and maps influencer networks\",\n    \"Advanced AI technology combined with user-friendly interfaces\",\n    \"Comprehensive features including automated workflows, real-time analytics, and seamless integrations\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 298,
+          "cost": 0.0002384,
+          "response_time": 1.378835916519165,
+          "error": null,
+          "json_valid": true,
+          "response_length": 593
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "MDOutlook",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Mid-market customers across various industries including technology, healthcare, finance, and manufacturing\",\n  \"competitive_advantages\": [\n    \"Lumineer\u2122 platform that surveys 500k clinicians and mines literature and social data\",\n    \"Mapping of influencer networks to guide targeting, education, and conference strategy\",\n    \"Precision segmentation analytics and agile advisory boards portal\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 298,
+          "cost": 1.7879999999999998e-05,
+          "response_time": 1.3100759983062744,
+          "error": null,
+          "json_valid": true,
+          "response_length": 560
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "MDOutlook",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Pharmaceutical companies (specifically launch and marketing teams), focusing on insights from healthcare professionals (clinicians, oncologists)\",\n  \"competitive_advantages\": [\n    \"Proprietary access to a large, specialized clinician survey panel (500k)\",\n    \"Advanced AI/NLP for literature and social data mining, combined with influencer network mapping\",\n    \"Actionable strategic guidance for pharmaceutical product launch and adoption in competitive therapeutic areas\"\n  ],\n  \"company_stage\": \"startup\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"Life Sciences SaaS\"\n}\n```",
+          "tokens_used": 309,
+          "cost": 0.00038625,
+          "response_time": 8.990514993667603,
+          "error": null,
+          "json_valid": true,
+          "response_length": 654
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "MDOutlook",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Pharmaceutical companies (specifically, launch teams in oncology)\",\n  \"competitive_advantages\": [\n    \"Access to a large proprietary survey panel of 500k clinicians\",\n    \"Advanced AI/NLP for literature and social data mining\",\n    \"Sophisticated influencer network mapping (KOL identification) for strategic guidance\"\n  ],\n  \"company_stage\": \"startup\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"PharmaTech / Life Sciences SaaS\"\n}\n```",
+          "tokens_used": 294,
+          "cost": 2.2049999999999997e-05,
+          "response_time": 6.645713806152344,
+          "error": null,
+          "json_valid": true,
+          "response_length": 510
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "Unlimit",
+        "url": "unlimit.com",
+        "domain": "unlimit.com",
+        "employee_count": "120",
+        "description": "Offshore and remote-site operators suffer from unreliable comms and high transit costs for M2M and broadband data. Unlimit aggregates multiple satellite, cellular and VSAT networks into a single managed service, applying dynamic link-balancing and usage-optimization to guarantee SLA-backed connectivity. Their Zero-Touch provisioning platform lets technicians deploy remote routers globally without on-site config, ensuring critical telemetry and VoIP run 24/7 even in polar or maritime environments.",
+        "technologies": "Multi-carrier SD-WAN; Zero-Touch provisioning; dynamic link-bonding; telemetry-QoS analytics",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:55:55.601714",
+      "sample_content_length": 983,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "Unlimit",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Mid-market customers across various industries including technology, healthcare, finance, and manufacturing\",\n  \"competitive_advantages\": [\n    \"Aggregation of multiple satellite, cellular, and VSAT networks into a single managed service\",\n    \"Dynamic link-balancing and usage-optimization to guarantee SLA-backed connectivity\",\n    \"Zero-Touch provisioning platform for global deployment of remote routers without on-site configuration\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 318,
+          "cost": 0.0002544,
+          "response_time": 1.4276022911071777,
+          "error": null,
+          "json_valid": true,
+          "response_length": 602
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "Unlimit",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Mid-market customers across various industries including technology, healthcare, finance, and manufacturing\",\n  \"competitive_advantages\": [\n    \"Aggregation of multiple satellite, cellular and VSAT networks into a single managed service\",\n    \"Dynamic link-balancing and usage-optimization to guarantee SLA-backed connectivity\",\n    \"Zero-Touch provisioning platform for global deployment of remote routers without on-site configuration\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 318,
+          "cost": 1.908e-05,
+          "response_time": 1.6048598289489746,
+          "error": null,
+          "json_valid": true,
+          "response_length": 601
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "Unlimit",
+          "success": false,
+          "response": null,
+          "tokens_used": 0,
+          "cost": 0.0,
+          "response_time": 21.923136711120605,
+          "error": "No response received",
+          "json_valid": false,
+          "response_length": 0
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "Unlimit",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS (Managed Connectivity as a Service)\",\n  \"target_market\": \"Businesses with critical connectivity needs in challenging remote and offshore environments (e.g., maritime, energy, polar research, remote industrial sites)\",\n  \"competitive_advantages\": [\n    \"SLA-backed, multi-network connectivity (satellite, cellular, VSAT) for extreme environments via dynamic link-balancing and optimization.\",\n    \"Zero-Touch provisioning platform enabling simplified global deployment and remote router configuration.\",\n    \"Specialized expertise in ensuring critical telemetry and VoIP in highly demanding remote, polar, and maritime conditions.\"\n  ],\n  \"company_stage\": \"Growth\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"Telecommunications / Managed Network Services\"\n}\n```",
+          "tokens_used": 343,
+          "cost": 2.5725e-05,
+          "response_time": 15.34649395942688,
+          "error": null,
+          "json_valid": true,
+          "response_length": 813
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "CFM Kentucky",
+        "url": "cfmcky.com",
+        "domain": "cfmcky.com",
+        "employee_count": "75",
+        "description": "Kentucky municipalities and utilities need robust financial management and regulatory reporting but often rely on spreadsheets or monolithic ERPs. CFM Kentucky delivers a cloud ERP tailored for public sector, with strength in fund accounting, grants tracking, and compliance dashboards. Automated GAAFR-ready reporting, budget-vs-actual analytics, and citizen self-service portals streamline operations and transparency\u2014reducing audit cycles and freeing finance teams for strategic planning.",
+        "technologies": "Cloud fund-accounting ERP; compliance reporting engine; budget-analytics; citizen portal integrations",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:56:43.913198",
+      "sample_content_length": 967,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "CFM Kentucky",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Kentucky municipalities and utilities, specifically mid-market public sector entities\",\n  \"competitive_advantages\": [\n    \"Tailored cloud ERP for public sector with fund accounting and grants tracking\",\n    \"Automated GAAFR-ready reporting and compliance dashboards\",\n    \"Citizen self-service portals for enhanced transparency and reduced audit cycles\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"fintech\"\n}\n```",
+          "tokens_used": 309,
+          "cost": 0.0002472,
+          "response_time": 1.3755741119384766,
+          "error": null,
+          "json_valid": true,
+          "response_length": 520
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "CFM Kentucky",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Kentucky municipalities and utilities, specifically SMB and public sector entities\",\n  \"competitive_advantages\": [\n    \"Tailored cloud ERP for public sector with fund accounting and grants tracking\",\n    \"Automated GAAFR-ready reporting and budget-vs-actual analytics\",\n    \"Citizen self-service portals for enhanced transparency and reduced audit cycles\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"fintech\"\n}\n```",
+          "tokens_used": 310,
+          "cost": 1.86e-05,
+          "response_time": 1.2719810009002686,
+          "error": null,
+          "json_valid": true,
+          "response_length": 522
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "CFM Kentucky",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS (specifically B2G SaaS for public sector)\",\n  \"target_market\": \"Public sector entities, including municipalities and utilities, primarily in Kentucky\",\n  \"competitive_advantages\": [\n    \"Cloud ERP tailored for public sector with strength in fund accounting, grants tracking, and compliance dashboards.\",\n    \"Automated GAAFR-ready reporting and robust budget-vs-actual analytics.\",\n    \"Citizen self-service portals enhancing transparency and streamlining operations.\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 7,\n  \"industry_sector\": \"SaaS (Public Sector Financial Management / GovTech)\"\n}\n```",
+          "tokens_used": 325,
+          "cost": 0.00040625000000000004,
+          "response_time": 14.289554834365845,
+          "error": null,
+          "json_valid": true,
+          "response_length": 657
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "CFM Kentucky",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Kentucky municipalities and utilities (Public Sector)\",\n  \"competitive_advantages\": [\n    \"Cloud ERP tailored specifically for public sector fund accounting, grants tracking, and compliance.\",\n    \"Automated GAAFR-ready reporting and budget-vs-actual analytics for streamlined operations.\",\n    \"Citizen self-service portals enhancing transparency and reducing audit cycles.\"\n  ],\n  \"company_stage\": \"Growth\",\n  \"technology_sophistication\": 7,\n  \"industry_sector\": \"GovTech\"\n}\n```",
+          "tokens_used": 309,
+          "cost": 2.3174999999999997e-05,
+          "response_time": 11.10278582572937,
+          "error": null,
+          "json_valid": true,
+          "response_length": 542
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "CDS.net",
+        "url": "cds.net",
+        "domain": "cds.net",
+        "employee_count": "250",
+        "description": "Hospitality and M&E venues struggle with disparate F&B, POS, and ticketing systems, leading to siloed data and poor guest experiences. CDS.net\u2019s unified hospitality platform unifies POS, event-management, and membership modules under one UI. Real-time reporting on F&B sales, event attendance, and CRM data helps operators optimize staffing, pricing, and promotions\u2014improving revenue and guest satisfaction without multiple vendors.",
+        "technologies": "Unified POS/event-management; membership CRM; real-time reporting",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:57:19.962807",
+      "sample_content_length": 921,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "CDS.net",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Hospitals, clinics, physician practices, and healthcare networks of all sizes\",\n  \"competitive_advantages\": [\n    \"HIPAA-compliant platform ensuring high standards of data security and privacy\",\n    \"Comprehensive suite of solutions including EHR, telemedicine, patient portals, and analytics\",\n    \"Focus on care coordination, patient engagement, and operational efficiency\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"healthcare\"\n}\n```",
+          "tokens_used": 296,
+          "cost": 0.0002368,
+          "response_time": 1.2462248802185059,
+          "error": null,
+          "json_valid": true,
+          "response_length": 545
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "CDS.net",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Hospitals, clinics, physician practices, and healthcare networks of all sizes\",\n  \"competitive_advantages\": [\n    \"HIPAA-compliant platform ensuring high standards of data security and privacy\",\n    \"Comprehensive suite of solutions including EHR, telemedicine, patient portals, and analytics\",\n    \"Focus on care coordination, patient engagement, and operational efficiency\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"healthcare\"\n}\n```",
+          "tokens_used": 296,
+          "cost": 1.776e-05,
+          "response_time": 1.2123169898986816,
+          "error": null,
+          "json_valid": true,
+          "response_length": 545
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "CDS.net",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Hospitality & Events venues (F&B, M&E)\",\n  \"competitive_advantages\": [\n    \"Unified platform for POS, event management, and membership, eliminating disparate systems and multiple vendors.\",\n    \"Real-time reporting on F&B sales, event attendance, and CRM data for optimized operations (staffing, pricing, promotions).\",\n    \"Improved revenue and guest satisfaction by addressing siloed data and enhancing guest experiences.\"\n  ],\n  \"company_stage\": \"Growth\",\n  \"technology_sophistication\": 6,\n  \"industry_sector\": \"Hospitality & Events\"\n}\n```",
+          "tokens_used": 307,
+          "cost": 0.00038375,
+          "response_time": 18.716356992721558,
+          "error": null,
+          "json_valid": true,
+          "response_length": 604
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "CDS.net",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Hospitality and M&E (Meetings & Events) venues, specifically those seeking to unify disparate F&B, POS, and ticketing systems.\",\n  \"competitive_advantages\": [\n    \"Unified Platform: Consolidates disparate F&B, POS, event-management, and membership modules into a single user interface, eliminating data silos.\",\n    \"Real-time Operational Intelligence: Provides immediate insights from F&B sales, event attendance, and CRM data for optimized staffing, pricing, and promotions.\",\n    \"Vendor Consolidation & Efficiency: Improves revenue and guest satisfaction by reducing complexity and the need for multiple vendors.\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 7,\n  \"industry_sector\": \"Hospitality Technology\"\n}\n```",
+          "tokens_used": 331,
+          "cost": 2.4825e-05,
+          "response_time": 11.398003101348877,
+          "error": null,
+          "json_valid": true,
+          "response_length": 799
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "Red Rock",
+        "url": "red-rock.com",
+        "domain": "red-rock.com",
+        "employee_count": "50",
+        "description": "Property operators and investors need reliable sourcing for mid-scale hospitality and multifamily acquisitions. Red Rock\u2019s data-driven brokerage platform aggregates off-market listings, applies proprietary valuation models, and automates LOI and DD workflows. Real-time alerts on comp movements and cap-rate shifts help clients execute quickly, reducing reliance on fragmented broker networks and improving deal certainty without custom data pipelines.",
+        "technologies": "Off-market data-aggregation; valuation-model engine; LOI/DD workflow; alert dashboards",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:58:00.544249",
+      "sample_content_length": 923,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "Red Rock",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Hospitals, clinics, physician practices, and healthcare networks of all sizes\",\n  \"competitive_advantages\": [\n    \"HIPAA-compliant platform ensuring high standards of data security and privacy\",\n    \"Comprehensive solutions including EHR, telemedicine, patient portals, and analytics\",\n    \"Focus on mid-market healthcare delivery challenges such as care coordination and operational efficiency\"\n  ],\n  \"company_stage\": \"startup\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"healthcare\"\n}\n```",
+          "tokens_used": 303,
+          "cost": 0.0002424,
+          "response_time": 1.480065107345581,
+          "error": null,
+          "json_valid": true,
+          "response_length": 566
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "Red Rock",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Hospitals, clinics, physician practices, and healthcare networks of all sizes\",\n  \"competitive_advantages\": [\n    \"HIPAA-compliant platform ensuring high data security and privacy\",\n    \"Comprehensive solutions including EHR, telemedicine, patient portals, and analytics\",\n    \"Focus on mid-market healthcare delivery challenges such as care coordination and operational efficiency\"\n  ],\n  \"company_stage\": \"startup\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"healthcare\"\n}\n```",
+          "tokens_used": 301,
+          "cost": 1.806e-05,
+          "response_time": 1.5156033039093018,
+          "error": null,
+          "json_valid": true,
+          "response_length": 553
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "Red Rock",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS platform\",\n  \"target_market\": \"Property operators and investors focused on mid-scale hospitality and multifamily acquisitions\",\n  \"competitive_advantages\": [\n    \"Aggregates off-market listings with proprietary valuation models for unique insights\",\n    \"Automates LOI and Due Diligence workflows to enhance efficiency and speed\",\n    \"Provides real-time alerts on market movements, reducing reliance on fragmented networks\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"PropTech (Real Estate Technology)\"\n}\n```",
+          "tokens_used": 308,
+          "cost": 0.000385,
+          "response_time": 11.337080240249634,
+          "error": null,
+          "json_valid": true,
+          "response_length": 595
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "Red Rock",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Property operators and investors focused on mid-scale hospitality and multifamily acquisitions\",\n  \"competitive_advantages\": [\n    \"Access to aggregated off-market listings and proprietary valuation models\",\n    \"Automated LOI and Due Diligence workflows for efficiency\",\n    \"Real-time market alerts (comps, cap-rates) for quick execution and improved deal certainty\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"Real Estate Technology\"\n}\n```",
+          "tokens_used": 303,
+          "cost": 2.2724999999999997e-05,
+          "response_time": 16.156641006469727,
+          "error": null,
+          "json_valid": true,
+          "response_length": 550
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "RR Partners",
+        "url": "rrpartners.com",
+        "domain": "rrpartners.com",
+        "employee_count": "100",
+        "description": "Corporations need integrated PR, digital, and content strategies but often cobble agencies together, losing coherence and measurement. RR Partners unites media relations, social, creative and analytics under one leadership team. Their \u201c360\u00b0 StoryBuilder\u201d framework maps audiences, crafts narratives, and uses real-time social/listening dashboards to optimize earned and paid activations. Clients achieve unified brand impact with measurable KPIs\u2014driving share-of-voice lift and stakeholder trust without agency hand-offs.",
+        "technologies": "Earned-paid-owned integration; social listening AI; content-performance analytics; media-mix dashboards",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:58:39.042463",
+      "sample_content_length": 1019,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "RR Partners",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Enterprise\",\n  \"competitive_advantages\": [\n    \"Integrated PR, digital, and content strategies under one leadership team\",\n    \"360\u00b0 StoryBuilder framework for mapping audiences and crafting narratives\",\n    \"Real-time social/listening dashboards for optimizing earned and paid activations\"\n  ],\n  \"company_stage\": \"Growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 304,
+          "cost": 0.0002432,
+          "response_time": 1.7580299377441406,
+          "error": null,
+          "json_valid": true,
+          "response_length": 454
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "RR Partners",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Enterprise\",\n  \"competitive_advantages\": [\n    \"Integrated PR, digital, and content strategies under one leadership team\",\n    \"360\u00b0 StoryBuilder framework for mapping audiences and crafting narratives\",\n    \"Real-time social/listening dashboards for optimizing earned and paid activations\"\n  ],\n  \"company_stage\": \"Growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 304,
+          "cost": 1.824e-05,
+          "response_time": 1.465623140335083,
+          "error": null,
+          "json_valid": true,
+          "response_length": 454
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "RR Partners",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B Marketing & PR Services\",\n  \"target_market\": \"Mid-market to large enterprises\",\n  \"competitive_advantages\": [\n    \"Integrated 360\u00b0 approach uniting PR, digital, and content under one team\",\n    \"Proprietary \\\"360\u00b0 StoryBuilder\\\" framework for strategic narrative development\",\n    \"Data-driven optimization with real-time social listening, analytics, and measurable KPIs\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"Marketing & Advertising\"\n}\n```",
+          "tokens_used": 313,
+          "cost": 0.00039125,
+          "response_time": 14.99819803237915,
+          "error": null,
+          "json_valid": true,
+          "response_length": 527
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "RR Partners",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B Services (PR, Digital Marketing & Content Agency)\",\n  \"target_market\": \"Large enterprises and mid-market companies\",\n  \"competitive_advantages\": [\n    \"Unified, integrated approach combining PR, digital, and content strategies under one team.\",\n    \"Proprietary '360\u00b0 StoryBuilder' framework leveraging real-time social listening and analytics.\",\n    \"Focus on measurable KPIs and tangible ROI (e.g., share-of-voice lift, stakeholder trust).\"\n  ],\n  \"company_stage\": \"Growth\",\n  \"technology_sophistication\": 7,\n  \"industry_sector\": \"Marketing & Communications\"\n}\n```",
+          "tokens_used": 322,
+          "cost": 2.4149999999999997e-05,
+          "response_time": 9.169731855392456,
+          "error": null,
+          "json_valid": true,
+          "response_length": 601
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "iptiQ (Swiss Re)",
+        "url": "iptiq.com",
+        "domain": "iptiq.com",
+        "employee_count": "474",
+        "description": "Traditional insurers launch digital products slowly. iptiQ provides a white-label life & P&C platform\u2014underwriting rules, KYC, policy admin, claims APIs\u2014so brands embed cover at checkout in weeks, widening protection reach while Swiss Re carries the risk. LinkedIn",
+        "technologies": "Cloud-native policy platform; data-driven underwriting engine; multi-tenant API gateway; AI claims triage; partner analytics console",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:59:14.442704",
+      "sample_content_length": 1001,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "iptiQ (Swiss Re)",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Mid-market customers across various industries including technology, healthcare, finance, and manufacturing\",\n  \"competitive_advantages\": [\n    \"Rapid deployment of digital insurance products (weeks instead of months)\",\n    \"Comprehensive white-label platform covering underwriting, KYC, policy admin, and claims\",\n    \"Advanced AI and data-driven technologies for underwriting and claims triage\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"Insurance Technology (Insurtech)\"\n}\n```",
+          "tokens_used": 302,
+          "cost": 0.0002416,
+          "response_time": 1.5084969997406006,
+          "error": null,
+          "json_valid": true,
+          "response_length": 588
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "iptiQ (Swiss Re)",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Mid-market customers across various industries including technology, healthcare, finance, and manufacturing\",\n  \"competitive_advantages\": [\n    \"Rapid deployment of digital insurance products (weeks instead of months)\",\n    \"Comprehensive white-label platform covering underwriting, KYC, policy admin, and claims\",\n    \"Advanced AI and data-driven technologies for underwriting and claims triage\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"Insurance technology (Insurtech)\"\n}\n```",
+          "tokens_used": 302,
+          "cost": 1.812e-05,
+          "response_time": 1.7510526180267334,
+          "error": null,
+          "json_valid": true,
+          "response_length": 588
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "iptiQ (Swiss Re)",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS (White-label platform)\",\n  \"target_market\": \"Mid-market companies, brands, and traditional insurers across various industries (technology, healthcare, finance, manufacturing) seeking to embed insurance products.\",\n  \"competitive_advantages\": [\n    \"Rapid digital product launch (weeks) for partners\",\n    \"Risk-bearing capacity provided by Swiss Re\",\n    \"Comprehensive, AI-powered, cloud-native platform with advanced underwriting and claims capabilities\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"Insurtech\"\n}\n```",
+          "tokens_used": 302,
+          "cost": 0.0003775,
+          "response_time": 5.570870876312256,
+          "error": null,
+          "json_valid": true,
+          "response_length": 603
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "iptiQ (Swiss Re)",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS (Insurtech platform)\",\n  \"target_market\": \"Mid-market businesses and brands (across technology, healthcare, finance, manufacturing) looking to embed or offer digital insurance products.\",\n  \"competitive_advantages\": [\n    \"Speed to market for digital insurance products (weeks, not months/years).\",\n    \"Swiss Re carries the underlying insurance risk for partners, reducing client burden.\",\n    \"Comprehensive white-label, cloud-native platform with AI-driven underwriting and claims capabilities.\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"Insurtech\"\n}\n```",
+          "tokens_used": 310,
+          "cost": 2.325e-05,
+          "response_time": 6.793020963668823,
+          "error": null,
+          "json_valid": true,
+          "response_length": 645
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "Celigo",
+        "url": "celigo.com",
+        "domain": "celigo.com",
+        "employee_count": "300",
+        "description": "Fast-growing SaaS companies juggle dozens of APIs for ERP, CRM, and marketplaces, creating brittle point-to-point integrations. Celigo\u2019s iPaaS platform offers pre-built connectors, visual flow-designer, and monitoring dashboards, letting operations teams automate order, invoicing, and inventory sync in hours. Automated error-handling and data-transform rules reduce IT tickets, ensuring business processes run seamlessly without custom coding or delay.",
+        "technologies": "Pre-built connectors; visual flow-designer; monitoring & alerting; error-handling engine",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T18:59:38.077106",
+      "sample_content_length": 1009,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "Celigo",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Enterprise\",\n  \"competitive_advantages\": [\n    \"Pre-built connectors for rapid integration\",\n    \"Visual flow-designer for easy automation\",\n    \"Robust error-handling and monitoring capabilities\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 281,
+          "cost": 0.00022480000000000004,
+          "response_time": 1.2211039066314697,
+          "error": null,
+          "json_valid": true,
+          "response_length": 360
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "Celigo",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Enterprise\",\n  \"competitive_advantages\": [\n    \"Pre-built connectors for rapid integration\",\n    \"Visual flow-designer for easy automation\",\n    \"Robust error-handling and monitoring capabilities\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 281,
+          "cost": 1.686e-05,
+          "response_time": 1.1820621490478516,
+          "error": null,
+          "json_valid": true,
+          "response_length": 360
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "Celigo",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS (iPaaS)\",\n  \"target_market\": \"Mid-market to enterprise organizations, particularly those with complex integration needs across ERP, CRM, and marketplaces, and fast-growing SaaS companies.\",\n  \"competitive_advantages\": [\n    \"Rapid, no-code/low-code integration via pre-built connectors and visual flow-designer.\",\n    \"Automated error-handling and data-transform rules reducing IT tickets and ensuring seamless processes.\",\n    \"Enterprise-grade security, scalability, and compliance for high-volume, mission-critical environments.\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 315,
+          "cost": 0.00039375,
+          "response_time": 5.8363330364227295,
+          "error": null,
+          "json_valid": true,
+          "response_length": 674
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "Celigo",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS (iPaaS)\",\n  \"target_market\": \"Mid-market to large enterprises, particularly fast-growing SaaS companies and operations teams needing to automate complex business processes across various systems (ERP, CRM, marketplaces).\",\n  \"competitive_advantages\": [\n    \"Simplified and rapid integration/automation through pre-built connectors and visual flow-designer, eliminating custom coding.\",\n    \"Automated error-handling and data transformation rules, reducing IT tickets and ensuring seamless business processes.\",\n    \"Enterprise-grade security, scalability, and compliance, designed for high-volume, mission-critical environments.\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"SaaS (Integration Platform)\"\n}\n```",
+          "tokens_used": 328,
+          "cost": 2.4599999999999998e-05,
+          "response_time": 5.68952488899231,
+          "error": null,
+          "json_valid": true,
+          "response_length": 794
+        }
+      }
+    },
+    {
+      "company": {
+        "name": "Relanto",
+        "url": "relanto.ai",
+        "domain": "relanto.ai",
+        "employee_count": "30",
+        "description": "Enterprise IT teams lose productivity to fragmented alerting and manual on-call rotations. Relanto\u2019s AI-driven incident orchestration ingests monitoring-tool events, applies root-cause grouping, and automatically notifies the right engineers via chat-ops. Predictive analytics forecast incident spikes, enabling pre-emptive remediation. Post-mortem analytics identify MTTA/MTTR trends, helping DevOps improve reliability without building custom ops dashboards.",
+        "technologies": "AI incident-grouping; predictive-analytics engine; chat-ops integrations; on-call automation workflows",
+        "source_row": 0
+      },
+      "timestamp": "2025-06-25T19:00:00.013195",
+      "sample_content_length": 1011,
+      "model_results": {
+        "nova_pro": {
+          "model": "Amazon Nova Pro",
+          "model_id": "amazon.nova-pro-v1:0",
+          "company": "Relanto",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Enterprise\",\n  \"competitive_advantages\": [\n    \"AI-driven incident orchestration\",\n    \"Predictive analytics for pre-emptive remediation\",\n    \"Post-mortem analytics for reliability improvement\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 275,
+          "cost": 0.00022000000000000003,
+          "response_time": 1.1188099384307861,
+          "error": null,
+          "json_valid": true,
+          "response_length": 358
+        },
+        "nova_lite": {
+          "model": "Amazon Nova Lite",
+          "model_id": "amazon.nova-lite-v1:0",
+          "company": "Relanto",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Enterprise\",\n  \"competitive_advantages\": [\n    \"AI-driven incident orchestration\",\n    \"Predictive analytics for pre-emptive remediation\",\n    \"Post-mortem analytics for reliability improvement\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8,\n  \"industry_sector\": \"SaaS\"\n}\n```",
+          "tokens_used": 275,
+          "cost": 1.65e-05,
+          "response_time": 1.386134147644043,
+          "error": null,
+          "json_valid": true,
+          "response_length": 358
+        },
+        "gemini_pro": {
+          "model": "Gemini 2.5 Pro",
+          "model_id": "gemini-2.5-pro",
+          "company": "Relanto",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS with Professional Services\",\n  \"target_market\": \"Enterprise IT teams and large organizations\",\n  \"competitive_advantages\": [\n    \"AI-driven incident orchestration with root-cause grouping for fragmented alerts.\",\n    \"Predictive analytics for forecasting incident spikes and enabling pre-emptive remediation.\",\n    \"Automated on-call notifications via chat-ops and post-mortem analytics for continuous reliability improvement.\"\n  ],\n  \"company_stage\": \"Growth\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"AIOps / IT Operations Management\"\n}\n```",
+          "tokens_used": 305,
+          "cost": 0.00038125,
+          "response_time": 9.097652912139893,
+          "error": null,
+          "json_valid": true,
+          "response_length": 597
+        },
+        "gemini_flash": {
+          "model": "Gemini 2.5 Flash",
+          "model_id": "gemini-2.5-flash",
+          "company": "Relanto",
+          "success": true,
+          "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Enterprise IT teams, DevOps teams, large organizations with complex IT infrastructure\",\n  \"competitive_advantages\": [\n    \"AI-driven incident orchestration with automated root-cause grouping and chat-ops notifications\",\n    \"Predictive analytics for forecasting incident spikes and enabling pre-emptive remediation\",\n    \"Post-mortem analytics for identifying MTTA/MTTR trends and improving reliability\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 9,\n  \"industry_sector\": \"AIOps / IT Operations Management (ITOM)\"\n}\n```",
+          "tokens_used": 306,
+          "cost": 2.295e-05,
+          "response_time": 13.92756199836731,
+          "error": null,
+          "json_valid": true,
+          "response_length": 602
+        }
+      }
+    }
+  ],
+  "model_performance": {
+    "nova_pro": {
+      "total_cost": 0.0023784,
+      "total_tokens": 2973,
+      "successful_requests": 10,
+      "failed_requests": 0,
+      "avg_response_time": 1.3990010976791383,
+      "json_success_count": 10,
+      "total_requests": 10,
+      "avg_cost_per_request": 0.00023784,
+      "json_success_rate": 1.0
+    },
+    "nova_lite": {
+      "total_cost": 0.00017837999999999998,
+      "total_tokens": 2973,
+      "successful_requests": 10,
+      "failed_requests": 0,
+      "avg_response_time": 1.4000638246536254,
+      "json_success_count": 10,
+      "total_requests": 10,
+      "avg_cost_per_request": 1.7837999999999998e-05,
+      "json_success_rate": 1.0
+    },
+    "gemini_pro": {
+      "total_cost": 0.0034762499999999997,
+      "total_tokens": 2781,
+      "successful_requests": 9,
+      "failed_requests": 1,
+      "avg_response_time": 11.112584087583754,
+      "json_success_count": 9,
+      "total_requests": 10,
+      "avg_cost_per_request": 0.00038625,
+      "json_success_rate": 0.9
+    },
+    "gemini_flash": {
+      "total_cost": 0.00023639999999999997,
+      "total_tokens": 3152,
+      "successful_requests": 10,
+      "failed_requests": 0,
+      "avg_response_time": 10.638248825073243,
+      "json_success_count": 10,
+      "total_requests": 10,
+      "avg_cost_per_request": 2.3639999999999997e-05,
+      "json_success_rate": 1.0
+    }
+  },
+  "rankings": {
+    "cost_efficiency": [
+      "nova_lite",
+      "gemini_flash",
+      "nova_pro",
+      "gemini_pro"
+    ],
+    "speed": [
+      "nova_pro",
+      "nova_lite",
+      "gemini_flash",
+      "gemini_pro"
+    ],
+    "accuracy": [
+      "nova_pro",
+      "nova_lite",
+      "gemini_flash",
+      "gemini_pro"
+    ]
+  },
+  "recommendation": {
+    "cost_efficiency": "Amazon Nova Lite - Lowest total cost",
+    "speed": "Amazon Nova Pro - Fastest average response time",
+    "accuracy": "Amazon Nova Pro - Highest JSON success rate",
+    "overall": "RECOMMEND Amazon Nova Lite - Best cost with good accuracy"
+  }
+}

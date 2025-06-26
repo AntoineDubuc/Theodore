@@ -1,0 +1,39 @@
+{
+  "test_companies": [
+    {
+      "name": "OpenAI",
+      "website": "https://openai.com",
+      "domain": "openai.com",
+      "source_row": "ssl_test",
+      "additional_data": {
+        "note": "AI company - more crawling-friendly for SSL testing"
+      }
+    },
+    {
+      "name": "Anthropic",
+      "website": "https://anthropic.com",
+      "domain": "anthropic.com",
+      "source_row": "ssl_test",
+      "additional_data": {
+        "note": "AI company - more crawling-friendly for SSL testing"
+      }
+    },
+    {
+      "name": "Hugging Face",
+      "website": "https://huggingface.co",
+      "domain": "huggingface.co",
+      "source_row": "ssl_test",
+      "additional_data": {
+        "note": "AI company - more crawling-friendly for SSL testing"
+      }
+    }
+  ],
+  "test_metadata": {
+    "total_companies": 3,
+    "source": "Google Sheets - 6000+ company dataset",
+    "sheets_url": "https://docs.google.com/spreadsheets/d/1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk/edit?gid=0#gid=0",
+    "selection_method": "Random sampling from valid companies with name and website",
+    "test_purpose": "SSL comparison testing - demonstrate SSL fix impact on real company data",
+    "generated_at": "2025-06-25T20:37:17.271546"
+  }
+}

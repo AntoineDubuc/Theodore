@@ -1,0 +1,89 @@
+{
+  "openai.com": {
+    "nova_pro": {
+      "model": "nova_pro",
+      "model_description": "Amazon Nova Pro - High-performance model",
+      "company_url": "openai.com",
+      "success": false,
+      "error": "No links discovered during crawling",
+      "timestamp": "2025-06-25T22:44:31.481163",
+      "processing_time_seconds": 0
+    },
+    "nova_micro": {
+      "model": "nova_micro",
+      "model_description": "Amazon Nova Micro - Lightweight model",
+      "company_url": "openai.com",
+      "success": false,
+      "error": "No links discovered during crawling",
+      "timestamp": "2025-06-25T22:44:44.142792",
+      "processing_time_seconds": 0
+    },
+    "nova_nano": {
+      "model": "nova_nano",
+      "model_description": "Amazon Nova Nano - Ultra-lightweight model",
+      "company_url": "openai.com",
+      "success": false,
+      "error": "No links discovered during crawling",
+      "timestamp": "2025-06-25T22:44:55.898087",
+      "processing_time_seconds": 0
+    }
+  },
+  "anthropic.com": {
+    "nova_pro": {
+      "model": "nova_pro",
+      "model_description": "Amazon Nova Pro - High-performance model",
+      "company_url": "anthropic.com",
+      "success": false,
+      "error": "\u274c No workers successfully warmed up!",
+      "timestamp": "2025-06-25T22:45:13.530384",
+      "processing_time_seconds": 0
+    },
+    "nova_micro": {
+      "model": "nova_micro",
+      "model_description": "Amazon Nova Micro - Lightweight model",
+      "company_url": "anthropic.com",
+      "success": false,
+      "error": "\u274c No workers successfully warmed up!",
+      "timestamp": "2025-06-25T22:45:19.742166",
+      "processing_time_seconds": 0
+    },
+    "nova_nano": {
+      "model": "nova_nano",
+      "model_description": "Amazon Nova Nano - Ultra-lightweight model",
+      "company_url": "anthropic.com",
+      "success": false,
+      "error": "No links discovered during crawling",
+      "timestamp": "2025-06-25T22:45:34.132707",
+      "processing_time_seconds": 0
+    }
+  },
+  "google.com": {
+    "nova_pro": {
+      "model": "nova_pro",
+      "model_description": "Amazon Nova Pro - High-performance model",
+      "company_url": "google.com",
+      "success": false,
+      "error": "No links discovered during crawling",
+      "timestamp": "2025-06-25T22:45:58.006934",
+      "processing_time_seconds": 0
+    },
+    "nova_micro": {
+      "model": "nova_micro",
+      "model_description": "Amazon Nova Micro - Lightweight model",
+      "company_url": "google.com",
+      "success": false,
+      "error": "No links discovered during crawling",
+      "timestamp": "2025-06-25T22:46:12.927207",
+      "processing_time_seconds": 0
+    },
+    "nova_nano": {
+      "model": "nova_nano",
+      "model_description": "Amazon Nova Nano - Ultra-lightweight model",
+      "company_url": "google.com",
+      "success": false,
+      "error": "\u274c No workers successfully warmed up!",
+      "timestamp": "2025-06-25T22:46:19.817982",
+      "processing_time_seconds": 0
+    }
+  }
+}

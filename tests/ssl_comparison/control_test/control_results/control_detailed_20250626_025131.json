@@ -1,0 +1,145 @@
+{
+  "summary": {
+    "test_metadata": {
+      "test_type": "control",
+      "test_start_time": "2025-06-26T02:51:18.406453",
+      "test_end_time": "2025-06-26T02:51:31.551317",
+      "total_companies_tested": 3,
+      "theodore_base_url": "http://localhost:5002"
+    },
+    "overall_metrics": {
+      "overall_success_rate": 0.0,
+      "companies_successful": 0,
+      "companies_failed": 3
+    },
+    "link_discovery_metrics": {
+      "link_discovery_success_rate": 0.0,
+      "companies_with_links": 0,
+      "companies_without_links": 3,
+      "total_links_discovered": 0,
+      "average_links_per_company": 0.0
+    },
+    "page_selection_metrics": {
+      "llm_success_rate": 0.0,
+      "heuristic_fallback_rate": 0.0,
+      "llm_successes": 0,
+      "heuristic_fallbacks": 0
+    },
+    "content_extraction_metrics": {
+      "content_extraction_success_rate": 0,
+      "pages_attempted": 0,
+      "pages_successful": 0,
+      "pages_failed": 0
+    },
+    "performance_metrics": {
+      "average_processing_time_seconds": 2.4,
+      "total_processing_time_seconds": 7.1
+    },
+    "ssl_metrics": {
+      "ssl_error_rate": 0.0,
+      "companies_with_ssl_errors": 0,
+      "companies_without_ssl_errors": 3
+    }
+  },
+  "detailed_results": [
+    {
+      "company_name": "OpenAI",
+      "website": "https://openai.com",
+      "domain": "openai.com",
+      "test_type": "control",
+      "test_timestamp": "2025-06-26T02:51:18.411797",
+      "source_row": "ssl_test",
+      "success": false,
+      "ssl_errors": [],
+      "link_discovery": {
+        "links_discovered": 0,
+        "discovery_method": "unknown",
+        "ssl_failures": []
+      },
+      "page_selection": {
+        "method_used": "unknown",
+        "llm_success": false,
+        "heuristic_fallback": false,
+        "pages_selected": 0
+      },
+      "content_extraction": {
+        "pages_attempted": 0,
+        "pages_successful": 0,
+        "total_content_chars": 0
+      },
+      "processing_metrics": {
+        "processing_time_seconds": 2.22,
+        "total_cost_usd": 0.0,
+        "error_messages": [
+          "HTTP 500: {\n  \"error\": \"Processing failed: No links discovered during crawling\"\n}\n"
+        ]
+      }
+    },
+    {
+      "company_name": "Anthropic",
+      "website": "https://anthropic.com",
+      "domain": "anthropic.com",
+      "test_type": "control",
+      "test_timestamp": "2025-06-26T02:51:23.635791",
+      "source_row": "ssl_test",
+      "success": false,
+      "ssl_errors": [],
+      "link_discovery": {
+        "links_discovered": 0,
+        "discovery_method": "unknown",
+        "ssl_failures": []
+      },
+      "page_selection": {
+        "method_used": "unknown",
+        "llm_success": false,
+        "heuristic_fallback": false,
+        "pages_selected": 0
+      },
+      "content_extraction": {
+        "pages_attempted": 0,
+        "pages_successful": 0,
+        "total_content_chars": 0
+      },
+      "processing_metrics": {
+        "processing_time_seconds": 2.28,
+        "total_cost_usd": 0.0,
+        "error_messages": [
+          "HTTP 500: {\n  \"error\": \"Processing failed: No links discovered during crawling\"\n}\n"
+        ]
+      }
+    },
+    {
+      "company_name": "Hugging Face",
+      "website": "https://huggingface.co",
+      "domain": "huggingface.co",
+      "test_type": "control",
+      "test_timestamp": "2025-06-26T02:51:28.921135",
+      "source_row": "ssl_test",
+      "success": false,
+      "ssl_errors": [],
+      "link_discovery": {
+        "links_discovered": 0,
+        "discovery_method": "unknown",
+        "ssl_failures": []
+      },
+      "page_selection": {
+        "method_used": "unknown",
+        "llm_success": false,
+        "heuristic_fallback": false,
+        "pages_selected": 0
+      },
+      "content_extraction": {
+        "pages_attempted": 0,
+        "pages_successful": 0,
+        "total_content_chars": 0
+      },
+      "processing_metrics": {
+        "processing_time_seconds": 2.63,
+        "total_cost_usd": 0.0,
+        "error_messages": [
+          "HTTP 500: {\n  \"error\": \"Processing failed: No links discovered during crawling\"\n}\n"
+        ]
+      }
+    }
+  ]
+}

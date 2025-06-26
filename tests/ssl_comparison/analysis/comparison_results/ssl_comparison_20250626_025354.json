@@ -1,0 +1,240 @@
+{
+  "comparison_metadata": {
+    "analysis_timestamp": "2025-06-26T02:53:54.931959",
+    "control_test_time": "2025-06-26T02:51:18.406453",
+    "treatment_test_time": "2025-06-26T02:53:35.960782",
+    "companies_tested": 3
+  },
+  "key_improvements": {
+    "overall_success": {
+      "control": 0.0,
+      "treatment": 0.0,
+      "improvement": {
+        "ratio": 0,
+        "percentage": "0%",
+        "absolute": 0
+      }
+    },
+    "link_discovery_success": {
+      "control": 0.0,
+      "treatment": 0.0,
+      "improvement": {
+        "ratio": 0,
+        "percentage": "0%",
+        "absolute": 0
+      }
+    },
+    "average_links_discovered": {
+      "control": 0.0,
+      "treatment": 0.0,
+      "improvement": {
+        "ratio": 0,
+        "percentage": "0%",
+        "absolute": 0
+      }
+    },
+    "llm_page_selection": {
+      "control": 0.0,
+      "treatment": 0.0,
+      "improvement": {
+        "ratio": 0,
+        "percentage": "0%",
+        "absolute": 0
+      }
+    },
+    "content_extraction": {
+      "control": 0,
+      "treatment": 0,
+      "improvement": {
+        "ratio": 0,
+        "percentage": "0%",
+        "absolute": 0
+      }
+    },
+    "ssl_error_reduction": {
+      "control": 0.0,
+      "treatment": 0.0,
+      "improvement": {
+        "ratio": 0,
+        "percentage": "0%",
+        "absolute": 0
+      }
+    },
+    "processing_time": {
+      "control": 2.4,
+      "treatment": 2.3,
+      "improvement": {
+        "ratio": 1.04,
+        "percentage": "+4.3%",
+        "absolute": 0.1
+      }
+    }
+  },
+  "detailed_metrics": {
+    "control_summary": {
+      "test_metadata": {
+        "test_type": "control",
+        "test_start_time": "2025-06-26T02:51:18.406453",
+        "test_end_time": "2025-06-26T02:51:31.551317",
+        "total_companies_tested": 3,
+        "theodore_base_url": "http://localhost:5002"
+      },
+      "overall_metrics": {
+        "overall_success_rate": 0.0,
+        "companies_successful": 0,
+        "companies_failed": 3
+      },
+      "link_discovery_metrics": {
+        "link_discovery_success_rate": 0.0,
+        "companies_with_links": 0,
+        "companies_without_links": 3,
+        "total_links_discovered": 0,
+        "average_links_per_company": 0.0
+      },
+      "page_selection_metrics": {
+        "llm_success_rate": 0.0,
+        "heuristic_fallback_rate": 0.0,
+        "llm_successes": 0,
+        "heuristic_fallbacks": 0
+      },
+      "content_extraction_metrics": {
+        "content_extraction_success_rate": 0,
+        "pages_attempted": 0,
+        "pages_successful": 0,
+        "pages_failed": 0
+      },
+      "performance_metrics": {
+        "average_processing_time_seconds": 2.4,
+        "total_processing_time_seconds": 7.1
+      },
+      "ssl_metrics": {
+        "ssl_error_rate": 0.0,
+        "companies_with_ssl_errors": 0,
+        "companies_without_ssl_errors": 3
+      }
+    },
+    "treatment_summary": {
+      "test_metadata": {
+        "test_type": "treatment",
+        "test_start_time": "2025-06-26T02:53:35.960782",
+        "test_end_time": "2025-06-26T02:53:49.797694",
+        "total_companies_tested": 3,
+        "theodore_base_url": "http://localhost:5002",
+        "ssl_fixes_applied": true
+      },
+      "overall_metrics": {
+        "overall_success_rate": 0.0,
+        "companies_successful": 0,
+        "companies_failed": 3
+      },
+      "link_discovery_metrics": {
+        "link_discovery_success_rate": 0.0,
+        "companies_with_links": 0,
+        "companies_without_links": 3,
+        "total_links_discovered": 0,
+        "average_links_per_company": 0.0
+      },
+      "page_selection_metrics": {
+        "llm_success_rate": 0.0,
+        "heuristic_fallback_rate": 0.0,
+        "llm_successes": 0,
+        "heuristic_fallbacks": 0
+      },
+      "content_extraction_metrics": {
+        "content_extraction_success_rate": 0,
+        "pages_attempted": 0,
+        "pages_successful": 0,
+        "pages_failed": 0
+      },
+      "performance_metrics": {
+        "average_processing_time_seconds": 2.3,
+        "total_processing_time_seconds": 6.8
+      },
+      "ssl_metrics": {
+        "ssl_error_rate": 0.0,
+        "companies_with_ssl_errors": 0,
+        "companies_without_ssl_errors": 3
+      }
+    }
+  },
+  "company_level_analysis": {
+    "total_companies_compared": 3,
+    "companies_with_improvements": 0,
+    "companies_with_more_links": 0,
+    "companies_with_ssl_reduction": 0,
+    "detailed_comparisons": [
+      {
+        "company_name": "OpenAI",
+        "website": "https://openai.com",
+        "control": {
+          "success": false,
+          "links_discovered": 0,
+          "pages_selected": 0,
+          "processing_time": 2.22,
+          "ssl_errors": 0
+        },
+        "treatment": {
+          "success": false,
+          "links_discovered": 0,
+          "pages_selected": 0,
+          "processing_time": 2.61,
+          "ssl_errors": 0
+        },
+        "improvements": {
+          "success_change": false,
+          "links_improvement": 0,
+          "pages_improvement": 0,
+          "ssl_errors_reduced": 0
+        }
+      },
+      {
+        "company_name": "Anthropic",
+        "website": "https://anthropic.com",
+        "control": {
+          "success": false,
+          "links_discovered": 0,
+          "pages_selected": 0,
+          "processing_time": 2.28,
+          "ssl_errors": 0
+        },
+        "treatment": {
+          "success": false,
+          "links_discovered": 0,
+          "pages_selected": 0,
+          "processing_time": 2.05,
+          "ssl_errors": 0
+        },
+        "improvements": {
+          "success_change": false,
+          "links_improvement": 0,
+          "pages_improvement": 0,
+          "ssl_errors_reduced": 0
+        }
+      },
+      {
+        "company_name": "Hugging Face",
+        "website": "https://huggingface.co",
+        "control": {
+          "success": false,
+          "links_discovered": 0,
+          "pages_selected": 0,
+          "processing_time": 2.63,
+          "ssl_errors": 0
+        },
+        "treatment": {
+          "success": false,
+          "links_discovered": 0,
+          "pages_selected": 0,
+          "processing_time": 2.17,
+          "ssl_errors": 0
+        },
+        "improvements": {
+          "success_change": false,
+          "links_improvement": 0,
+          "pages_improvement": 0,
+          "ssl_errors_reduced": 0
+        }
+      }
+    ]
+  }
+}

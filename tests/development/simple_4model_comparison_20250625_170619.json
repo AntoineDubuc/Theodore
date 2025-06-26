@@ -1,0 +1,171 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-06-25T17:05:38.835188",
+    "models_tested": 4,
+    "companies_tested": 2
+  },
+  "model_results": {
+    "Procurify": {
+      "nova_pro": {
+        "model": "Amazon Nova Pro",
+        "model_id": "amazon.nova-pro-v1:0",
+        "company": "Procurify",
+        "success": true,
+        "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"mid-market and enterprise customers\",\n  \"competitive_advantages\": [\n    \"Automated approval workflows\",\n    \"Real-time budget tracking\",\n    \"Integration with popular accounting systems\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8\n}\n```",
+        "tokens_used": 202,
+        "cost": 0.00016160000000000002,
+        "response_time": 1.2927353382110596,
+        "error": null,
+        "json_valid": true
+      },
+      "nova_lite": {
+        "model": "Amazon Nova Lite",
+        "model_id": "amazon.nova-lite-v1:0",
+        "company": "Procurify",
+        "success": true,
+        "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"mid-market and enterprise customers\",\n  \"competitive_advantages\": [\n    \"automated approval workflows\",\n    \"real-time budget tracking\",\n    \"integration with popular accounting systems\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 8\n}\n```",
+        "tokens_used": 202,
+        "cost": 1.2120000000000001e-05,
+        "response_time": 0.7816929817199707,
+        "error": null,
+        "json_valid": true
+      },
+      "gemini_pro": {
+        "model": "Gemini 2.5 Pro",
+        "model_id": "gemini-2.5-pro",
+        "company": "Procurify",
+        "success": true,
+        "response": "```json\n{\n  \"business_model\": \"B2B SaaS (Software as a Service)\",\n  \"target_market\": \"Mid-market and enterprise customers across various industries (healthcare, education, manufacturing, technology)\",\n  \"competitive_advantages\": [\n    \"Comprehensive, centralized spend management platform\",\n    \"Seamless integration with popular accounting systems (QuickBooks, NetSuite, Sage)\",\n    \"Automated approval workflows and real-time budget tracking/analytics\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 7\n}\n```",
+        "tokens_used": 223,
+        "cost": 0.00027875,
+        "response_time": 4.424870014190674,
+        "error": null,
+        "json_valid": true
+      },
+      "gemini_flash": {
+        "model": "Gemini 2.5 Flash",
+        "model_id": "gemini-2.5-flash",
+        "company": "Procurify",
+        "success": true,
+        "response": "```json\n{\n  \"business_model\": \"B2B SaaS (Software as a Service)\",\n  \"target_market\": \"Mid-market and enterprise organizations across various industries including healthcare, education, manufacturing, and technology.\",\n  \"competitive_advantages\": [\n    \"Comprehensive, centralized platform for procurement and spend management\",\n    \"Automated approval workflows and real-time budget tracking\",\n    \"Seamless integration with popular accounting systems (e.g., QuickBooks, NetSuite)\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 7\n}\n```",
+        "tokens_used": 228,
+        "cost": 1.71e-05,
+        "response_time": 3.6527020931243896,
+        "error": null,
+        "json_valid": true
+      }
+    },
+    "Stripe": {
+      "nova_pro": {
+        "model": "Amazon Nova Pro",
+        "model_id": "amazon.nova-pro-v1:0",
+        "company": "Stripe",
+        "success": true,
+        "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Businesses of all sizes, from startups to large enterprises\",\n  \"competitive_advantages\": [\n    \"Comprehensive suite of APIs and tools for payment processing\",\n    \"Global reach with support for various channels and geographies\",\n    \"High-profile customers and partnerships (e.g., Amazon, Google, Microsoft, Shopify)\"\n  ],\n  \"company_stage\": \"mature\",\n  \"technology_sophistication\": 10\n}\n```",
+        "tokens_used": 237,
+        "cost": 0.0001896,
+        "response_time": 1.1490659713745117,
+        "error": null,
+        "json_valid": true
+      },
+      "nova_lite": {
+        "model": "Amazon Nova Lite",
+        "model_id": "amazon.nova-lite-v1:0",
+        "company": "Stripe",
+        "success": true,
+        "response": "```json\n{\n  \"business_model\": \"B2B SaaS\",\n  \"target_market\": \"Businesses of all sizes, from startups to large enterprises\",\n  \"competitive_advantages\": [\n    \"Comprehensive suite of APIs and tools for online payment management\",\n    \"Global reach with support for various channels and geographies\",\n    \"Reputation and trust from serving high-profile customers like Amazon, Google, Microsoft, and Shopify\"\n  ],\n  \"company_stage\": \"mature\",\n  \"technology_sophistication\": 10\n}\n```",
+        "tokens_used": 242,
+        "cost": 1.452e-05,
+        "response_time": 1.1705000400543213,
+        "error": null,
+        "json_valid": true
+      },
+      "gemini_pro": {
+        "model": "Gemini 2.5 Pro",
+        "model_id": "gemini-2.5-pro",
+        "company": "Stripe",
+        "success": true,
+        "response": "```json\n{\n  \"business_model\": \"Fintech Platform (Payment Processing, APIs)\",\n  \"target_market\": \"Businesses of all sizes (startups to large enterprises)\",\n  \"competitive_advantages\": [\n    \"Comprehensive suite of APIs and tools for developers\",\n    \"End-to-end payment solution (processing, fraud, billing, marketplaces)\",\n    \"Global reach and scalability trusted by major enterprises\"\n  ],\n  \"company_stage\": \"growth\",\n  \"technology_sophistication\": 9\n}\n```",
+        "tokens_used": 235,
+        "cost": 0.00029375,
+        "response_time": 4.654318809509277,
+        "error": null,
+        "json_valid": true
+      },
+      "gemini_flash": {
+        "model": "Gemini 2.5 Flash",
+        "model_id": "gemini-2.5-flash",
+        "company": "Stripe",
+        "success": true,
+        "response": "```json\n{\n  \"business_model\": \"B2B SaaS / API-driven Payment Processing\",\n  \"target_market\": \"Businesses of all sizes (SMBs, mid-market, enterprise)\",\n  \"competitive_advantages\": [\n    \"Comprehensive, end-to-end platform (payment processing, fraud prevention, subscription billing, marketplace payments)\",\n    \"Scalability and reliability (serves startups to large enterprises like Amazon, Google, Microsoft, Shopify)\",\n    \"Developer-friendly suite of APIs and tools\"\n  ],\n  \"company_stage\": \"Mature\",\n  \"technology_sophistication\": 9\n}\n```",
+        "tokens_used": 242,
+        "cost": 1.8149999999999997e-05,
+        "response_time": 7.064199924468994,
+        "error": null,
+        "json_valid": true
+      }
+    }
+  },
+  "cost_analysis": {
+    "nova_pro": {
+      "total_cost": 0.0003512,
+      "total_tokens": 439,
+      "successful_requests": 2
+    },
+    "nova_lite": {
+      "total_cost": 2.6640000000000002e-05,
+      "total_tokens": 444,
+      "successful_requests": 2
+    },
+    "gemini_pro": {
+      "total_cost": 0.0005725000000000001,
+      "total_tokens": 458,
+      "successful_requests": 2
+    },
+    "gemini_flash": {
+      "total_cost": 3.5249999999999996e-05,
+      "total_tokens": 470,
+      "successful_requests": 2
+    }
+  },
+  "performance_analysis": {
+    "nova_pro": {
+      "avg_response_time": 1.2209006547927856,
+      "successful_requests": 2,
+      "errors": 0
+    },
+    "nova_lite": {
+      "avg_response_time": 0.976096510887146,
+      "successful_requests": 2,
+      "errors": 0
+    },
+    "gemini_pro": {
+      "avg_response_time": 4.539594411849976,
+      "successful_requests": 2,
+      "errors": 0
+    },
+    "gemini_flash": {
+      "avg_response_time": 5.358451008796692,
+      "successful_requests": 2,
+      "errors": 0
+    }
+  },
+  "accuracy_analysis": {
+    "nova_pro": {
+      "json_valid_count": 2,
+      "total_requests": 2
+    },
+    "nova_lite": {
+      "json_valid_count": 2,
+      "total_requests": 2
+    },
+    "gemini_pro": {
+      "json_valid_count": 2,
+      "total_requests": 2
+    },
+    "gemini_flash": {
+      "json_valid_count": 2,
+      "total_requests": 2
+    }
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "summary": {
+    "test_metadata": {
+      "test_type": "control",
+      "test_start_time": "2025-06-26T02:38:14.827402",
+      "test_end_time": "2025-06-26T02:38:20.893316",
+      "total_companies_tested": 3,
+      "theodore_base_url": "http://localhost:5002"
+    },
+    "overall_metrics": {
+      "overall_success_rate": 0.0,
+      "companies_successful": 0,
+      "companies_failed": 3
+    },
+    "link_discovery_metrics": {
+      "link_discovery_success_rate": 0.0,
+      "companies_with_links": 0,
+      "companies_without_links": 3,
+      "total_links_discovered": 0,
+      "average_links_per_company": 0.0
+    },
+    "page_selection_metrics": {
+      "llm_success_rate": 0.0,
+      "heuristic_fallback_rate": 0.0,
+      "llm_successes": 0,
+      "heuristic_fallbacks": 0
+    },
+    "content_extraction_metrics": {
+      "content_extraction_success_rate": 0,
+      "pages_attempted": 0,
+      "pages_successful": 0,
+      "pages_failed": 0
+    },
+    "performance_metrics": {
+      "average_processing_time_seconds": 0.0,
+      "total_processing_time_seconds": 0.1
+    },
+    "ssl_metrics": {
+      "ssl_error_rate": 0.0,
+      "companies_with_ssl_errors": 0,
+      "companies_without_ssl_errors": 3
+    }
+  },
+  "detailed_results": [
+    {
+      "company_name": "Microsoft",
+      "website": "https://microsoft.com",
+      "domain": "microsoft.com",
+      "test_type": "control",
+      "test_timestamp": "2025-06-26T02:38:14.836106",
+      "source_row": "fallback",
+      "success": false,
+      "ssl_errors": [],
+      "link_discovery": {
+        "links_discovered": 0,
+        "discovery_method": "unknown",
+        "ssl_failures": []
+      },
+      "page_selection": {
+        "method_used": "unknown",
+        "llm_success": false,
+        "heuristic_fallback": false,
+        "pages_selected": 0
+      },
+      "content_extraction": {
+        "pages_attempted": 0,
+        "pages_successful": 0,
+        "total_content_chars": 0
+      },
+      "processing_metrics": {
+        "processing_time_seconds": 0.01,
+        "total_cost_usd": 0.0,
+        "error_messages": [
+          "HTTP 500: {\n  \"company\": {\n    \"name\": \"Microsoft\",\n    \"website\": \"https://microsoft.com\"\n  },\n  \"error\": \"AsyncExecutionManager research failed: signal only works in main thread of the main interpreter\",\n  \"e"
+        ]
+      }
+    },
+    {
+      "company_name": "Google",
+      "website": "https://google.com",
+      "domain": "google.com",
+      "test_type": "control",
+      "test_timestamp": "2025-06-26T02:38:17.847002",
+      "source_row": "fallback",
+      "success": false,
+      "ssl_errors": [],
+      "link_discovery": {
+        "links_discovered": 0,
+        "discovery_method": "unknown",
+        "ssl_failures": []
+      },
+      "page_selection": {
+        "method_used": "unknown",
+        "llm_success": false,
+        "heuristic_fallback": false,
+        "pages_selected": 0
+      },
+      "content_extraction": {
+        "pages_attempted": 0,
+        "pages_successful": 0,
+        "total_content_chars": 0
+      },
+      "processing_metrics": {
+        "processing_time_seconds": 0.02,
+        "total_cost_usd": 0.0,
+        "error_messages": [
+          "HTTP 500: {\n  \"company\": {\n    \"name\": \"Google\",\n    \"website\": \"https://google.com\"\n  },\n  \"error\": \"AsyncExecutionManager research failed: signal only works in main thread of the main interpreter\",\n  \"excepti"
+        ]
+      }
+    },
+    {
+      "company_name": "Apple",
+      "website": "https://apple.com",
+      "domain": "apple.com",
+      "test_type": "control",
+      "test_timestamp": "2025-06-26T02:38:20.876057",
+      "source_row": "fallback",
+      "success": false,
+      "ssl_errors": [],
+      "link_discovery": {
+        "links_discovered": 0,
+        "discovery_method": "unknown",
+        "ssl_failures": []
+      },
+      "page_selection": {
+        "method_used": "unknown",
+        "llm_success": false,
+        "heuristic_fallback": false,
+        "pages_selected": 0
+      },
+      "content_extraction": {
+        "pages_attempted": 0,
+        "pages_successful": 0,
+        "total_content_chars": 0
+      },
+      "processing_metrics": {
+        "processing_time_seconds": 0.02,
+        "total_cost_usd": 0.0,
+        "error_messages": [
+          "HTTP 500: {\n  \"company\": {\n    \"name\": \"Apple\",\n    \"website\": \"https://apple.com\"\n  },\n  \"error\": \"AsyncExecutionManager research failed: signal only works in main thread of the main interpreter\",\n  \"exception"
+        ]
+      }
+    }
+  ]
+}

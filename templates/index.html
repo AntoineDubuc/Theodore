@@ -40,6 +40,21 @@
                         <a href="/settings" class="nav-link" title="System Configuration">
                             ⚙️ Settings
                         </a>
+                        {% if current_user and current_user.is_authenticated %}
+                            <a href="{{ url_for('auth.profile') }}" class="nav-link" title="User Profile">
+                                👤 {{ current_user.username }}
+                            </a>
+                            <a href="{{ url_for('auth.logout') }}" class="nav-link" title="Logout">
+                                🚪 Logout
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="nav-link" title="Sign In">
+                                🔑 Login
+                            </a>
+                            <a href="{{ url_for('auth.register') }}" class="nav-link" title="Create Account">
+                                📝 Register
+                            </a>
+                        {% endif %}
                     </nav>
                 </div>
             </div>
@@ -394,11 +409,56 @@
                 <div class="search-card">
                     <h3 style="margin-bottom: 24px; color: var(--text-primary);">Database Browser</h3>
                     
+                    <!-- Database Search -->
+                    <div class="database-search">
+                        <div class="form-group">
+                            <label for="databaseSearch" class="form-label">
+                                🔍 Search Companies
+                            </label>
+                            <div class="input-wrapper">
+                                <input 
+                                    type="text" 
+                                    id="databaseSearch" 
+                                    class="form-input" 
+                                    placeholder="Search by company name, industry, business model..."
+                                    autocomplete="off"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="search-filters">
+                            <select id="industryFilter" class="form-select">
+                                <option value="">All Industries</option>
+                            </select>
+                            <select id="businessModelFilter" class="form-select">
+                                <option value="">All Business Models</option>
+                                <option value="B2B">B2B</option>
+                                <option value="B2C">B2C</option>
+                                <option value="B2B2C">B2B2C</option>
+                                <option value="Marketplace">Marketplace</option>
+                            </select>
+                            <select id="companySizeFilter" class="form-select">
+                                <option value="">All Company Sizes</option>
+                                <option value="startup">Startup</option>
+                                <option value="SMB">SMB</option>
+                                <option value="enterprise">Enterprise</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Database Stats -->
                     <div id="databaseStats" class="database-stats">
                         <div class="stat-item">
                             <span class="stat-label">Total Companies:</span>
                             <span class="stat-value" id="totalCompanies">Loading...</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Showing:</span>
+                            <span class="stat-value" id="showingCompanies">0 of 0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Current Page:</span>
+                            <span class="stat-value" id="currentPage">1</span>
                         </div>
                     </div>
 
@@ -421,6 +481,39 @@
                     <!-- Companies Table -->
                     <div id="companiesTable" class="companies-table">
                         <div class="loading">Loading companies...</div>
+                    </div>
+                    
+                    <!-- Pagination Controls -->
+                    <div id="paginationControls" class="pagination-controls" style="display: none;">
+                        <div class="pagination-info">
+                            <span id="paginationInfo">Showing 1-10 of 25 companies</span>
+                        </div>
+                        <div class="pagination-buttons">
+                            <button id="firstPageBtn" class="pagination-btn" onclick="goToPage(1)">
+                                ⏮️ First
+                            </button>
+                            <button id="prevPageBtn" class="pagination-btn" onclick="goToPreviousPage()">
+                                ⬅️ Previous
+                            </button>
+                            <div class="pagination-pages" id="paginationPages">
+                                <!-- Page numbers will be inserted here -->
+                            </div>
+                            <button id="nextPageBtn" class="pagination-btn" onclick="goToNextPage()">
+                                Next ➡️
+                            </button>
+                            <button id="lastPageBtn" class="pagination-btn" onclick="goToLastPage()">
+                                Last ⏭️
+                            </button>
+                        </div>
+                        <div class="pagination-size">
+                            <label for="pageSize">Items per page:</label>
+                            <select id="pageSize" class="form-select" onchange="changePageSize()">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>

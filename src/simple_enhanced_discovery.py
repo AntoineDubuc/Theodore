@@ -12,6 +12,9 @@ from datetime import datetime
 from urllib.parse import quote
 from bs4 import BeautifulSoup
 
+# Configure SSL handling
+requests.packages.urllib3.disable_warnings()
+
 from src.models import CompanyData
 from src.bedrock_client import BedrockClient
 from src.gemini_client import GeminiClient
@@ -855,7 +858,7 @@ Search queries for companies similar to {company_name}:"""
                 'num': 5
             }
             
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=10, verify=False)
             response.raise_for_status()
             
             data = response.json()
@@ -883,7 +886,7 @@ Search queries for companies similar to {company_name}:"""
                 'num': 5
             }
             
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=10, verify=False)
             response.raise_for_status()
             
             data = response.json()
@@ -908,7 +911,7 @@ Search queries for companies similar to {company_name}:"""
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
             }
             
-            response = requests.get(search_url, headers=headers, timeout=10)
+            response = requests.get(search_url, headers=headers, timeout=10, verify=False)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.text, 'html.parser')

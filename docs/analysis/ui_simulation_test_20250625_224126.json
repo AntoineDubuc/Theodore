@@ -1,0 +1,6 @@
+{
+  "success": false,
+  "company_name": "certara.com",
+  "error": "HTTP 500: {\n  \"error\": \"Processing failed: No links discovered during crawling\"\n}\n",
+  "processing_time": 8.573478937149048
+}

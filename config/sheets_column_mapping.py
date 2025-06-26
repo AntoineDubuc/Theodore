@@ -90,11 +90,12 @@ COLUMN_MAPPING = {
     'total_cost_usd': 'BJ',             # Total Cost USD
     'llm_calls_breakdown': 'BK',        # LLM Calls Breakdown
     
-    # NEW: Additional crawling fields (BL-BO)
+    # NEW: Additional crawling fields (BL-BP)
     'scraped_urls': 'BL',               # Scraped URLs
     'llm_prompts_sent': 'BM',           # LLM Prompts Sent
     'page_selection_prompt': 'BN',      # Page Selection Prompt
     'content_analysis_prompt': 'BO',    # Content Analysis Prompt
+    'business_model_framework': 'BP',   # David's Business Model Framework
 }
 
 def format_value_for_sheet(value: Any) -> str:

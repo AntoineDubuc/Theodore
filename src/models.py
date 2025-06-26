@@ -95,6 +95,7 @@ class CompanyData(BaseModel):
     key_services: List[str] = Field(default_factory=list, description="Main offerings")
     competitive_advantages: List[str] = Field(default_factory=list, description="Company competitive advantages")
     target_market: Optional[str] = Field(None, description="Who they serve")
+    business_model_framework: Optional[str] = Field(None, description="David's Business Model Framework classification")
     
     # Extended metadata from Crawl4AI
     company_description: Optional[str] = Field(None, description="About/description from website")
@@ -315,6 +316,255 @@ class SimilarityCluster(BaseModel):
     clustering_method: str = Field(default="similarity_graph", description="How cluster was formed")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class FieldExtractionResult(BaseModel):
+    """Result of extracting a specific field from company data"""
+    
+    field_name: str = Field(..., description="Name of the field (e.g., 'founding_year', 'location')")
+    success: bool = Field(..., description="Whether extraction was successful")
+    value: Optional[str] = Field(None, description="Extracted value if successful")
+    confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Confidence in extraction (0-1)")
+    method: str = Field(..., description="Extraction method: regex, ai_analysis, manual, etc.")
+    source_page: Optional[str] = Field(None, description="URL where field was found")
+    extraction_time: float = Field(default=0.0, description="Time taken to extract this field")
+    error_message: Optional[str] = Field(None, description="Error message if extraction failed")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class FieldExtractionMetrics(BaseModel):
+    """Aggregated field extraction metrics for analytics"""
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    field_name: str = Field(..., description="Name of the field being tracked")
+    
+    # Success metrics
+    total_attempts: int = Field(default=0, description="Total extraction attempts")
+    successful_extractions: int = Field(default=0, description="Number of successful extractions")
+    failed_extractions: int = Field(default=0, description="Number of failed extractions")
+    
+    # Success rate calculations
+    success_rate: float = Field(default=0.0, ge=0.0, le=1.0, description="Success rate (0-1)")
+    
+    # Performance metrics
+    avg_extraction_time: float = Field(default=0.0, description="Average time per extraction")
+    avg_confidence: float = Field(default=0.0, description="Average confidence score")
+    
+    # Method breakdown
+    method_performance: Dict[str, Dict[str, Any]] = Field(
+        default_factory=dict, 
+        description="Performance by extraction method (regex, ai_analysis, etc.)"
+    )
+    
+    # Recent performance trends
+    last_24h_success_rate: Optional[float] = Field(None, description="Success rate in last 24 hours")
+    last_week_success_rate: Optional[float] = Field(None, description="Success rate in last week")
+    
+    # Data quality insights
+    common_failure_reasons: List[str] = Field(default_factory=list, description="Most common failure reasons")
+    improvement_suggestions: List[str] = Field(default_factory=list, description="AI-generated improvement suggestions")
+    
+    # Metadata
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    def calculate_success_rate(self):
+        """Calculate and update success rate"""
+        if self.total_attempts > 0:
+            self.success_rate = self.successful_extractions / self.total_attempts
+        else:
+            self.success_rate = 0.0
+    
+    def add_extraction_result(self, result: FieldExtractionResult):
+        """Add a new extraction result and update metrics"""
+        self.total_attempts += 1
+        
+        if result.success:
+            self.successful_extractions += 1
+        else:
+            self.failed_extractions += 1
+            if result.error_message:
+                self.common_failure_reasons.append(result.error_message)
+        
+        # Update method performance
+        method = result.method
+        if method not in self.method_performance:
+            self.method_performance[method] = {
+                "attempts": 0,
+                "successes": 0,
+                "avg_time": 0.0,
+                "avg_confidence": 0.0
+            }
+        
+        method_data = self.method_performance[method]
+        method_data["attempts"] += 1
+        if result.success:
+            method_data["successes"] += 1
+        
+        # Update averages
+        method_data["avg_time"] = (
+            (method_data["avg_time"] * (method_data["attempts"] - 1) + result.extraction_time) / 
+            method_data["attempts"]
+        )
+        
+        if result.confidence is not None:
+            method_data["avg_confidence"] = (
+                (method_data["avg_confidence"] * (method_data["attempts"] - 1) + result.confidence) / 
+                method_data["attempts"]
+            )
+        
+        # Recalculate overall metrics
+        self.calculate_success_rate()
+        self.last_updated = datetime.utcnow()
+
+
+class CompanyFieldExtractionSession(BaseModel):
+    """Track field extraction for a specific company processing session"""
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str = Field(..., description="Company being processed")
+    company_name: str = Field(..., description="Company name for reference")
+    
+    # Session details
+    session_start: datetime = Field(default_factory=datetime.utcnow)
+    session_end: Optional[datetime] = Field(None)
+    total_processing_time: float = Field(default=0.0, description="Total session time in seconds")
+    
+    # Field extraction results
+    field_results: List[FieldExtractionResult] = Field(default_factory=list, description="Results for each field")
+    
+    # Session summary
+    fields_attempted: int = Field(default=0)
+    fields_successful: int = Field(default=0)
+    fields_failed: int = Field(default=0)
+    session_success_rate: float = Field(default=0.0)
+    
+    # Processing details
+    pages_scraped: int = Field(default=0)
+    ai_calls_made: int = Field(default=0)
+    total_tokens_used: int = Field(default=0)
+    total_cost_usd: float = Field(default=0.0)
+    
+    def add_field_result(self, result: FieldExtractionResult):
+        """Add a field extraction result to this session"""
+        self.field_results.append(result)
+        self.fields_attempted += 1
+        
+        if result.success:
+            self.fields_successful += 1
+        else:
+            self.fields_failed += 1
+        
+        # Update session success rate
+        self.session_success_rate = self.fields_successful / self.fields_attempted if self.fields_attempted > 0 else 0.0
+    
+    def complete_session(self):
+        """Mark session as complete and calculate final metrics"""
+        self.session_end = datetime.utcnow()
+        if self.session_start:
+            self.total_processing_time = (self.session_end - self.session_start).total_seconds()
+
+
+class UserPrompt(BaseModel):
+    """User-specific prompt configuration stored in Pinecone"""
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str = Field(..., description="User ID who owns this prompt")
+    prompt_type: str = Field(..., description="Type of prompt: analysis, page_selection, extraction, custom")
+    prompt_name: str = Field(..., description="User-friendly name for the prompt")
+    prompt_content: str = Field(..., description="The actual prompt text")
+    
+    # Metadata
+    description: Optional[str] = Field(None, description="User description of what this prompt does")
+    is_active: bool = Field(default=True, description="Whether this prompt is currently active")
+    is_default: bool = Field(default=False, description="Whether this is the user's default for this type")
+    
+    # Usage tracking
+    usage_count: int = Field(default=0, description="How many times this prompt has been used")
+    last_used: Optional[datetime] = Field(None, description="When this prompt was last used")
+    
+    # Performance tracking
+    avg_success_rate: Optional[float] = Field(None, description="Average success rate when using this prompt")
+    avg_processing_time: Optional[float] = Field(None, description="Average processing time")
+    avg_cost_per_use: Optional[float] = Field(None, description="Average cost per use")
+    
+    # Versioning
+    version: int = Field(default=1, description="Version number for this prompt")
+    parent_prompt_id: Optional[str] = Field(None, description="ID of the prompt this was based on")
+    
+    # Sharing
+    is_public: bool = Field(default=False, description="Whether other users can see/use this prompt")
+    shared_with: List[str] = Field(default_factory=list, description="User IDs this prompt is shared with")
+    
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    def update_usage_stats(self, success_rate: float, processing_time: float, cost: float):
+        """Update prompt usage statistics"""
+        self.usage_count += 1
+        self.last_used = datetime.utcnow()
+        
+        # Calculate running averages
+        if self.avg_success_rate is None:
+            self.avg_success_rate = success_rate
+        else:
+            self.avg_success_rate = (self.avg_success_rate * (self.usage_count - 1) + success_rate) / self.usage_count
+        
+        if self.avg_processing_time is None:
+            self.avg_processing_time = processing_time
+        else:
+            self.avg_processing_time = (self.avg_processing_time * (self.usage_count - 1) + processing_time) / self.usage_count
+        
+        if self.avg_cost_per_use is None:
+            self.avg_cost_per_use = cost
+        else:
+            self.avg_cost_per_use = (self.avg_cost_per_use * (self.usage_count - 1) + cost) / self.usage_count
+
+
+class UserPromptLibrary(BaseModel):
+    """Collection of prompts for a specific user"""
+    
+    user_id: str = Field(..., description="User ID who owns this library")
+    prompts: List[UserPrompt] = Field(default_factory=list, description="User's prompts")
+    
+    # Library metadata
+    total_prompts: int = Field(default=0, description="Total number of prompts")
+    total_usage: int = Field(default=0, description="Total usage across all prompts")
+    avg_library_success_rate: Optional[float] = Field(None, description="Average success rate across all prompts")
+    
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_accessed: datetime = Field(default_factory=datetime.utcnow)
+    
+    def add_prompt(self, prompt: UserPrompt):
+        """Add a new prompt to the library"""
+        self.prompts.append(prompt)
+        self.total_prompts = len(self.prompts)
+        self.last_accessed = datetime.utcnow()
+    
+    def get_prompt_by_id(self, prompt_id: str) -> Optional[UserPrompt]:
+        """Get a specific prompt by ID"""
+        return next((p for p in self.prompts if p.id == prompt_id), None)
+    
+    def get_prompts_by_type(self, prompt_type: str) -> List[UserPrompt]:
+        """Get all prompts of a specific type"""
+        return [p for p in self.prompts if p.prompt_type == prompt_type and p.is_active]
+    
+    def get_default_prompt(self, prompt_type: str) -> Optional[UserPrompt]:
+        """Get the default prompt for a specific type"""
+        return next((p for p in self.prompts if p.prompt_type == prompt_type and p.is_default and p.is_active), None)
+    
+    def set_default_prompt(self, prompt_id: str):
+        """Set a prompt as default for its type"""
+        prompt = self.get_prompt_by_id(prompt_id)
+        if prompt:
+            # Unset other defaults for this type
+            for p in self.prompts:
+                if p.prompt_type == prompt.prompt_type:
+                    p.is_default = False
+            # Set new default
+            prompt.is_default = True
 
 
 class CompanyIntelligenceConfig(BaseModel):

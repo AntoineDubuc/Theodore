@@ -6,10 +6,12 @@ class TheodoreUI {
         this.setupFormValidation();
         this.initializeAnimations();
         this.initializeDatabaseBrowser();
+        this.initializeDatabaseSearch();
         this.activeResearchJobs = new Map(); // Track active research jobs
         this.pollingIntervals = new Map(); // Track polling intervals
         this.currentPollingInterval = null; // Track main progress polling
         this.researchDataCache = new Map(); // Store research results data
+        this.databaseSearchState = {}; // Store current search state
     }
 
     initializeEventListeners() {
@@ -2019,6 +2021,11 @@ class TheodoreUI {
                     <div class="research-section">
                         <strong>Business Model:</strong> ${this.escapeHtml(researchedCompany.business_model || 'Unknown')}
                     </div>
+                    ${researchedCompany.business_model_framework ? `
+                        <div class="research-section">
+                            <strong>Business Model Framework:</strong> ${this.escapeHtml(researchedCompany.business_model_framework)}
+                        </div>
+                    ` : ''}
                     ${researchedCompany.company_description ? `
                         <div class="research-section">
                             <strong>Description:</strong> ${this.escapeHtml(researchedCompany.company_description.substring(0, 200))}${researchedCompany.company_description.length > 200 ? '...' : ''}
@@ -2408,7 +2415,13 @@ class TheodoreUI {
 
         const modalContent = `
             <div class="company-details">
-                <h3>${this.escapeHtml(company.name)}</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0;">${this.escapeHtml(company.name)}</h3>
+                    <button class="btn btn-accent" onclick="window.theodoreUI.showEditCompanyModal('${company.id}')" style="padding: 8px 16px;">
+                        <span>✏️</span>
+                        Edit Company
+                    </button>
+                </div>
                 
                 <!-- Data Availability Notice -->
                 ${company.scrape_status === 'failed' || (company.sales_intelligence && company.sales_intelligence.startsWith('No content could be extracted')) ? `
@@ -2448,6 +2461,7 @@ class TheodoreUI {
                             <p><strong>Pain Points:</strong> ${displayArray(company.pain_points)}</p>
                             <p><strong>Competitive Advantages:</strong> ${displayArray(company.competitive_advantages)}</p>
                             <p><strong>Business Model Type:</strong> ${displayText(company.business_model_type)}</p>
+                            <p><strong>Business Model Framework:</strong> ${displayText(company.business_model_framework)}</p>
                             <p><strong>Decision Maker Type:</strong> ${displayText(company.decision_maker_type)}</p>
                             <p><strong>Sales Complexity:</strong> ${displayText(company.sales_complexity)}</p>
                         </div>
@@ -2628,6 +2642,241 @@ class TheodoreUI {
         
         const modal = this.createModal('Company Details', modalContent);
         document.body.appendChild(modal);
+    }
+
+    async showEditCompanyModal(companyId) {
+        try {
+            // First fetch the current company data
+            const response = await fetch(`/api/company/${companyId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (!data.success) {
+                this.showError('Failed to load company data for editing');
+                return;
+            }
+            
+            const company = data.company;
+            this.showEditForm(company);
+            
+        } catch (error) {
+            console.error('Error loading company for edit:', error);
+            this.showError('Failed to load company data for editing');
+        }
+    }
+
+    showEditForm(company) {
+        const editFormContent = `
+            <div class="edit-company-form">
+                <form id="editCompanyForm" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="edit-form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        
+                        <!-- Left Column -->
+                        <div class="edit-form-column">
+                            <h4>🏢 Basic Information</h4>
+                            
+                            <div class="form-group">
+                                <label for="edit_name">Company Name *</label>
+                                <input type="text" id="edit_name" name="name" value="${this.escapeHtml(company.name || '')}" required class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_website">Website *</label>
+                                <input type="url" id="edit_website" name="website" value="${this.escapeHtml(company.website || '')}" required class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_industry">Industry</label>
+                                <input type="text" id="edit_industry" name="industry" value="${this.escapeHtml(company.industry || '')}" class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_business_model">Business Model</label>
+                                <select id="edit_business_model" name="business_model" class="form-select">
+                                    <option value="">Select Business Model</option>
+                                    <option value="B2B" ${company.business_model === 'B2B' ? 'selected' : ''}>B2B</option>
+                                    <option value="B2C" ${company.business_model === 'B2C' ? 'selected' : ''}>B2C</option>
+                                    <option value="B2B2C" ${company.business_model === 'B2B2C' ? 'selected' : ''}>B2B2C</option>
+                                    <option value="Marketplace" ${company.business_model === 'Marketplace' ? 'selected' : ''}>Marketplace</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_company_size">Company Size</label>
+                                <select id="edit_company_size" name="company_size" class="form-select">
+                                    <option value="">Select Company Size</option>
+                                    <option value="startup" ${company.company_size === 'startup' ? 'selected' : ''}>Startup (1-10)</option>
+                                    <option value="small" ${company.company_size === 'small' ? 'selected' : ''}>Small (11-50)</option>
+                                    <option value="medium" ${company.company_size === 'medium' ? 'selected' : ''}>Medium (51-200)</option>
+                                    <option value="large" ${company.company_size === 'large' ? 'selected' : ''}>Large (201-1000)</option>
+                                    <option value="enterprise" ${company.company_size === 'enterprise' ? 'selected' : ''}>Enterprise (1000+)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_founding_year">Founded Year</label>
+                                <input type="number" id="edit_founding_year" name="founding_year" value="${company.founding_year || ''}" min="1800" max="${new Date().getFullYear()}" class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_location">Location</label>
+                                <input type="text" id="edit_location" name="location" value="${this.escapeHtml(company.location || '')}" class="form-input" placeholder="City, State/Country">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_employee_count_range">Employee Count Range</label>
+                                <input type="text" id="edit_employee_count_range" name="employee_count_range" value="${this.escapeHtml(company.employee_count_range || '')}" class="form-input" placeholder="e.g., 11-50">
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column -->
+                        <div class="edit-form-column">
+                            <h4>💼 Business Details</h4>
+                            
+                            <div class="form-group">
+                                <label for="edit_company_description">Company Description</label>
+                                <textarea id="edit_company_description" name="company_description" class="form-input" rows="3" placeholder="Brief description of the company">${this.escapeHtml(company.company_description || '')}</textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_value_proposition">Value Proposition</label>
+                                <textarea id="edit_value_proposition" name="value_proposition" class="form-input" rows="3" placeholder="What value does the company provide?">${this.escapeHtml(company.value_proposition || '')}</textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_target_market">Target Market</label>
+                                <input type="text" id="edit_target_market" name="target_market" value="${this.escapeHtml(company.target_market || '')}" class="form-input" placeholder="e.g., SMBs, Enterprise, Consumers">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_key_services">Key Services (comma-separated)</label>
+                                <input type="text" id="edit_key_services" name="key_services" value="${Array.isArray(company.key_services) ? company.key_services.join(', ') : (company.key_services || '')}" class="form-input" placeholder="Service 1, Service 2, Service 3">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_tech_stack">Tech Stack (comma-separated)</label>
+                                <input type="text" id="edit_tech_stack" name="tech_stack" value="${Array.isArray(company.tech_stack) ? company.tech_stack.join(', ') : (company.tech_stack || '')}" class="form-input" placeholder="React, Node.js, AWS">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_funding_status">Funding Status</label>
+                                <select id="edit_funding_status" name="funding_status" class="form-select">
+                                    <option value="">Select Funding Status</option>
+                                    <option value="bootstrapped" ${company.funding_status === 'bootstrapped' ? 'selected' : ''}>Bootstrapped</option>
+                                    <option value="pre-seed" ${company.funding_status === 'pre-seed' ? 'selected' : ''}>Pre-Seed</option>
+                                    <option value="seed" ${company.funding_status === 'seed' ? 'selected' : ''}>Seed</option>
+                                    <option value="series-a" ${company.funding_status === 'series-a' ? 'selected' : ''}>Series A</option>
+                                    <option value="series-b" ${company.funding_status === 'series-b' ? 'selected' : ''}>Series B</option>
+                                    <option value="series-c" ${company.funding_status === 'series-c' ? 'selected' : ''}>Series C+</option>
+                                    <option value="public" ${company.funding_status === 'public' ? 'selected' : ''}>Public</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit_geographic_scope">Geographic Scope</label>
+                                <select id="edit_geographic_scope" name="geographic_scope" class="form-select">
+                                    <option value="">Select Geographic Scope</option>
+                                    <option value="local" ${company.geographic_scope === 'local' ? 'selected' : ''}>Local</option>
+                                    <option value="regional" ${company.geographic_scope === 'regional' ? 'selected' : ''}>Regional</option>
+                                    <option value="national" ${company.geographic_scope === 'national' ? 'selected' : ''}>National</option>
+                                    <option value="international" ${company.geographic_scope === 'international' ? 'selected' : ''}>International</option>
+                                    <option value="global" ${company.geographic_scope === 'global' ? 'selected' : ''}>Global</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions" style="margin-top: 24px; text-align: center; border-top: 1px solid var(--border-subtle); padding-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()" style="margin-right: 12px;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <span>💾</span>
+                            Update Company
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        const modal = this.createModal('Edit Company', editFormContent);
+        
+        // Add form submit handler
+        const form = modal.querySelector('#editCompanyForm');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleUpdateCompany(company.id, form, modal);
+        });
+        
+        document.body.appendChild(modal);
+    }
+
+    async handleUpdateCompany(companyId, form, modal) {
+        try {
+            const formData = new FormData(form);
+            const updateData = {};
+            
+            // Process form data
+            for (const [key, value] of formData.entries()) {
+                if (value.trim() !== '') {
+                    // Handle comma-separated arrays
+                    if (['key_services', 'tech_stack'].includes(key)) {
+                        updateData[key] = value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+                    }
+                    // Handle numbers
+                    else if (key === 'founding_year') {
+                        const year = parseInt(value);
+                        if (!isNaN(year)) {
+                            updateData[key] = year;
+                        }
+                    }
+                    // Handle regular fields
+                    else {
+                        updateData[key] = value;
+                    }
+                }
+            }
+            
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span>⏳</span> Updating...';
+            submitBtn.disabled = true;
+            
+            // Send update request
+            const response = await fetch(`/api/company/${companyId}/update`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showSuccess('Company updated successfully!');
+                modal.remove();
+                
+                // Refresh any displayed data
+                if (window.location.hash === '#database') {
+                    this.loadDatabaseBrowser();
+                }
+            } else {
+                throw new Error(result.error || 'Update failed');
+            }
+            
+        } catch (error) {
+            console.error('Error updating company:', error);
+            this.showError(`Failed to update company: ${error.message}`);
+            
+            // Reset button state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
     }
     
     async viewScrapingDetails(companyId) {
@@ -3010,48 +3259,216 @@ class TheodoreUI {
         // No initialization needed, will load when tab is clicked
     }
 
-    async loadDatabaseBrowser() {
-        
+    async loadDatabaseBrowser(searchParams = {}) {
         const tableContainer = document.getElementById('companiesTable');
         const totalElement = document.getElementById('totalCompanies');
+        const showingElement = document.getElementById('showingCompanies');
+        const currentPageElement = document.getElementById('currentPage');
+        const paginationControls = document.getElementById('paginationControls');
+        
+        // Default parameters
+        const params = {
+            page: 1,
+            page_size: 25,
+            search: '',
+            industry: '',
+            business_model: '',
+            company_size: '',
+            ...searchParams
+        };
+        
+        // Store current search state
+        this.databaseSearchState = params;
         
         // Show loading state
         tableContainer.innerHTML = '<div class="loading">Loading companies...</div>';
-        if (totalElement) {
-            totalElement.textContent = 'Loading...';
-        }
+        if (totalElement) totalElement.textContent = 'Loading...';
+        if (showingElement) showingElement.textContent = '0 of 0';
+        if (currentPageElement) currentPageElement.textContent = params.page;
+        if (paginationControls) paginationControls.style.display = 'none';
         
         try {
-            // Try the new companies endpoint first
-            let response = await fetch('/api/companies');
-            let data = await response.json();
+            // Build query string
+            const queryParams = new URLSearchParams();
+            Object.keys(params).forEach(key => {
+                if (params[key]) queryParams.append(key, params[key]);
+            });
+            
+            const response = await fetch(`/api/companies?${queryParams.toString()}`);
+            const data = await response.json();
 
             if (response.ok && data.success) {
-                this.updateDatabaseStats({ total_companies: data.total });
+                this.updateDatabaseStats(data);
                 this.updateCompaniesTable(data.companies);
+                this.updatePaginationControls(data);
+                this.populateFilterOptions(data.filters || {});
             } else {
-                // Fallback to old database endpoint
-                response = await fetch('/api/database');
-                data = await response.json();
-                
-                if (response.ok) {
-                    this.updateDatabaseStats(data);
-                    this.updateCompaniesTable(data.companies || []);
-                } else {
-                    this.showDatabaseError(data.error || 'Failed to load database');
-                }
+                this.showDatabaseError(data.error || 'Failed to load database');
             }
         } catch (error) {
             console.error('Database browser error:', error);
             this.showDatabaseError('Network error loading database');
         }
     }
+    
+    initializeDatabaseSearch() {
+        // Search input with debouncing
+        const searchInput = document.getElementById('databaseSearch');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.performDatabaseSearch();
+                }, 500); // 500ms debounce
+            });
+        }
+        
+        // Filter dropdowns
+        const industryFilter = document.getElementById('industryFilter');
+        const businessModelFilter = document.getElementById('businessModelFilter');
+        const companySizeFilter = document.getElementById('companySizeFilter');
+        
+        if (industryFilter) {
+            industryFilter.addEventListener('change', () => this.performDatabaseSearch());
+        }
+        if (businessModelFilter) {
+            businessModelFilter.addEventListener('change', () => this.performDatabaseSearch());
+        }
+        if (companySizeFilter) {
+            companySizeFilter.addEventListener('change', () => this.performDatabaseSearch());
+        }
+        
+        // Page size selector
+        const pageSizeSelect = document.getElementById('pageSize');
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', () => this.changePageSize());
+        }
+    }
+    
+    performDatabaseSearch() {
+        const searchInput = document.getElementById('databaseSearch');
+        const industryFilter = document.getElementById('industryFilter');
+        const businessModelFilter = document.getElementById('businessModelFilter');
+        const companySizeFilter = document.getElementById('companySizeFilter');
+        
+        const searchParams = {
+            page: 1, // Reset to first page on new search
+            search: searchInput ? searchInput.value.trim() : '',
+            industry: industryFilter ? industryFilter.value : '',
+            business_model: businessModelFilter ? businessModelFilter.value : '',
+            company_size: companySizeFilter ? companySizeFilter.value : '',
+            page_size: this.databaseSearchState?.page_size || 25
+        };
+        
+        this.loadDatabaseBrowser(searchParams);
+    }
 
     updateDatabaseStats(data) {
         const totalElement = document.getElementById('totalCompanies');
+        const showingElement = document.getElementById('showingCompanies');
+        const currentPageElement = document.getElementById('currentPage');
+        
         if (totalElement) {
-            totalElement.textContent = data.total_companies || 0;
+            totalElement.textContent = data.total || 0;
         }
+        if (showingElement) {
+            showingElement.textContent = `${data.showing_start || 0}-${data.showing_end || 0} of ${data.total || 0}`;
+        }
+        if (currentPageElement) {
+            currentPageElement.textContent = data.page || 1;
+        }
+    }
+    
+    updatePaginationControls(data) {
+        const paginationControls = document.getElementById('paginationControls');
+        const paginationInfo = document.getElementById('paginationInfo');
+        const paginationPages = document.getElementById('paginationPages');
+        const firstPageBtn = document.getElementById('firstPageBtn');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const lastPageBtn = document.getElementById('lastPageBtn');
+        
+        if (!paginationControls) return;
+        
+        // Show/hide pagination controls
+        if (data.total_pages <= 1) {
+            paginationControls.style.display = 'none';
+            return;
+        }
+        
+        paginationControls.style.display = 'block';
+        
+        // Update pagination info
+        if (paginationInfo) {
+            paginationInfo.textContent = `Showing ${data.showing_start || 0}-${data.showing_end || 0} of ${data.total || 0} companies`;
+        }
+        
+        // Update page buttons
+        const currentPage = data.page || 1;
+        const totalPages = data.total_pages || 1;
+        
+        if (firstPageBtn) firstPageBtn.disabled = currentPage === 1;
+        if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+        if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
+        if (lastPageBtn) lastPageBtn.disabled = currentPage === totalPages;
+        
+        // Generate page number buttons
+        if (paginationPages) {
+            const pageButtons = [];
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            
+            // Adjust range if we're near the beginning or end
+            if (endPage - startPage < 4) {
+                if (startPage === 1) {
+                    endPage = Math.min(totalPages, startPage + 4);
+                } else if (endPage === totalPages) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                pageButtons.push(`
+                    <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">
+                        ${i}
+                    </button>
+                `);
+            }
+            
+            paginationPages.innerHTML = pageButtons.join('');
+        }
+    }
+    
+    populateFilterOptions(filters) {
+        const industryFilter = document.getElementById('industryFilter');
+        
+        if (industryFilter && filters.industries) {
+            // Clear existing options except the first one
+            industryFilter.innerHTML = '<option value="">All Industries</option>';
+            
+            // Add industry options
+            filters.industries.forEach(industry => {
+                if (industry) {
+                    const option = document.createElement('option');
+                    option.value = industry;
+                    option.textContent = industry;
+                    if (filters.current_industry === industry) {
+                        option.selected = true;
+                    }
+                    industryFilter.appendChild(option);
+                }
+            });
+        }
+        
+        // Set current filter values
+        const searchInput = document.getElementById('databaseSearch');
+        const businessModelFilter = document.getElementById('businessModelFilter');
+        const companySizeFilter = document.getElementById('companySizeFilter');
+        
+        if (searchInput) searchInput.value = filters.current_search || '';
+        if (businessModelFilter) businessModelFilter.value = filters.current_business_model || '';
+        if (companySizeFilter) companySizeFilter.value = filters.current_company_size || '';
     }
 
     updateCompaniesTable(companies) {
@@ -4039,6 +4456,92 @@ class TheodoreUI {
         `;
         
         resultsContent.innerHTML = resultsHTML;
+    }
+    
+    renderClassificationSection(company) {
+        // Helper function to format display text
+        const displayText = (value) => value && value !== 'Unknown' && value !== 'N/A' && value.trim() !== '' ? value : 'Not Available';
+        const displayPercentage = (value) => value ? `${Math.round(value * 100)}%` : 'Not Available';
+        
+        // Check if we have any classification data to show
+        const hasClassificationData = company.is_saas !== undefined || 
+                                    company.saas_classification || 
+                                    company.business_model_framework ||
+                                    company.classification_confidence;
+        
+        if (!hasClassificationData) {
+            return ''; // No classification data to show
+        }
+        
+        return `
+            <div class="detail-section">
+                <h4>🏷️ Business Model Classification</h4>
+                ${company.is_saas !== undefined ? `<p><strong>SaaS Classification:</strong> ${company.is_saas ? '✅ SaaS' : '❌ Non-SaaS'}</p>` : ''}
+                ${company.saas_classification ? `<p><strong>Category:</strong> ${displayText(company.saas_classification)}</p>` : ''}
+                ${company.business_model_framework ? `<p><strong>Business Model Framework:</strong> ${displayText(company.business_model_framework)}</p>` : ''}
+                ${company.classification_confidence ? `<p><strong>Classification Confidence:</strong> ${displayPercentage(company.classification_confidence)}</p>` : ''}
+                ${company.classification_justification ? `<p><strong>Justification:</strong> ${displayText(company.classification_justification)}</p>` : ''}
+            </div>
+        `;
+    }
+}
+
+// Global pagination functions
+function goToPage(page) {
+    const ui = window.theodoreUI;
+    if (ui && ui.databaseSearchState) {
+        ui.loadDatabaseBrowser({
+            ...ui.databaseSearchState,
+            page: page
+        });
+    }
+}
+
+function goToPreviousPage() {
+    const ui = window.theodoreUI;
+    if (ui && ui.databaseSearchState) {
+        const currentPage = ui.databaseSearchState.page || 1;
+        if (currentPage > 1) {
+            goToPage(currentPage - 1);
+        }
+    }
+}
+
+function goToNextPage() {
+    const ui = window.theodoreUI;
+    if (ui && ui.databaseSearchState) {
+        const currentPage = ui.databaseSearchState.page || 1;
+        goToPage(currentPage + 1);
+    }
+}
+
+function goToLastPage() {
+    const ui = window.theodoreUI;
+    if (ui && ui.databaseSearchState) {
+        // Get last page from pagination info
+        const paginationInfo = document.getElementById('paginationInfo');
+        if (paginationInfo) {
+            const text = paginationInfo.textContent;
+            const match = text.match(/of (\d+) companies/);
+            if (match) {
+                const total = parseInt(match[1]);
+                const pageSize = ui.databaseSearchState.page_size || 25;
+                const lastPage = Math.ceil(total / pageSize);
+                goToPage(lastPage);
+            }
+        }
+    }
+}
+
+function changePageSize() {
+    const ui = window.theodoreUI;
+    const pageSizeSelect = document.getElementById('pageSize');
+    if (ui && ui.databaseSearchState && pageSizeSelect) {
+        ui.loadDatabaseBrowser({
+            ...ui.databaseSearchState,
+            page: 1, // Reset to first page
+            page_size: parseInt(pageSizeSelect.value)
+        });
     }
 }
 

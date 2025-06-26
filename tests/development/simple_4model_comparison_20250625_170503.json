@@ -1,0 +1,171 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-06-25T17:04:46.954278",
+    "models_tested": 4,
+    "companies_tested": 2
+  },
+  "model_results": {
+    "Procurify": {
+      "nova_pro": {
+        "model": "Amazon Nova Pro",
+        "model_id": "amazon.nova-pro-v1:0",
+        "company": "Procurify",
+        "success": false,
+        "response": null,
+        "tokens_used": 0,
+        "cost": 0.0,
+        "response_time": 0.12209105491638184,
+        "error": "'BedrockClient' object has no attribute 'analyze_with_bedrock'",
+        "json_valid": false
+      },
+      "nova_lite": {
+        "model": "Amazon Nova Lite",
+        "model_id": "amazon.nova-lite-v1:0",
+        "company": "Procurify",
+        "success": false,
+        "response": null,
+        "tokens_used": 0,
+        "cost": 0.0,
+        "response_time": 0.005583047866821289,
+        "error": "'BedrockClient' object has no attribute 'analyze_with_bedrock'",
+        "json_valid": false
+      },
+      "gemini_pro": {
+        "model": "Gemini 2.5 Pro",
+        "model_id": "gemini-2.5-pro",
+        "company": "Procurify",
+        "success": false,
+        "response": null,
+        "tokens_used": 0,
+        "cost": 0.0,
+        "response_time": 0.1800680160522461,
+        "error": "'GeminiClient' object has no attribute 'analyze_with_gemini'",
+        "json_valid": false
+      },
+      "gemini_flash": {
+        "model": "Gemini 2.5 Flash",
+        "model_id": "gemini-2.5-flash",
+        "company": "Procurify",
+        "success": false,
+        "response": null,
+        "tokens_used": 0,
+        "cost": 0.0,
+        "response_time": 0.000415802001953125,
+        "error": "'GeminiClient' object has no attribute 'analyze_with_gemini'",
+        "json_valid": false
+      }
+    },
+    "Stripe": {
+      "nova_pro": {
+        "model": "Amazon Nova Pro",
+        "model_id": "amazon.nova-pro-v1:0",
+        "company": "Stripe",
+        "success": false,
+        "response": null,
+        "tokens_used": 0,
+        "cost": 0.0,
+        "response_time": 0.0061991214752197266,
+        "error": "'BedrockClient' object has no attribute 'analyze_with_bedrock'",
+        "json_valid": false
+      },
+      "nova_lite": {
+        "model": "Amazon Nova Lite",
+        "model_id": "amazon.nova-lite-v1:0",
+        "company": "Stripe",
+        "success": false,
+        "response": null,
+        "tokens_used": 0,
+        "cost": 0.0,
+        "response_time": 0.005080223083496094,
+        "error": "'BedrockClient' object has no attribute 'analyze_with_bedrock'",
+        "json_valid": false
+      },
+      "gemini_pro": {
+        "model": "Gemini 2.5 Pro",
+        "model_id": "gemini-2.5-pro",
+        "company": "Stripe",
+        "success": false,
+        "response": null,
+        "tokens_used": 0,
+        "cost": 0.0,
+        "response_time": 0.00020003318786621094,
+        "error": "'GeminiClient' object has no attribute 'analyze_with_gemini'",
+        "json_valid": false
+      },
+      "gemini_flash": {
+        "model": "Gemini 2.5 Flash",
+        "model_id": "gemini-2.5-flash",
+        "company": "Stripe",
+        "success": false,
+        "response": null,
+        "tokens_used": 0,
+        "cost": 0.0,
+        "response_time": 0.0002551078796386719,
+        "error": "'GeminiClient' object has no attribute 'analyze_with_gemini'",
+        "json_valid": false
+      }
+    }
+  },
+  "cost_analysis": {
+    "nova_pro": {
+      "total_cost": 0.0,
+      "total_tokens": 0,
+      "successful_requests": 0
+    },
+    "nova_lite": {
+      "total_cost": 0.0,
+      "total_tokens": 0,
+      "successful_requests": 0
+    },
+    "gemini_pro": {
+      "total_cost": 0.0,
+      "total_tokens": 0,
+      "successful_requests": 0
+    },
+    "gemini_flash": {
+      "total_cost": 0.0,
+      "total_tokens": 0,
+      "successful_requests": 0
+    }
+  },
+  "performance_analysis": {
+    "nova_pro": {
+      "avg_response_time": 0.0,
+      "successful_requests": 0,
+      "errors": 2
+    },
+    "nova_lite": {
+      "avg_response_time": 0.0,
+      "successful_requests": 0,
+      "errors": 2
+    },
+    "gemini_pro": {
+      "avg_response_time": 0.0,
+      "successful_requests": 0,
+      "errors": 2
+    },
+    "gemini_flash": {
+      "avg_response_time": 0.0,
+      "successful_requests": 0,
+      "errors": 2
+    }
+  },
+  "accuracy_analysis": {
+    "nova_pro": {
+      "json_valid_count": 0,
+      "total_requests": 2
+    },
+    "nova_lite": {
+      "json_valid_count": 0,
+      "total_requests": 2
+    },
+    "gemini_pro": {
+      "json_valid_count": 0,
+      "total_requests": 2
+    },
+    "gemini_flash": {
+      "json_valid_count": 0,
+      "total_requests": 2
+    }
+  }
+}

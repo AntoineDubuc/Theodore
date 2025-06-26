@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Theodore</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .profile-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .profile-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .profile-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        
+        .profile-card {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        
+        .profile-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .info-value {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <a href="{{ url_for('index') }}" class="nav-link">
+            ← Back to Dashboard
+        </a>
+        
+        <div class="profile-header">
+            <h1 class="profile-title">User Profile</h1>
+        </div>
+        
+        <div class="profile-card">
+            <div class="profile-info">
+                <div class="info-item">
+                    <div class="info-label">Email Address</div>
+                    <div class="info-value">{{ user.email }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Username</div>
+                    <div class="info-value">{{ user.username }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Account Status</div>
+                    <div class="info-value">
+                        {% if user.is_active %}
+                            <span style="color: #22c55e;">✓ Active</span>
+                        {% else %}
+                            <span style="color: #ef4444;">✗ Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Member Since</div>
+                    <div class="info-value">{{ user.user.created_at.strftime('%B %d, %Y') if user.user.created_at else 'Unknown' }}</div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    🏠 Dashboard
+                </a>
+                
+                <button class="btn btn-secondary" onclick="alert('Password change coming soon!')">
+                    🔒 Change Password
+                </button>
+                
+                <form style="display: inline;" method="POST" action="{{ url_for('auth.logout') }}" 
+                      onsubmit="return confirm('Are you sure you want to logout?')">
+                    <button type="submit" class="btn btn-danger">
+                        🚪 Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Account Statistics (placeholder for future features) -->
+        <div class="profile-card">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Account Activity</h3>
+            <div class="profile-info">
+                <div class="info-item">
+                    <div class="info-label">Companies Researched</div>
+                    <div class="info-value">Coming Soon</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Last Login</div>
+                    <div class="info-value">{{ user.user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.user.last_login else 'This session' }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Searches Performed</div>
+                    <div class="info-value">Coming Soon</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Favorite Industries</div>
+                    <div class="info-value">Coming Soon</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

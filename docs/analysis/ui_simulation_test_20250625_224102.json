@@ -1,0 +1,6 @@
+{
+  "success": false,
+  "company_name": "scitara.com",
+  "error": "HTTP 500: {\n  \"error\": \"Processing failed: No links discovered during crawling\"\n}\n",
+  "processing_time": 14.828046798706055
+}

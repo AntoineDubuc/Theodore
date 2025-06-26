@@ -6,17 +6,27 @@ Theodore provides an advanced company analysis platform with dynamic link discov
 
 ## 🎯 Current Features
 
+### 🔍 **Core Intelligence Engine**
 - **Intelligent Company Scraper**: 4-phase processing with link discovery, LLM page selection, parallel extraction, and AI aggregation
+- **Business Model Framework**: David's structured business model classification system with WHO/WHAT/HOW/WHY analysis
 - **Structured Research System**: 8 predefined research prompts with cost transparency and JSON/CSV export
 - **Nova Pro AI Model**: 6x cost reduction ($0.66 → $0.11 per research) with enterprise-grade performance
+- **Enhanced Sales Intelligence**: AI-generated 2-3 paragraph summaries optimized for sales teams
+
+### 📊 **Advanced Database & Search**
+- **Professional Search Engine**: Real-time multi-field search across company name, industry, business model, SaaS classification, business model framework, value proposition, target market, and company descriptions
+- **Smart Pagination System**: Configurable page sizes (10-100 items), intelligent navigation controls, and responsive design for large datasets
+- **Advanced Filtering**: Industry filter (dynamically populated), business model filter (B2B/B2C/B2B2C/Marketplace), and company size filter (Startup/SMB/Enterprise)
+- **Database Analytics**: Enhanced statistics showing total companies, current page range, and filter result counts
+- **Search Performance**: 500ms debounced input, filter state persistence, and optimized API queries for responsive user experience
+
+### 🎮 **User Interface & Experience**  
+- **Modern Web Interface**: Beautiful glass morphism UI with perfect dark mode accessibility at http://localhost:5002
 - **Real-time Progress Tracking**: Live phase-by-phase status updates with detailed logging
 - **Research Metadata Display**: Shows pages crawled, processing time, and research timestamps in UI
-- **Enhanced Sales Intelligence**: AI-generated 2-3 paragraph summaries optimized for sales teams
 - **Scrollable Research Modals**: Detailed company information with comprehensive research metadata
-- **Modern Web Interface**: Beautiful glass morphism UI with perfect dark mode accessibility at http://localhost:5002
 - **Multi-Source Discovery**: Combines Pinecone similarity search with AI-powered recommendations
 - **Research Session Management**: Track multi-prompt research operations with comprehensive metrics
-- **Smart Database Browser**: View companies with sales intelligence status and one-click website access
 - **Universal Website Integration**: Green website buttons throughout the interface for seamless company access
 - **WCAG-Compliant Design**: High-contrast dark mode with light blue (#60a5fa) links for optimal readability
 
@@ -823,6 +833,81 @@ Company Name → Database Check → Research Status Assessment → Real-time Res
 - **Market Mapping**: Understand competitive landscapes
 - **Due Diligence**: Automated company intelligence gathering
 
+## 🔍 Advanced Database Search & Navigation
+
+Theodore's database browser provides professional-grade search and navigation capabilities for efficiently exploring large company datasets.
+
+### **Multi-Field Search Engine**
+```
+🔍 Search across 8+ fields simultaneously:
+✅ Company names           ✅ Industry classifications
+✅ Business models         ✅ SaaS categories
+✅ Business model framework ✅ Value propositions
+✅ Target markets          ✅ Company descriptions
+```
+
+### **Smart Filtering System**
+```javascript
+// Dynamic filter combinations
+Industry Filter:     [All Industries ▼] → [FinTech, Healthcare, SaaS...]
+Business Model:      [All Models ▼]     → [B2B, B2C, B2B2C, Marketplace]
+Company Size:        [All Sizes ▼]      → [Startup, SMB, Enterprise]
+
+// Real-time search with 500ms debouncing
+Search Input: "stripe payment processing" → Instant filtered results
+```
+
+### **Professional Pagination**
+```
+📄 Intelligent Navigation:
+[⏮️ First] [⬅️ Previous] [1] [2] [3] [4] [5] [Next ➡️] [Last ⏭️]
+
+📊 Dynamic Statistics:
+Total Companies: 147 | Showing: 26-50 of 8 | Current Page: 2
+
+⚙️ Configurable Display:
+Items per page: [10] [25] [50] [100] ← User selectable
+```
+
+### **Search Performance Features**
+- **Debounced Input**: 500ms delay prevents excessive API calls
+- **State Persistence**: Maintains search/filter state during navigation  
+- **Progressive Enhancement**: Works seamlessly with Theodore's existing UI
+- **Mobile Optimized**: Responsive design adapts to all screen sizes
+- **Filter Combinations**: Combine text search + industry + business model + size
+
+### **Example Search Workflows**
+
+#### **Finding Payment Companies**
+```
+1. Search: "payment"
+2. Filter: Industry = "FinTech" 
+3. Filter: Business Model = "B2B"
+→ Results: Stripe, Square, Adyen, PayPal Business...
+```
+
+#### **Exploring SaaS Startups**
+```
+1. Filter: Company Size = "Startup"
+2. Filter: Business Model = "SaaS"  
+3. Search: "enterprise software"
+→ Results: Early-stage B2B SaaS companies...
+```
+
+#### **Market Research Navigation**
+```
+1. Filter: Industry = "Healthcare"
+2. Page Size: 100 items
+3. Navigate through paginated results
+→ Comprehensive healthcare company database exploration
+```
+
+### **Technical Implementation**
+- **Backend**: Enhanced `/api/companies` endpoint with query parameters
+- **Frontend**: Real-time search with React-style state management
+- **Database**: Optimized Pinecone queries with intelligent filtering
+- **Performance**: Client-side pagination with server-side filtering
+
 ## 🔗 API Endpoints
 
 ### Structured Research APIs
@@ -861,7 +946,36 @@ POST /api/discover
   "max_results": 10
 }
 
-# Browse database
+# Advanced database search with pagination
+GET /api/companies?search=payment&industry=FinTech&business_model=B2B&page=1&page_size=25
+
+# Search parameters:
+# - search: Multi-field text search
+# - industry: Filter by industry  
+# - business_model: Filter by business model (B2B/B2C/B2B2C/Marketplace)
+# - company_size: Filter by size (startup/SMB/enterprise)  
+# - page: Page number (1-based)
+# - page_size: Items per page (1-100)
+
+# Response includes:
+{
+  "success": true,
+  "companies": [...],
+  "total": 147,
+  "page": 1,
+  "page_size": 25,
+  "total_pages": 6,
+  "showing_start": 1,
+  "showing_end": 25,
+  "filters": {
+    "industries": ["FinTech", "Healthcare", "SaaS", ...],
+    "current_search": "payment",
+    "current_industry": "FinTech",
+    "current_business_model": "B2B"
+  }
+}
+
+# Browse database (legacy endpoint)  
 GET /api/database/browse?page=1&limit=20
 
 # Get company details

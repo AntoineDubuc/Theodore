@@ -182,9 +182,13 @@ class EnhancedBatchProcessor:
                     self.pipeline.scraper.scrape_company = scrape_with_timeout
                 
                 try:
+                    # Create job ID for progress tracking
+                    job_id = f"enhanced_batch_{row_number}_{int(time.time())}"
+                    
                     company_result = self.pipeline.process_single_company(
                         company_name=company_name,
-                        website=website
+                        website=website,
+                        job_id=job_id
                     )
                     
                     processing_time = time.time() - start_time

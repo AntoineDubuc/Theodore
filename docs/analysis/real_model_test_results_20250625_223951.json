@@ -1,0 +1,42 @@
+[
+  {
+    "company_name": "scitara.com",
+    "website": "https://scitara.com",
+    "success": false,
+    "error": "HTTP 500: {\n  \"company\": {\n    \"name\": \"scitara.com\",\n    \"website\": \"https://scitara.com\"\n  },\n  \"error\": \"AsyncExecutionManager research failed: signal only works in main thread of the main interpreter\",\n  \"exception_type\": \"ValueError\",\n  \"method\": \"AsyncExecutionManager\"\n}\n",
+    "processing_time_seconds": 0.01,
+    "timestamp": "2025-06-25T22:39:11.881799"
+  },
+  {
+    "company_name": "viseven.com",
+    "website": "https://viseven.com",
+    "success": false,
+    "error": "HTTP 500: {\n  \"company\": {\n    \"name\": \"viseven.com\",\n    \"website\": \"https://viseven.com\"\n  },\n  \"error\": \"AsyncExecutionManager research failed: signal only works in main thread of the main interpreter\",\n  \"exception_type\": \"ValueError\",\n  \"method\": \"AsyncExecutionManager\"\n}\n",
+    "processing_time_seconds": 0.04,
+    "timestamp": "2025-06-25T22:39:21.925055"
+  },
+  {
+    "company_name": "3dsbiovia.com",
+    "website": "https://3dsbiovia.com",
+    "success": false,
+    "error": "HTTP 500: {\n  \"company\": {\n    \"name\": \"3dsbiovia.com\",\n    \"website\": \"https://3dsbiovia.com\"\n  },\n  \"error\": \"AsyncExecutionManager research failed: signal only works in main thread of the main interpreter\",\n  \"exception_type\": \"ValueError\",\n  \"method\": \"AsyncExecutionManager\"\n}\n",
+    "processing_time_seconds": 0.03,
+    "timestamp": "2025-06-25T22:39:31.954527"
+  },
+  {
+    "company_name": "agmednet.com",
+    "website": "https://agmednet.com",
+    "success": false,
+    "error": "HTTP 500: {\n  \"company\": {\n    \"name\": \"agmednet.com\",\n    \"website\": \"https://agmednet.com\"\n  },\n  \"error\": \"AsyncExecutionManager research failed: signal only works in main thread of the main interpreter\",\n  \"exception_type\": \"ValueError\",\n  \"method\": \"AsyncExecutionManager\"\n}\n",
+    "processing_time_seconds": 0.02,
+    "timestamp": "2025-06-25T22:39:41.976608"
+  },
+  {
+    "company_name": "aitiabio.com",
+    "website": "https://aitiabio.com",
+    "success": false,
+    "error": "HTTP 500: {\n  \"company\": {\n    \"name\": \"aitiabio.com\",\n    \"website\": \"https://aitiabio.com\"\n  },\n  \"error\": \"AsyncExecutionManager research failed: signal only works in main thread of the main interpreter\",\n  \"exception_type\": \"ValueError\",\n  \"method\": \"AsyncExecutionManager\"\n}\n",
+    "processing_time_seconds": 0.02,
+    "timestamp": "2025-06-25T22:39:51.996976"
+  }
+]

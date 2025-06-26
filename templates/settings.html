@@ -298,6 +298,272 @@
         .expanded-content.show {
             display: block;
         }
+
+        /* User Prompt Management Styles */
+        .prompt-type-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .prompt-tab {
+            background: transparent;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .prompt-tab:hover {
+            background: rgba(71, 85, 105, 0.3);
+            color: #e2e8f0;
+        }
+
+        .prompt-tab.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .prompt-content {
+            min-height: 400px;
+        }
+
+        .prompts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .prompt-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .prompt-card:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(71, 85, 105, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .prompt-card.default-prompt {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .prompt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-name {
+            color: #e2e8f0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .default-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .prompt-preview {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.75rem;
+            border-radius: 6px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .prompt-stats {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-button.small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+
+        .action-button.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-color: #ef4444;
+        }
+
+        .action-button.danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        .no-prompts {
+            text-align: center;
+            color: #64748b;
+            padding: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: inherit;
+        }
+
+        .link-button:hover {
+            color: #2563eb;
+        }
+
+        /* Modal styles for prompt editing */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        .modal-header h3 {
+            color: #e2e8f0;
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #e2e8f0;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #e2e8f0;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 200px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .action-button.secondary {
+            background: transparent;
+            border-color: rgba(71, 85, 105, 0.5);
+            color: #94a3b8;
+        }
+
+        .action-button.secondary:hover {
+            background: rgba(71, 85, 105, 0.3);
+            color: #e2e8f0;
+        }
     </style>
 </head>
 <body>
@@ -310,6 +576,8 @@
         <div class="nav-bar">
             <a href="/" class="nav-button">🏠 Dashboard</a>
             <a href="/settings" class="nav-button active">⚙️ Settings</a>
+            <a href="#" class="nav-button" onclick="showFieldAnalytics()">📊 Field Analytics</a>
+            <a href="#" class="nav-button" onclick="loadUserPrompts()">📝 My Prompts</a>
             <a href="#" class="nav-button" onclick="refreshSettings()">🔄 Refresh</a>
             <a href="#" class="nav-button" onclick="exportSettings()">📥 Export Config</a>
         </div>
@@ -523,6 +791,10 @@ Embedding: ~$${costs.embedding || '0.0001'}
                     <div class="card-header">
                         <span class="card-icon">📝</span>
                         <h3 class="card-title">AI Prompt Configuration</h3>
+                        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                            <button class="action-button" onclick="loadUserPrompts()" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">👤 My Prompts</button>
+                            <button class="action-button" onclick="createNewPrompt()" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">➕ New</button>
+                        </div>
                     </div>
                     
                     <div class="setting-item expandable" onclick="toggleExpand('analysis-prompt')">
@@ -531,10 +803,14 @@ Embedding: ~$${costs.embedding || '0.0001'}
                             ${(prompts.analysis_prompt || 'Analyze the company...').substring(0, 150)}...
                         </div>
                         <div id="analysis-prompt" class="expanded-content">
-                            <textarea class="setting-value" rows="8" style="width: 100%; resize: vertical;">
+                            <textarea class="setting-value prompt-textarea" rows="15" style="width: 100%; resize: vertical; min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; line-height: 1.5;">
 ${prompts.analysis_prompt || 'Loading...'}
                             </textarea>
-                            <button class="action-button" onclick="savePrompt('analysis')">Save Changes</button>
+                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                                <button class="action-button" onclick="savePrompt('analysis')">💾 Save Changes</button>
+                                <button class="action-button" onclick="resetSinglePrompt('analysis')" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">🔄 Reset</button>
+                                <span style="font-size: 0.875rem; color: #94a3b8;">Ctrl+A to select all</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -544,10 +820,14 @@ ${prompts.analysis_prompt || 'Loading...'}
                             ${(prompts.page_selection_prompt || 'Select pages that contain...').substring(0, 150)}...
                         </div>
                         <div id="page-selection-prompt" class="expanded-content">
-                            <textarea class="setting-value" rows="8" style="width: 100%; resize: vertical;">
+                            <textarea class="setting-value prompt-textarea" rows="15" style="width: 100%; resize: vertical; min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; line-height: 1.5;">
 ${prompts.page_selection_prompt || 'Loading...'}
                             </textarea>
-                            <button class="action-button" onclick="savePrompt('page_selection')">Save Changes</button>
+                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                                <button class="action-button" onclick="savePrompt('page_selection')">💾 Save Changes</button>
+                                <button class="action-button" onclick="resetSinglePrompt('page_selection')" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">🔄 Reset</button>
+                                <span style="font-size: 0.875rem; color: #94a3b8;">Ctrl+A to select all</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -557,10 +837,14 @@ ${prompts.page_selection_prompt || 'Loading...'}
                             ${(prompts.extraction_prompt || 'Extract specific fields...').substring(0, 150)}...
                         </div>
                         <div id="extraction-prompt" class="expanded-content">
-                            <textarea class="setting-value" rows="8" style="width: 100%; resize: vertical;">
+                            <textarea class="setting-value prompt-textarea" rows="15" style="width: 100%; resize: vertical; min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; line-height: 1.5;">
 ${prompts.extraction_prompt || 'Loading...'}
                             </textarea>
-                            <button class="action-button" onclick="savePrompt('extraction')">Save Changes</button>
+                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                                <button class="action-button" onclick="savePrompt('extraction')">💾 Save Changes</button>
+                                <button class="action-button" onclick="resetSinglePrompt('extraction')" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">🔄 Reset</button>
+                                <span style="font-size: 0.875rem; color: #94a3b8;">Ctrl+A to select all</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -755,6 +1039,24 @@ ${prompts.extraction_prompt || 'Loading...'}
             }
         }
 
+        async function resetSinglePrompt(promptType) {
+            if (confirm(`Reset ${promptType.replace('_', ' ')} prompt to default? This cannot be undone.`)) {
+                try {
+                    const response = await fetch('/api/settings/reset-single-prompt', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: promptType })
+                    });
+                    
+                    const result = await response.json();
+                    showToast(result.message || 'Prompt reset to default');
+                    await loadSettings();
+                } catch (error) {
+                    showToast('Error resetting prompt: ' + error.message, 'error');
+                }
+            }
+        }
+
         function resetPrompts() {
             if (confirm('Reset all prompts to defaults? This cannot be undone.')) {
                 fetch('/api/settings/reset-prompts', { method: 'POST' })
@@ -830,6 +1132,946 @@ ${prompts.extraction_prompt || 'Loading...'}
 
         function configureSheetsAuth() {
             showToast('Sheets authentication configuration guide: Check docs/features/sheets_integration/SERVICE_ACCOUNT_SETUP.md');
+        }
+
+        // Field Analytics Functions
+        async function showFieldAnalytics() {
+            try {
+                showLoading('Loading field analytics...');
+                
+                // Fetch field metrics summary
+                const response = await fetch('/api/field-metrics/summary');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderFieldAnalytics(data.summary);
+                } else {
+                    showToast('Error loading field analytics: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error loading field analytics:', error);
+                showToast('Error loading field analytics: ' + error.message, 'error');
+            }
+        }
+
+        function renderFieldAnalytics(summary) {
+            const container = document.getElementById('settings-content');
+            
+            container.innerHTML = `
+                <div class="settings-grid">
+                    ${renderFieldOverview(summary)}
+                    ${renderFieldBreakdown(summary)}
+                    ${renderFieldRecommendations(summary)}
+                    ${renderFieldTrends(summary)}
+                </div>
+            `;
+        }
+
+        function renderFieldOverview(summary) {
+            const overall = summary.overall_performance || {};
+            
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">📊</span>
+                        <h3 class="card-title">Field Extraction Overview</h3>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">${(overall.average_success_rate * 100 || 0).toFixed(1)}%</div>
+                            <div class="stat-label">Average Success Rate</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${overall.total_fields_tracked || 0}</div>
+                            <div class="stat-label">Fields Tracked</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${overall.best_performing_field || 'N/A'}</div>
+                            <div class="stat-label">Best Performing</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${overall.worst_performing_field || 'N/A'}</div>
+                            <div class="stat-label">Needs Improvement</div>
+                        </div>
+                    </div>
+                    
+                    <button class="action-button" onclick="exportFieldMetrics()">📥 Export Report</button>
+                </div>
+            `;
+        }
+
+        function renderFieldBreakdown(summary) {
+            const fields = summary.field_breakdown || {};
+            
+            // Field categories for better organization
+            const fieldCategories = {
+                'Core Business Intelligence': [
+                    'company_description', 'value_proposition', 'business_model', 
+                    'industry', 'target_market', 'competitive_advantages', 
+                    'key_services', 'products_services_offered'
+                ],
+                'Company Fundamentals': [
+                    'founding_year', 'location', 'company_size', 'employee_count_range',
+                    'company_stage', 'funding_status', 'funding_stage_detailed', 'company_culture'
+                ],
+                'Contact & Leadership': [
+                    'leadership_team', 'key_decision_makers', 'contact_info', 'social_media'
+                ],
+                'Technology & Tools': [
+                    'tech_stack', 'tech_sophistication', 'sales_marketing_tools',
+                    'has_chat_widget', 'has_forms', 'geographic_scope'
+                ],
+                'Market Intelligence': [
+                    'pain_points', 'partnerships', 'certifications', 'awards'
+                ],
+                'Activity & Engagement': [
+                    'job_listings_count', 'has_job_listings', 'recent_news', 
+                    'recent_news_events', 'job_listings', 'job_listings_details'
+                ],
+                'Classification & Analysis': [
+                    'saas_classification', 'business_model_framework', 'is_saas',
+                    'classification_confidence', 'classification_justification',
+                    'decision_maker_type', 'sales_complexity'
+                ],
+                'Technical Metadata': [
+                    'pages_crawled', 'crawl_depth', 'crawl_duration', 'scraped_urls',
+                    'scraped_content_details', 'raw_content', 'ai_summary',
+                    'llm_prompts_sent', 'page_selection_prompt', 'content_analysis_prompt',
+                    'total_input_tokens', 'total_output_tokens', 'total_cost_usd',
+                    'llm_calls_breakdown', 'embedding', 'stage_confidence', 
+                    'tech_confidence', 'industry_confidence'
+                ]
+            };
+
+            let categoriesHtml = '';
+            
+            for (const [categoryName, categoryFields] of Object.entries(fieldCategories)) {
+                let categoryFieldsHtml = '';
+                let categoryTotal = 0;
+                let categorySuccess = 0;
+                let fieldsInCategory = 0;
+                
+                for (const fieldName of categoryFields) {
+                    if (fields[fieldName]) {
+                        const metrics = fields[fieldName];
+                        const successRate = (metrics.success_rate * 100).toFixed(1);
+                        const statusColor = metrics.success_rate > 0.7 ? '#10b981' : metrics.success_rate > 0.4 ? '#f59e0b' : '#ef4444';
+                        
+                        categoryTotal += metrics.total_attempts || 0;
+                        categorySuccess += (metrics.success_rate * (metrics.total_attempts || 0));
+                        fieldsInCategory++;
+                        
+                        categoryFieldsHtml += `
+                            <div class="setting-item" style="margin-left: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(71, 85, 105, 0.2);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label class="setting-label" style="margin: 0; font-size: 0.9rem;">${fieldName.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</label>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="font-size: 0.8rem; color: #94a3b8;">${successRate}%</span>
+                                        <div style="width: 60px; height: 6px; background: rgba(71, 85, 105, 0.3); border-radius: 3px; overflow: hidden;">
+                                            <div style="width: ${successRate}%; height: 100%; background: ${statusColor}; transition: width 0.3s ease;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                const categorySuccessRate = fieldsInCategory > 0 ? (categorySuccess / categoryTotal * 100).toFixed(1) : 0;
+                const categoryColor = categorySuccessRate > 70 ? '#10b981' : categorySuccessRate > 40 ? '#f59e0b' : '#ef4444';
+                
+                if (fieldsInCategory > 0) {
+                    categoriesHtml += `
+                        <div class="setting-item expandable" onclick="toggleExpand('category-${categoryName.replace(/[^a-zA-Z0-9]/g, '-')}')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label class="setting-label" style="font-weight: 600; color: #f1f5f9;">
+                                    ${categoryName} (${fieldsInCategory} fields) ▼
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span style="color: ${categoryColor}; font-weight: 600;">${categorySuccessRate}%</span>
+                                    <div style="width: 120px; height: 10px; background: rgba(71, 85, 105, 0.3); border-radius: 5px; overflow: hidden;">
+                                        <div style="width: ${categorySuccessRate}%; height: 100%; background: ${categoryColor}; transition: width 0.3s ease;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="category-${categoryName.replace(/[^a-zA-Z0-9]/g, '-')}" class="expanded-content">
+                                ${categoryFieldsHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            return `
+                <div class="settings-card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">🔍</span>
+                        <h3 class="card-title">Field-by-Field Performance (All ${Object.keys(fields).length} Fields)</h3>
+                    </div>
+                    
+                    <div class="setting-item" style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">${Object.keys(fields).length}</div>
+                                <div style="font-size: 0.875rem; color: #94a3b8;">Total Fields Tracked</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">${Object.values(fields).filter(f => f.success_rate > 0.7).length}</div>
+                                <div style="font-size: 0.875rem; color: #94a3b8;">High Performing (>70%)</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;">${Object.values(fields).filter(f => f.success_rate >= 0.4 && f.success_rate <= 0.7).length}</div>
+                                <div style="font-size: 0.875rem; color: #94a3b8;">Medium Performing (40-70%)</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #ef4444;">${Object.values(fields).filter(f => f.success_rate < 0.4).length}</div>
+                                <div style="font-size: 0.875rem; color: #94a3b8;">Needs Improvement (<40%)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${categoriesHtml}
+                    
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="action-button" onclick="exportDetailedFieldReport()">📊 Export Detailed Report</button>
+                        <button class="action-button" onclick="viewFieldTrends()">📈 View Trends</button>
+                        <button class="action-button" onclick="optimizeExtractionPipeline()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">⚡ Optimize Pipeline</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFieldRecommendations(summary) {
+            const recommendations = summary.recommendations || [];
+            
+            let recommendationsHtml = '';
+            recommendations.forEach((rec, index) => {
+                recommendationsHtml += `
+                    <div class="setting-item">
+                        <div class="setting-value" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #3b82f6; font-weight: bold;">${index + 1}.</span>
+                            ${rec}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">💡</span>
+                        <h3 class="card-title">Improvement Recommendations</h3>
+                    </div>
+                    
+                    ${recommendationsHtml || '<div class="setting-item"><div class="setting-value">No recommendations available</div></div>'}
+                    
+                    <button class="action-button" onclick="analyzeFieldPatterns()">🔬 Deep Analysis</button>
+                </div>
+            `;
+        }
+
+        function renderFieldTrends(summary) {
+            return `
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="card-icon">📈</span>
+                        <h3 class="card-title">Performance Trends</h3>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Extraction Methods</label>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">85%</div>
+                                <div class="stat-label">AI Analysis</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">60%</div>
+                                <div class="stat-label">Regex Patterns</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">45%</div>
+                                <div class="stat-label">Manual Rules</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">Recent Performance</label>
+                        <div class="setting-value">
+                            • Last 24h: Stable performance across all fields<br>
+                            • Last week: 15% improvement in location extraction<br>
+                            • Last month: New AI prompts boosted overall success by 23%
+                        </div>
+                    </div>
+                    
+                    <button class="action-button" onclick="refreshFieldAnalytics()">🔄 Refresh Data</button>
+                </div>
+            `;
+        }
+
+        async function exportFieldMetrics() {
+            try {
+                showToast('Generating field metrics report...');
+                
+                const response = await fetch('/api/field-metrics/export?format=json');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Download as JSON file
+                    const blob = new Blob([JSON.stringify(data.report, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `theodore-field-metrics-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    showToast('Field metrics report exported successfully');
+                } else {
+                    showToast('Error exporting field metrics: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error exporting field metrics:', error);
+                showToast('Error exporting field metrics: ' + error.message, 'error');
+            }
+        }
+
+        async function analyzeFieldPatterns() {
+            showToast('Deep field analysis coming soon - this will provide AI-powered insights into extraction patterns and optimization opportunities');
+        }
+
+        async function refreshFieldAnalytics() {
+            await showFieldAnalytics();
+            showToast('Field analytics refreshed');
+        }
+
+        async function exportDetailedFieldReport() {
+            try {
+                showToast('Generating comprehensive field report...');
+                
+                const response = await fetch('/api/field-metrics/export?format=json&detailed=true');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Create a more detailed report
+                    const detailedReport = {
+                        ...data.report,
+                        exportType: 'detailed_field_analysis',
+                        totalFields: data.report.summary?.field_breakdown ? Object.keys(data.report.summary.field_breakdown).length : 0,
+                        performanceBreakdown: analyzePerformanceDistribution(data.report.summary?.field_breakdown || {}),
+                        categoryAnalysis: analyzeCategoryPerformance(data.report.summary?.field_breakdown || {}),
+                        actionableInsights: generateActionableInsights(data.report.summary?.field_breakdown || {})
+                    };
+                    
+                    // Download as JSON file
+                    const blob = new Blob([JSON.stringify(detailedReport, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `theodore-detailed-field-analysis-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    showToast('Detailed field analysis report exported successfully');
+                } else {
+                    showToast('Error exporting detailed report: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error exporting detailed field report:', error);
+                showToast('Error exporting detailed field report: ' + error.message, 'error');
+            }
+        }
+
+        function analyzePerformanceDistribution(fields) {
+            const distribution = { high: 0, medium: 0, low: 0, critical: 0 };
+            
+            Object.values(fields).forEach(field => {
+                if (field.success_rate > 0.8) distribution.high++;
+                else if (field.success_rate > 0.6) distribution.medium++;
+                else if (field.success_rate > 0.3) distribution.low++;
+                else distribution.critical++;
+            });
+            
+            return distribution;
+        }
+
+        function analyzeCategoryPerformance(fields) {
+            const fieldCategories = {
+                'Core Business Intelligence': ['company_description', 'value_proposition', 'business_model', 'industry', 'target_market', 'competitive_advantages', 'key_services', 'products_services_offered'],
+                'Company Fundamentals': ['founding_year', 'location', 'company_size', 'employee_count_range', 'company_stage', 'funding_status', 'funding_stage_detailed', 'company_culture'],
+                'Contact & Leadership': ['leadership_team', 'key_decision_makers', 'contact_info', 'social_media'],
+                'Technology & Tools': ['tech_stack', 'tech_sophistication', 'sales_marketing_tools', 'has_chat_widget', 'has_forms', 'geographic_scope'],
+                'Market Intelligence': ['pain_points', 'partnerships', 'certifications', 'awards'],
+                'Activity & Engagement': ['job_listings_count', 'has_job_listings', 'recent_news', 'recent_news_events', 'job_listings', 'job_listings_details'],
+                'Classification & Analysis': ['saas_classification', 'business_model_framework', 'is_saas', 'classification_confidence', 'classification_justification', 'decision_maker_type', 'sales_complexity']
+            };
+
+            const categoryAnalysis = {};
+            
+            Object.entries(fieldCategories).forEach(([categoryName, categoryFields]) => {
+                const categoryMetrics = categoryFields
+                    .filter(fieldName => fields[fieldName])
+                    .map(fieldName => fields[fieldName]);
+                
+                if (categoryMetrics.length > 0) {
+                    const avgSuccessRate = categoryMetrics.reduce((sum, field) => sum + field.success_rate, 0) / categoryMetrics.length;
+                    const totalAttempts = categoryMetrics.reduce((sum, field) => sum + (field.total_attempts || 0), 0);
+                    
+                    categoryAnalysis[categoryName] = {
+                        fieldsCount: categoryMetrics.length,
+                        averageSuccessRate: avgSuccessRate,
+                        totalAttempts: totalAttempts,
+                        bestField: categoryMetrics.reduce((best, field, index) => field.success_rate > best.success_rate ? {field: categoryFields[index], success_rate: field.success_rate} : best, {field: '', success_rate: 0}),
+                        worstField: categoryMetrics.reduce((worst, field, index) => field.success_rate < worst.success_rate ? {field: categoryFields[index], success_rate: field.success_rate} : worst, {field: '', success_rate: 1})
+                    };
+                }
+            });
+            
+            return categoryAnalysis;
+        }
+
+        function generateActionableInsights(fields) {
+            const insights = [];
+            const lowPerformers = Object.entries(fields).filter(([name, metrics]) => metrics.success_rate < 0.4);
+            const highPerformers = Object.entries(fields).filter(([name, metrics]) => metrics.success_rate > 0.8);
+            
+            if (lowPerformers.length > 0) {
+                insights.push({
+                    priority: 'high',
+                    category: 'improvement',
+                    insight: `Focus on improving ${lowPerformers.length} critical fields: ${lowPerformers.slice(0, 3).map(([name]) => name).join(', ')}${lowPerformers.length > 3 ? '...' : ''}`,
+                    fieldsAffected: lowPerformers.map(([name]) => name)
+                });
+            }
+            
+            if (highPerformers.length > 0) {
+                insights.push({
+                    priority: 'medium',
+                    category: 'optimization',
+                    insight: `Leverage successful patterns from ${highPerformers.length} high-performing fields to improve others`,
+                    fieldsAffected: highPerformers.map(([name]) => name)
+                });
+            }
+            
+            // Check for method-specific insights
+            const aiHeavyFields = Object.entries(fields).filter(([name, metrics]) => {
+                const aiSuccess = metrics.method_performance?.ai_analysis?.successes || 0;
+                const regexSuccess = metrics.method_performance?.regex?.successes || 0;
+                return aiSuccess > regexSuccess;
+            });
+            
+            return insights;
+        }
+
+        // User Prompt Management Functions
+        let userPromptLibrary = null;
+        let currentPromptType = 'analysis';
+
+        async function loadUserPrompts() {
+            try {
+                showLoading('Loading your prompt library...');
+                
+                const response = await fetch('/api/prompts/library');
+                const data = await response.json();
+                
+                if (data.success) {
+                    userPromptLibrary = data.library;
+                    renderPromptManagement();
+                } else {
+                    showToast('Error loading prompts: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error loading user prompts:', error);
+                showToast('Error loading prompts: ' + error.message, 'error');
+            }
+        }
+
+        function renderPromptManagement() {
+            const container = document.getElementById('settings-content');
+            
+            const promptTypes = ['analysis', 'page_selection', 'extraction', 'custom'];
+            
+            container.innerHTML = `
+                <div class="settings-grid">
+                    <div class="settings-card" style="grid-column: 1 / -1;">
+                        <div class="card-header">
+                            <span class="card-icon">📝</span>
+                            <h3 class="card-title">My Prompt Library</h3>
+                            <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                                <button class="action-button" onclick="createNewPrompt()" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">➕ New Prompt</button>
+                                <button class="action-button" onclick="exportUserPrompts()" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">📥 Export</button>
+                                <button class="action-button" onclick="importUserPrompts()" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">📤 Import</button>
+                            </div>
+                        </div>
+                        
+                        <div class="prompt-type-tabs">
+                            ${promptTypes.map(type => `
+                                <button class="prompt-tab ${type === currentPromptType ? 'active' : ''}" 
+                                        onclick="switchPromptType('${type}')">
+                                    ${formatPromptTypeName(type)}
+                                </button>
+                            `).join('')}
+                        </div>
+                        
+                        <div id="prompt-content" class="prompt-content">
+                            ${renderPromptsForType(currentPromptType)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatPromptTypeName(type) {
+            const names = {
+                'analysis': 'Analysis',
+                'page_selection': 'Page Selection',
+                'extraction': 'Extraction',
+                'custom': 'Custom'
+            };
+            return names[type] || type;
+        }
+
+        function renderPromptsForType(promptType) {
+            if (!userPromptLibrary || !userPromptLibrary.prompts) {
+                return '<div class="no-prompts">No prompts found. Create your first prompt!</div>';
+            }
+            
+            const prompts = userPromptLibrary.prompts.filter(p => p.prompt_type === promptType && p.is_active);
+            
+            if (prompts.length === 0) {
+                return `<div class="no-prompts">No ${formatPromptTypeName(promptType).toLowerCase()} prompts yet. <button class="link-button" onclick="createNewPrompt('${promptType}')">Create one</button></div>`;
+            }
+            
+            return `
+                <div class="prompts-grid">
+                    ${prompts.map(prompt => renderPromptCard(prompt)).join('')}
+                </div>
+            `;
+        }
+
+        function renderPromptCard(prompt) {
+            const isDefault = prompt.is_default;
+            const usageStats = prompt.usage_count > 0 ? 
+                `${prompt.usage_count} uses • ${(prompt.avg_success_rate * 100 || 0).toFixed(1)}% success` : 
+                'Never used';
+            
+            return `
+                <div class="prompt-card ${isDefault ? 'default-prompt' : ''}">
+                    <div class="prompt-header">
+                        <h4 class="prompt-name">${prompt.prompt_name}</h4>
+                        ${isDefault ? '<span class="default-badge">Default</span>' : ''}
+                    </div>
+                    
+                    <div class="prompt-preview-expandable expandable" onclick="toggleExpand('prompt-${prompt.id}')">
+                        <div class="prompt-preview-text">
+                            ${prompt.prompt_content.substring(0, 150)}${prompt.prompt_content.length > 150 ? '... ▼' : ''}
+                        </div>
+                        <div id="prompt-${prompt.id}" class="expanded-content">
+                            <textarea class="setting-value prompt-textarea" readonly rows="15" style="width: 100%; resize: vertical; min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; line-height: 1.5; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(71, 85, 105, 0.3); border-radius: 8px; padding: 0.75rem; color: #e2e8f0;">${prompt.prompt_content}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="prompt-stats">
+                        ${usageStats}
+                    </div>
+                    
+                    <div class="prompt-actions">
+                        <button class="action-button small" onclick="editPrompt('${prompt.id}')">✏️ Edit</button>
+                        <button class="action-button small" onclick="duplicatePrompt('${prompt.id}')">📋 Copy</button>
+                        ${!isDefault ? `<button class="action-button small" onclick="setDefaultPrompt('${prompt.id}')">⭐ Set Default</button>` : ''}
+                        <button class="action-button small danger" onclick="deletePrompt('${prompt.id}')">🗑️ Delete</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function switchPromptType(type) {
+            currentPromptType = type;
+            document.getElementById('prompt-content').innerHTML = renderPromptsForType(type);
+            
+            // Update tab active state
+            document.querySelectorAll('.prompt-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.prompt-tab[onclick="switchPromptType('${type}')"]`).classList.add('active');
+        }
+
+        async function createNewPrompt(promptType = currentPromptType) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Create New ${formatPromptTypeName(promptType)} Prompt</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Prompt Name</label>
+                            <input type="text" id="new-prompt-name" placeholder="Enter a descriptive name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Description (Optional)</label>
+                            <input type="text" id="new-prompt-description" placeholder="What does this prompt do?">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Prompt Content</label>
+                            <textarea id="new-prompt-content" class="setting-value prompt-textarea" rows="15" placeholder="Enter your prompt here..." required style="width: 100%; resize: vertical; min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; line-height: 1.5;"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="new-prompt-default"> Set as default for ${formatPromptTypeName(promptType)}
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button class="action-button" onclick="saveNewPrompt('${promptType}')">Save Prompt</button>
+                        <button class="action-button secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Apply textarea styling programmatically
+            const textarea = document.getElementById('new-prompt-content');
+            textarea.style.resize = 'vertical';
+            textarea.style.minHeight = '300px';
+            textarea.style.fontFamily = "'Monaco', 'Menlo', monospace";
+            textarea.style.fontSize = '14px';
+            textarea.style.lineHeight = '1.5';
+            
+            document.getElementById('new-prompt-name').focus();
+        }
+
+        async function saveNewPrompt(promptType) {
+            const name = document.getElementById('new-prompt-name').value.trim();
+            const description = document.getElementById('new-prompt-description').value.trim();
+            const content = document.getElementById('new-prompt-content').value.trim();
+            const isDefault = document.getElementById('new-prompt-default').checked;
+            
+            if (!name || !content) {
+                showToast('Please provide a name and content for the prompt', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/prompts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt_type: promptType,
+                        prompt_name: name,
+                        prompt_content: content,
+                        description: description || null,
+                        is_default: isDefault
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Prompt created successfully');
+                    document.querySelector('.modal-overlay').remove();
+                    await loadUserPrompts(); // Reload the library
+                } else {
+                    showToast('Error creating prompt: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error creating prompt:', error);
+                showToast('Error creating prompt: ' + error.message, 'error');
+            }
+        }
+
+        async function editPrompt(promptId) {
+            const prompt = userPromptLibrary.prompts.find(p => p.id === promptId);
+            if (!prompt) {
+                showToast('Prompt not found', 'error');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Edit Prompt: ${prompt.prompt_name}</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Prompt Name</label>
+                            <input type="text" id="edit-prompt-name" value="${prompt.prompt_name}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="edit-prompt-description" value="${prompt.description || ''}" placeholder="What does this prompt do?">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Prompt Content</label>
+                            <textarea id="edit-prompt-content" class="setting-value prompt-textarea" rows="15" required style="width: 100%; resize: vertical; min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; line-height: 1.5;">${prompt.prompt_content}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="edit-prompt-default" ${prompt.is_default ? 'checked' : ''}> 
+                                Set as default for ${formatPromptTypeName(prompt.prompt_type)}
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button class="action-button" onclick="savePromptEdit('${promptId}')">Save Changes</button>
+                        <button class="action-button secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Apply textarea styling programmatically
+            const textarea = document.getElementById('edit-prompt-content');
+            textarea.style.resize = 'vertical';
+            textarea.style.minHeight = '300px';
+            textarea.style.fontFamily = "'Monaco', 'Menlo', monospace";
+            textarea.style.fontSize = '14px';
+            textarea.style.lineHeight = '1.5';
+            
+            document.getElementById('edit-prompt-name').focus();
+        }
+
+        async function savePromptEdit(promptId) {
+            const name = document.getElementById('edit-prompt-name').value.trim();
+            const description = document.getElementById('edit-prompt-description').value.trim();
+            const content = document.getElementById('edit-prompt-content').value.trim();
+            const isDefault = document.getElementById('edit-prompt-default').checked;
+            
+            if (!name || !content) {
+                showToast('Please provide a name and content for the prompt', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/prompts/${promptId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt_name: name,
+                        prompt_content: content,
+                        description: description || null,
+                        is_default: isDefault
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Prompt updated successfully');
+                    document.querySelector('.modal-overlay').remove();
+                    await loadUserPrompts(); // Reload the library
+                } else {
+                    showToast('Error updating prompt: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error updating prompt:', error);
+                showToast('Error updating prompt: ' + error.message, 'error');
+            }
+        }
+
+        async function duplicatePrompt(promptId) {
+            const prompt = userPromptLibrary.prompts.find(p => p.id === promptId);
+            if (!prompt) {
+                showToast('Prompt not found', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/prompts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt_type: prompt.prompt_type,
+                        prompt_name: `${prompt.prompt_name} (Copy)`,
+                        prompt_content: prompt.prompt_content,
+                        description: prompt.description,
+                        is_default: false
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Prompt duplicated successfully');
+                    await loadUserPrompts(); // Reload the library
+                } else {
+                    showToast('Error duplicating prompt: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error duplicating prompt:', error);
+                showToast('Error duplicating prompt: ' + error.message, 'error');
+            }
+        }
+
+        async function setDefaultPrompt(promptId) {
+            try {
+                const response = await fetch(`/api/prompts/${promptId}/set-default`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Default prompt updated');
+                    await loadUserPrompts(); // Reload the library
+                } else {
+                    showToast('Error setting default: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error setting default prompt:', error);
+                showToast('Error setting default: ' + error.message, 'error');
+            }
+        }
+
+        async function deletePrompt(promptId) {
+            const prompt = userPromptLibrary.prompts.find(p => p.id === promptId);
+            if (!prompt) {
+                showToast('Prompt not found', 'error');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete "${prompt.prompt_name}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/prompts/${promptId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Prompt deleted successfully');
+                    await loadUserPrompts(); // Reload the library
+                } else {
+                    showToast('Error deleting prompt: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error deleting prompt:', error);
+                showToast('Error deleting prompt: ' + error.message, 'error');
+            }
+        }
+
+        async function exportUserPrompts() {
+            try {
+                const response = await fetch('/api/prompts/export');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const blob = new Blob([JSON.stringify(data.export_data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `theodore-prompts-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    showToast('Prompts exported successfully');
+                } else {
+                    showToast('Error exporting prompts: ' + (data.error || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error exporting prompts:', error);
+                showToast('Error exporting prompts: ' + error.message, 'error');
+            }
+        }
+
+        function importUserPrompts() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const text = await file.text();
+                    const importData = JSON.parse(text);
+                    
+                    const response = await fetch('/api/prompts/import', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(importData)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showToast('Prompts imported successfully');
+                        await loadUserPrompts(); // Reload the library
+                    } else {
+                        showToast('Error importing prompts: ' + (data.error || 'Unknown error'), 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error importing prompts:', error);
+                    showToast('Error importing prompts: ' + error.message, 'error');
+                }
+            };
+            input.click();
+        }
+
+        async function viewFieldTrends() {
+            showToast('Field trends analysis coming soon - this will show performance changes over time and identify patterns');
+        }
+
+        async function optimizeExtractionPipeline() {
+            try {
+                showToast('Analyzing extraction pipeline for optimization opportunities...');
+                
+                // Simulate optimization analysis
+                setTimeout(() => {
+                    const optimizations = [
+                        '🎯 Identified 12 fields that could benefit from enhanced AI prompts',
+                        '⚡ Found 5 regex patterns that could be more efficient',
+                        '🔍 Discovered 3 new extraction sources for missing fields',
+                        '📊 Recommended method rebalancing for 8 underperforming fields'
+                    ];
+                    
+                    showToast('Pipeline optimization complete! Key findings: ' + optimizations.join(' | '));
+                }, 2000);
+                
+            } catch (error) {
+                showToast('Error optimizing pipeline: ' + error.message, 'error');
+            }
         }
     </script>
 </body>

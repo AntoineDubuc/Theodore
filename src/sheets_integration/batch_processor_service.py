@@ -22,7 +22,7 @@ class BatchProcessorService:
     """Handles batch processing of companies from Google Sheets using Service Account"""
     
     def __init__(self, sheets_client: GoogleSheetsServiceClient, 
-                 concurrency: int = 2,  # REDUCED FOR TESTING
+                 concurrency: int = 5,  # OPTIMIZED: 5 concurrent companies for balanced performance
                  update_interval: int = 1,  # Update after every company
                  max_consecutive_errors: int = 3,
                  max_companies_to_process: int = None):
@@ -180,11 +180,17 @@ class BatchProcessorService:
                 '0%'
             )
             
-            # Run Theodore research pipeline
+            # Run Theodore research pipeline with job tracking
             logger.info(f"Starting research for {company_name}...")
+            
+            # Create a job ID for progress tracking if not provided
+            if not job_id:
+                job_id = f"batch_{spreadsheet_id}_{row_number}_{int(time.time())}"
+            
             company_data = self.pipeline.process_single_company(
                 company_name=company_name,
-                website=website if website else ''
+                website=website if website else '',
+                job_id=job_id
             )
             
             if company_data and company_data.name:

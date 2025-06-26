@@ -1,17 +1,23 @@
 """
 Enhanced field extractor for specific business intelligence fields
 Focuses on improving extraction of founding_year, location, contact_info, leadership_team
+Now includes field-level success tracking and metrics
 """
 
 import re
 import json
+import time
+import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 class EnhancedFieldExtractor:
     """Extract specific business fields using targeted patterns and AI analysis"""
     
-    def __init__(self):
+    def __init__(self, metrics_service=None):
+        self.metrics_service = metrics_service
         # Patterns for founding year extraction
         self.founding_year_patterns = [
             r'founded in (\d{4})',
@@ -52,34 +58,82 @@ class EnhancedFieldExtractor:
             r'chief marketing officer[:\s]+([^,\n]+)',
         ]
     
-    def extract_founding_year(self, content: str) -> Optional[int]:
-        """Extract founding year from text content"""
+    def extract_founding_year(self, content: str, session_id: str = None, source_page: str = None) -> Optional[int]:
+        """Extract founding year from text content with metrics tracking"""
+        start_time = time.time()
+        
         if not content:
+            if self.metrics_service and session_id:
+                self.metrics_service.track_field_extraction(
+                    session_id=session_id,
+                    field_name="founding_year",
+                    success=False,
+                    method="regex",
+                    source_page=source_page,
+                    extraction_time=time.time() - start_time,
+                    error_message="No content provided"
+                )
             return None
         
         content_lower = content.lower()
         
-        for pattern in self.founding_year_patterns:
+        for i, pattern in enumerate(self.founding_year_patterns):
             matches = re.findall(pattern, content_lower, re.IGNORECASE)
             for match in matches:
                 try:
                     year = int(match)
                     # Validate reasonable year range
                     if 1800 <= year <= datetime.now().year:
+                        # Track successful extraction
+                        if self.metrics_service and session_id:
+                            self.metrics_service.track_field_extraction(
+                                session_id=session_id,
+                                field_name="founding_year",
+                                success=True,
+                                value=str(year),
+                                confidence=0.9 if i < 3 else 0.7,  # Higher confidence for "founded in" patterns
+                                method="regex",
+                                source_page=source_page,
+                                extraction_time=time.time() - start_time
+                            )
                         return year
                 except ValueError:
                     continue
         
+        # Track failed extraction
+        if self.metrics_service and session_id:
+            self.metrics_service.track_field_extraction(
+                session_id=session_id,
+                field_name="founding_year",
+                success=False,
+                method="regex",
+                source_page=source_page,
+                extraction_time=time.time() - start_time,
+                error_message="No founding year found in content"
+            )
+        
         return None
     
-    def extract_location(self, content: str) -> Optional[str]:
-        """Extract company location from text content"""
+    def extract_location(self, content: str, session_id: str = None, source_page: str = None) -> Optional[str]:
+        """Extract company location from text content with metrics tracking"""
+        start_time = time.time()
+        
         if not content:
+            if self.metrics_service and session_id:
+                self.metrics_service.track_field_extraction(
+                    session_id=session_id,
+                    field_name="location",
+                    success=False,
+                    method="regex",
+                    source_page=source_page,
+                    extraction_time=time.time() - start_time,
+                    error_message="No content provided"
+                )
             return None
         
         content_lower = content.lower()
         
-        for pattern in self.location_patterns:
+        for i, pattern in enumerate(self.location_patterns):
             matches = re.findall(pattern, content_lower, re.IGNORECASE)
             for match in matches:
                 # Clean up the location string
@@ -89,7 +143,32 @@ class EnhancedFieldExtractor:
                 location = re.sub(r'\s+(and|with|including).*$', '', location, flags=re.IGNORECASE)
                 
                 if len(location) > 3:  # Minimum reasonable location length
+                    # Track successful extraction
+                    if self.metrics_service and session_id:
+                        confidence = 0.8 if i < 2 else 0.6  # Higher confidence for "headquarters" patterns
+                        self.metrics_service.track_field_extraction(
+                            session_id=session_id,
+                            field_name="location",
+                            success=True,
+                            value=location.title(),
+                            confidence=confidence,
+                            method="regex",
+                            source_page=source_page,
+                            extraction_time=time.time() - start_time
+                        )
                     return location.title()
+        
+        # Track failed extraction
+        if self.metrics_service and session_id:
+            self.metrics_service.track_field_extraction(
+                session_id=session_id,
+                field_name="location",
+                success=False,
+                method="regex",
+                source_page=source_page,
+                extraction_time=time.time() - start_time,
+                error_message="No location found in content"
+            )
         
         return None
     
