@@ -35,6 +35,9 @@ from src.progress_logger import log_processing_phase, start_company_processing, 
 
 logger = logging.getLogger(__name__)
 
+# Browser user agent to mimic Chrome on macOS for better compatibility
+BROWSER_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
@@ -573,7 +576,13 @@ class ConcurrentIntelligentScraper:
         try:
             browser_args = get_browser_args(ignore_ssl=not should_verify_ssl())
             async with AsyncWebCrawler(browser_args=browser_args) as crawler:
-                result = await crawler.arun(url=sitemap_url, bypass_cache=True)
+                config = CrawlerRunConfig(
+                    user_agent=BROWSER_USER_AGENT,
+                    magic=True,
+                    simulate_user=True,
+                    cache_mode=CacheMode.BYPASS
+                )
+                result = await crawler.arun(url=sitemap_url, config=config)
                 if result.success and result.raw_html:
                     root = ET.fromstring(result.raw_html)
                     urls = []
@@ -646,6 +655,9 @@ class ConcurrentIntelligentScraper:
                     result = await crawler.arun(
                         url=current_url,
                         config=CrawlerRunConfig(
+                            user_agent=BROWSER_USER_AGENT,
+                            magic=True,
+                            simulate_user=True,
                             cache_mode=CacheMode.ENABLED,
                             word_count_threshold=10
                         )
@@ -867,14 +879,48 @@ Selected URLs:"""
             verbose=False
         ) as crawler:
             
-            # ✅ FIXED: Modern configuration parameters
+            # ✅ ENHANCED: Advanced Crawl4AI configuration with browser simulation
             config = CrawlerRunConfig(
-                word_count_threshold=50,
-                css_selector="main, article, .content",
-                excluded_tags=["script", "style"],
+                # Browser simulation and anti-bot bypass
+                user_agent=BROWSER_USER_AGENT,
+                simulate_user=True,
+                magic=True,
+                override_navigator=True,
+                
+                # Content extraction optimization
+                word_count_threshold=10,
+                css_selector="main, article, .content, .main-content, section",
+                excluded_tags=["nav", "footer", "aside", "script", "style"],
+                remove_overlay_elements=True,
+                process_iframes=True,
+                
+                # JavaScript interaction for dynamic content (with error handling)
+                js_code=[
+                    """
+                    try {
+                        if (document.body && document.body.scrollHeight) {
+                            window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+                        }
+                    } catch (e) { console.log('Scroll blocked:', e); }
+                    """,
+                    """
+                    try {
+                        ['load-more', 'show-more', 'view-all'].forEach(className => {
+                            const btn = document.querySelector('.' + className);
+                            if (btn) btn.click();
+                        });
+                    } catch (e) { console.log('Button click blocked:', e); }
+                    """
+                ],
+                wait_for="css:.main-content, css:main, css:article",
+                
+                # Link and media handling
+                exclude_social_media_links=True,
+                exclude_domains=["ads.com", "tracking.com", "analytics.com"],
+                
+                # Performance and reliability
                 cache_mode=CacheMode.ENABLED,
-                wait_until="domcontentloaded",
-                page_timeout=30000,
+                page_timeout=45000,
                 verbose=False
             )
             

@@ -7,6 +7,8 @@ import os
 import json
 import asyncio
 import logging
+import traceback
+import time
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from datetime import datetime
 
@@ -19,16 +21,16 @@ load_dotenv()
 
 # Import Theodore modules
 import sys
-sys.path.insert(0, 'src')
-from main_pipeline import TheodoreIntelligencePipeline, find_company_by_name
-from models import CompanyIntelligenceConfig, CompanySimilarity, CompanyData
+sys.path.insert(0, '.')
+from src.main_pipeline import TheodoreIntelligencePipeline, find_company_by_name
+from src.models import CompanyIntelligenceConfig, CompanySimilarity, CompanyData
 from typing import Optional
-from progress_logger import progress_logger, start_company_processing
+from src.progress_logger import progress_logger, start_company_processing
 
 # Import authentication modules
-from auth_manager import AuthManager
-from auth_routes import auth_bp
-from auth_decorators import optional_auth, api_auth_optional
+from src.auth_manager import AuthManager
+from src.auth_routes import auth_bp
+from src.auth_decorators import optional_auth, api_auth_optional
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'theodore-dev-key-2024')
@@ -45,27 +47,156 @@ else:
 # Register authentication blueprint
 app.register_blueprint(auth_bp)
 
-# Initialize Theodore pipeline
-config = CompanyIntelligenceConfig()
+# Initialize Theodore pipeline with robust error handling
+config = None
 pipeline = None
 
-def init_pipeline():
-    """Initialize Theodore pipeline"""
-    global pipeline
+def get_pipeline():
+    """Get or create pipeline instance with detailed component-by-component diagnostics"""
+    global pipeline, config
+    
+    if pipeline is not None:
+        return pipeline
+    
+    print("🔧 DIAGNOSTIC MODE: Testing each pipeline component individually...")
+    
+    # Store detailed error info for web response
+    global last_pipeline_error
+    last_pipeline_error = {
+        'stage': 'unknown',
+        'error': 'Unknown error',
+        'component_status': {},
+        'env_vars': {}
+    }
+    
     try:
+        # Stage 1: Environment Variables
+        print("🔍 Stage 1: Checking environment variables...")
+        last_pipeline_error['stage'] = 'environment_check'
+        
+        env_vars = {
+            'PINECONE_API_KEY': os.getenv('PINECONE_API_KEY'),
+            'PINECONE_INDEX_NAME': os.getenv('PINECONE_INDEX_NAME'),
+            'AWS_ACCESS_KEY_ID': os.getenv('AWS_ACCESS_KEY_ID'),
+            'AWS_SECRET_ACCESS_KEY': os.getenv('AWS_SECRET_ACCESS_KEY'),
+            'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY')
+        }
+        
+        for key, value in env_vars.items():
+            status = '✅ Set' if value else '❌ Missing'
+            print(f"   {key}: {status}")
+            last_pipeline_error['env_vars'][key] = bool(value)
+        
+        if not env_vars['PINECONE_API_KEY']:
+            raise ValueError("PINECONE_API_KEY environment variable not set")
+        if not env_vars['PINECONE_INDEX_NAME']:
+            raise ValueError("PINECONE_INDEX_NAME environment variable not set")
+        
+        # Stage 2: Config Creation
+        print("🔍 Stage 2: Creating config...")
+        last_pipeline_error['stage'] = 'config_creation'
+        if config is None:
+            config = CompanyIntelligenceConfig()
+        print("✅ Config created successfully")
+        last_pipeline_error['component_status']['config'] = True
+        
+        # Stage 3: Test Individual Components
+        print("🔍 Stage 3: Testing individual components...")
+        
+        # Test BedrockClient
+        print("   Testing BedrockClient...")
+        last_pipeline_error['stage'] = 'bedrock_client'
+        try:
+            from src.bedrock_client import BedrockClient
+            bedrock_client = BedrockClient(config)
+            print("   ✅ BedrockClient created")
+            last_pipeline_error['component_status']['bedrock'] = True
+        except Exception as e:
+            print(f"   ❌ BedrockClient failed: {e}")
+            last_pipeline_error['component_status']['bedrock'] = str(e)
+            
+        # Test GeminiClient  
+        print("   Testing GeminiClient...")
+        last_pipeline_error['stage'] = 'gemini_client'
+        try:
+            from src.gemini_client import GeminiClient
+            gemini_client = GeminiClient(config)
+            print("   ✅ GeminiClient created")
+            last_pipeline_error['component_status']['gemini'] = True
+        except Exception as e:
+            print(f"   ❌ GeminiClient failed: {e}")
+            last_pipeline_error['component_status']['gemini'] = str(e)
+            
+        # Test PineconeClient
+        print("   Testing PineconeClient...")
+        last_pipeline_error['stage'] = 'pinecone_client'
+        try:
+            from src.pinecone_client import PineconeClient
+            pinecone_client = PineconeClient(
+                config, 
+                env_vars['PINECONE_API_KEY'], 
+                os.getenv('PINECONE_ENVIRONMENT'),
+                env_vars['PINECONE_INDEX_NAME']
+            )
+            print("   ✅ PineconeClient created")
+            last_pipeline_error['component_status']['pinecone'] = True
+        except Exception as e:
+            print(f"   ❌ PineconeClient failed: {e}")
+            last_pipeline_error['component_status']['pinecone'] = str(e)
+        
+        # Stage 4: Full Pipeline Creation
+        print("🔍 Stage 4: Creating full pipeline...")
+        last_pipeline_error['stage'] = 'full_pipeline'
+        
         pipeline = TheodoreIntelligencePipeline(
             config=config,
-            pinecone_api_key=os.getenv('PINECONE_API_KEY'),
+            pinecone_api_key=env_vars['PINECONE_API_KEY'],
             pinecone_environment=os.getenv('PINECONE_ENVIRONMENT'),
-            pinecone_index=os.getenv('PINECONE_INDEX_NAME')
+            pinecone_index=env_vars['PINECONE_INDEX_NAME']
         )
-        print("✅ Theodore pipeline initialized successfully")
+        
+        print("✅ FULL PIPELINE CREATED SUCCESSFULLY!")
+        last_pipeline_error = None  # Clear error since we succeeded
+        return pipeline
+        
     except Exception as e:
-        print(f"❌ Failed to initialize Theodore pipeline: {e}")
+        error_msg = f"Failed at stage '{last_pipeline_error['stage']}': {str(e)}"
+        print(f"❌ {error_msg}")
+        
+        last_pipeline_error['error'] = str(e)
+        try:
+            last_pipeline_error['full_traceback'] = traceback.format_exc()
+        except:
+            last_pipeline_error['full_traceback'] = f"Error details: {str(e)}"
+        
+        traceback.print_exc()
+        pipeline = None
+        return None
+
+# Global variable to store last pipeline error for web responses
+last_pipeline_error = None
+
+def init_pipeline():
+    """Initialize pipeline at startup with error handling"""
+    global pipeline
+    try:
+        pipeline = get_pipeline()
+        if pipeline:
+            print("✅ Startup pipeline initialization successful")
+        else:
+            print("❌ Startup pipeline initialization failed - will retry on first request")
+    except Exception as e:
+        print(f"❌ Startup pipeline initialization crashed: {e}")
+        print("⚠️  App will continue without pipeline - will retry on first request")
         pipeline = None
 
-# Initialize pipeline on startup
-init_pipeline()
+# Initialize pipeline on startup (non-blocking)
+try:
+    init_pipeline()
+except Exception as e:
+    print(f"⚠️  Pipeline initialization error during startup: {e}")
+    pipeline = None
+    print("🔧 App starting anyway - pipeline will be initialized on first request")
 
 @app.route('/')
 @optional_auth
@@ -80,13 +211,51 @@ def index():
 @app.route('/api/health')
 def health_check():
     """Health check endpoint"""
+    current_pipeline = get_pipeline()
     return jsonify({
         'status': 'healthy',
-        'pipeline_ready': pipeline is not None,
-        'concurrent_scraper_ready': hasattr(pipeline, 'scraper') and pipeline.scraper is not None if pipeline else False,
-        'gemini_client_ready': hasattr(pipeline, 'gemini_client') and pipeline.gemini_client is not None if pipeline else False,
+        'pipeline_ready': current_pipeline is not None,
+        'concurrent_scraper_ready': hasattr(current_pipeline, 'scraper') and current_pipeline.scraper is not None if current_pipeline else False,
+        'gemini_client_ready': hasattr(current_pipeline, 'gemini_client') and current_pipeline.gemini_client is not None if current_pipeline else False,
         'timestamp': datetime.utcnow().isoformat()
     })
+
+@app.route('/api/diagnostic')
+def diagnostic_check():
+    """Detailed diagnostic endpoint to troubleshoot pipeline initialization"""
+    global last_pipeline_error
+    
+    # Force a fresh pipeline check
+    current_pipeline = get_pipeline()
+    
+    response = {
+        'pipeline_status': 'success' if current_pipeline else 'failed',
+        'timestamp': datetime.utcnow().isoformat()
+    }
+    
+    if current_pipeline:
+        response.update({
+            'message': 'Pipeline initialized successfully!',
+            'pipeline_type': str(type(current_pipeline)),
+            'components': {
+                'scraper': hasattr(current_pipeline, 'scraper') and current_pipeline.scraper is not None,
+                'bedrock_client': hasattr(current_pipeline, 'bedrock_client') and current_pipeline.bedrock_client is not None,
+                'gemini_client': hasattr(current_pipeline, 'gemini_client') and current_pipeline.gemini_client is not None,
+                'pinecone_client': hasattr(current_pipeline, 'pinecone_client') and current_pipeline.pinecone_client is not None
+            }
+        })
+    else:
+        response.update({
+            'message': 'Pipeline initialization failed',
+            'error_details': last_pipeline_error if last_pipeline_error else 'No detailed error information available'
+        })
+    
+    return jsonify(response)
+
+@app.route('/diagnostic')
+def diagnostic_page():
+    """Diagnostic page for troubleshooting pipeline issues"""
+    return render_template('diagnostic.html')
 
 @app.route('/api/companies/details')
 def get_companies_details():
@@ -1280,8 +1449,41 @@ def normalize_website_url(website: str) -> str:
 @app.route('/api/process-company', methods=['POST'])
 def process_company():
     """Process a company with intelligent scraping and real-time progress tracking"""
-    if not pipeline:
-        return jsonify({'error': 'Theodore pipeline not initialized'}), 500
+    # Robust pipeline retrieval with lazy initialization
+    current_pipeline = get_pipeline()
+    
+    if not current_pipeline:
+        # Include detailed diagnostic information in the response
+        global last_pipeline_error
+        error_response = {
+            'error': 'Theodore pipeline initialization failed',
+            'suggestion': 'Check the detailed diagnostic information below to identify the issue.',
+        }
+        
+        if last_pipeline_error:
+            error_response.update({
+                'diagnostic_info': {
+                    'failed_stage': last_pipeline_error.get('stage', 'unknown'),
+                    'error_message': last_pipeline_error.get('error', 'Unknown error'),
+                    'component_status': last_pipeline_error.get('component_status', {}),
+                    'environment_variables': last_pipeline_error.get('env_vars', {}),
+                    'full_traceback': last_pipeline_error.get('full_traceback', 'Not available')
+                }
+            })
+        else:
+            # Fallback diagnostic info
+            error_response.update({
+                'basic_debug_info': {
+                    'pinecone_key_set': bool(os.getenv('PINECONE_API_KEY')),
+                    'pinecone_index_set': bool(os.getenv('PINECONE_INDEX_NAME')),
+                    'aws_key_set': bool(os.getenv('AWS_ACCESS_KEY_ID')),
+                    'gemini_key_set': bool(os.getenv('GEMINI_API_KEY'))
+                }
+            })
+        
+        return jsonify(error_response), 500
+    
+    print(f"✅ PIPELINE STATUS: Pipeline available - {type(current_pipeline)}")
     
     data = request.get_json()
     company_name = data.get('company_name', '').strip()
@@ -1314,7 +1516,7 @@ def process_company():
         )
         
         # Process company using the main pipeline (same as research functionality)
-        result = pipeline.process_single_company(company_name, website, job_id=job_id)
+        result = current_pipeline.process_single_company(company_name, website, job_id=job_id)
         
         # Check if processing was successful  
         if result and result.company_description:

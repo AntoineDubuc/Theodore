@@ -5,8 +5,8 @@ Handles user session management and login integration
 
 import os
 from flask_login import LoginManager, UserMixin
-from auth_service import AuthService
-from auth_models import User, UserSession
+from src.auth_service import AuthService
+from src.auth_models import User, UserSession
 
 class TheodoreUser(UserMixin):
     """Flask-Login compatible user class"""

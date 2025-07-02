@@ -6,7 +6,7 @@ Handles login, registration, and logout endpoints
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from pydantic import ValidationError
-from auth_models import UserAlreadyExistsError, InvalidCredentialsError, AuthError
+from src.auth_models import UserAlreadyExistsError, InvalidCredentialsError, AuthError
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 

@@ -43,9 +43,9 @@ class TheodoreIntelligencePipeline:
         # Initialize components
         self.bedrock_client = BedrockClient(config)  # Keep for embeddings
         self.gemini_client = GeminiClient(config)    # Use for analysis and similarity
-        # Use concurrent intelligent scraper with detailed URL logging and thread-safe LLM calls
-        from src.concurrent_intelligent_scraper import ConcurrentIntelligentScraperSync
-        self.scraper = ConcurrentIntelligentScraperSync(config, self.bedrock_client)
+        # Use intelligent scraper (fixed link discovery) instead of concurrent for now
+        from src.intelligent_company_scraper import IntelligentCompanyScraperSync
+        self.scraper = IntelligentCompanyScraperSync(config, self.bedrock_client)
         # Legacy scraper removed - using intelligent scraper only
         # self.legacy_scraper = CompanyWebScraper(config, self.bedrock_client)
         self.pinecone_client = PineconeClient(

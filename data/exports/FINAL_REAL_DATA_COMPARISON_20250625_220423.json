@@ -1,0 +1,350 @@
+{
+  "timestamp": "20250625_220423",
+  "analysis_type": "real_google_sheets_before_after",
+  "companies_before": 6056,
+  "companies_after": 340,
+  "fields_analyzed": 16,
+  "overall_metrics": {
+    "before_avg_rate": 0.125,
+    "after_avg_rate": 0.06213235294117648,
+    "improvement": -0.06286764705882353,
+    "coverage_before": 0.09090909090909091,
+    "coverage_after": 0.9090909090909091,
+    "coverage_improvement": 0.8181818181818181
+  },
+  "field_improvements": {
+    "business_model": {
+      "before_rate": 0.0,
+      "after_rate": 0.07352941176470588,
+      "improvement": 0.07352941176470588,
+      "before_count": 0,
+      "after_count": "25"
+    },
+    "company_description": {
+      "before_rate": 0.0,
+      "after_rate": 0.07352941176470588,
+      "improvement": 0.07352941176470588,
+      "before_count": 0,
+      "after_count": "25"
+    },
+    "company_name": {
+      "before_rate": 1.0,
+      "after_rate": 0.10882352941176471,
+      "improvement": -0.8911764705882352,
+      "before_count": "6056",
+      "after_count": "37"
+    },
+    "competitive_advantages": {
+      "before_rate": 0.0,
+      "after_rate": 0.058823529411764705,
+      "improvement": 0.058823529411764705,
+      "before_count": 0,
+      "after_count": "20"
+    },
+    "contact_info": {
+      "before_rate": 0.0,
+      "after_rate": 0.058823529411764705,
+      "improvement": 0.058823529411764705,
+      "before_count": 0,
+      "after_count": "20"
+    },
+    "employee_count": {
+      "before_rate": 0.0,
+      "after_rate": 0.0,
+      "improvement": 0.0,
+      "before_count": 0,
+      "after_count": 0
+    },
+    "founding_year": {
+      "before_rate": 0.0,
+      "after_rate": 0.052941176470588235,
+      "improvement": 0.052941176470588235,
+      "before_count": 0,
+      "after_count": "18"
+    },
+    "funding_status": {
+      "before_rate": 0.0,
+      "after_rate": 0.058823529411764705,
+      "improvement": 0.058823529411764705,
+      "before_count": 0,
+      "after_count": "20"
+    },
+    "industry": {
+      "before_rate": 0.0,
+      "after_rate": 0.07352941176470588,
+      "improvement": 0.07352941176470588,
+      "before_count": 0,
+      "after_count": "25"
+    },
+    "leadership_team": {
+      "before_rate": 0.0,
+      "after_rate": 0.05588235294117647,
+      "improvement": 0.05588235294117647,
+      "before_count": 0,
+      "after_count": "19"
+    },
+    "location": {
+      "before_rate": 0.0,
+      "after_rate": 0.058823529411764705,
+      "improvement": 0.058823529411764705,
+      "before_count": 0,
+      "after_count": "20"
+    },
+    "recent_news": {
+      "before_rate": 0.0,
+      "after_rate": 0.052941176470588235,
+      "improvement": 0.052941176470588235,
+      "before_count": 0,
+      "after_count": "18"
+    },
+    "saas_classification": {
+      "before_rate": 0.0,
+      "after_rate": 0.052941176470588235,
+      "improvement": 0.052941176470588235,
+      "before_count": 0,
+      "after_count": "18"
+    },
+    "target_market": {
+      "before_rate": 0.0,
+      "after_rate": 0.07352941176470588,
+      "improvement": 0.07352941176470588,
+      "before_count": 0,
+      "after_count": "25"
+    },
+    "tech_stack": {
+      "before_rate": 0.0,
+      "after_rate": 0.06470588235294118,
+      "improvement": 0.06470588235294118,
+      "before_count": 0,
+      "after_count": "22"
+    },
+    "website": {
+      "before_rate": 1.0,
+      "after_rate": 0.07647058823529412,
+      "improvement": -0.9235294117647059,
+      "before_count": "6056",
+      "after_count": "26"
+    }
+  },
+  "before_fields": {
+    "company_name": {
+      "count": "6056",
+      "rate": 1.0,
+      "total": 6056
+    },
+    "website": {
+      "count": "6056",
+      "rate": 1.0,
+      "total": 6056
+    },
+    "status_notes": {
+      "count": "24",
+      "rate": 0.003963011889035667,
+      "total": 6056
+    },
+    "industry": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "business_model": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "company_description": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "founding_year": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "location": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "employee_count": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "tech_stack": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "contact_info": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "leadership_team": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "funding_status": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "saas_classification": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "competitive_advantages": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "target_market": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    },
+    "recent_news": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 6056
+    }
+  },
+  "after_fields": {
+    "company_name": {
+      "count": "37",
+      "rate": 0.10882352941176471,
+      "total": 340,
+      "column": "Company Name"
+    },
+    "website": {
+      "count": "26",
+      "rate": 0.07647058823529412,
+      "total": 340,
+      "column": "Website"
+    },
+    "industry": {
+      "count": "25",
+      "rate": 0.07352941176470588,
+      "total": 340,
+      "column": "Industry"
+    },
+    "business_model": {
+      "count": "25",
+      "rate": 0.07352941176470588,
+      "total": 340,
+      "column": "Business Model"
+    },
+    "company_description": {
+      "count": "25",
+      "rate": 0.07352941176470588,
+      "total": 340,
+      "column": "Company Description"
+    },
+    "founding_year": {
+      "count": "18",
+      "rate": 0.052941176470588235,
+      "total": 340,
+      "column": "Founding Year"
+    },
+    "location": {
+      "count": "20",
+      "rate": 0.058823529411764705,
+      "total": 340,
+      "column": "Location"
+    },
+    "employee_count": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 340,
+      "column": null
+    },
+    "tech_stack": {
+      "count": "22",
+      "rate": 0.06470588235294118,
+      "total": 340,
+      "column": "Tech Stack"
+    },
+    "contact_info": {
+      "count": "20",
+      "rate": 0.058823529411764705,
+      "total": 340,
+      "column": "Contact Info"
+    },
+    "leadership_team": {
+      "count": "19",
+      "rate": 0.05588235294117647,
+      "total": 340,
+      "column": "Leadership Team"
+    },
+    "funding_status": {
+      "count": "20",
+      "rate": 0.058823529411764705,
+      "total": 340,
+      "column": "Funding Status"
+    },
+    "saas_classification": {
+      "count": "18",
+      "rate": 0.052941176470588235,
+      "total": 340,
+      "column": "SaaS Classification"
+    },
+    "competitive_advantages": {
+      "count": "20",
+      "rate": 0.058823529411764705,
+      "total": 340,
+      "column": "Competitive Advantages"
+    },
+    "target_market": {
+      "count": "25",
+      "rate": 0.07352941176470588,
+      "total": 340,
+      "column": "Target Market"
+    },
+    "recent_news": {
+      "count": "18",
+      "rate": 0.052941176470588235,
+      "total": 340,
+      "column": "Recent News"
+    },
+    "analysis_summary": {
+      "count": 0,
+      "rate": 0.0,
+      "total": 340,
+      "column": null
+    },
+    "pages_crawled": {
+      "count": "22",
+      "rate": 0.06470588235294118,
+      "total": 340,
+      "column": "Pages Crawled"
+    },
+    "crawl_depth": {
+      "count": "26",
+      "rate": 0.07647058823529412,
+      "total": 340,
+      "column": "Crawl Depth"
+    },
+    "company_stage": {
+      "count": "20",
+      "rate": 0.058823529411764705,
+      "total": 340,
+      "column": "Company Stage"
+    },
+    "tech_sophistication": {
+      "count": "8",
+      "rate": 0.023529411764705882,
+      "total": 340,
+      "column": "Tech Sophistication"
+    },
+    "geographic_scope": {
+      "count": "8",
+      "rate": 0.023529411764705882,
+      "total": 340,
+      "column": "Geographic Scope"
+    }
+  }
+}

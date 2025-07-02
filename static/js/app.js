@@ -2,6 +2,14 @@
 
 class TheodoreUI {
     constructor() {
+        // Browser compatibility detection
+        this.isVivaldi = navigator.userAgent.includes('Vivaldi');
+        this.isRestrictiveBrowser = this.isVivaldi; // Add other restrictive browsers here
+        
+        if (this.isRestrictiveBrowser) {
+            console.log('Restrictive browser detected, enabling compatibility mode');
+        }
+        
         this.initializeEventListeners();
         this.setupFormValidation();
         this.initializeAnimations();
@@ -292,9 +300,17 @@ class TheodoreUI {
         
         this.clearMessages();
         
-        // Start progress polling immediately
+        // Start progress polling immediately with error handling
         const progressContainer = document.getElementById('progressContainer');
-        this.pollCurrentJobProgress(progressContainer, companyName);
+        if (!this.isRestrictiveBrowser) {
+            try {
+                this.pollCurrentJobProgress(progressContainer, companyName);
+            } catch (pollError) {
+                console.log('Progress polling blocked by browser security:', pollError);
+            }
+        } else {
+            console.log('Skipping progress polling in restrictive browser mode');
+        }
         
         try {
             const response = await fetch('/api/process-company', {
@@ -561,7 +577,13 @@ class TheodoreUI {
         `;
         
         logContainer.appendChild(logEntry);
-        logContainer.scrollTop = logContainer.scrollHeight;
+        
+        // Auto-scroll to bottom with Vivaldi compatibility
+        try {
+            logContainer.scrollTop = logContainer.scrollHeight;
+        } catch (e) {
+            console.log('Auto-scroll blocked by browser security policy');
+        }
     }
     
     stopProgressPolling(companyName) {
@@ -579,7 +601,11 @@ class TheodoreUI {
         this.currentSearchQuery = query.trim().toLowerCase();
         
         if (!query.trim() || query.length < 2) {
-            this.hideSearchSuggestions('query_too_short');
+            try {
+                this.hideSearchSuggestions('query_too_short');
+            } catch (e) {
+                console.log('Browser blocked hideSearchSuggestions');
+            }
             return;
         }
 
@@ -612,10 +638,18 @@ class TheodoreUI {
                 if (filteredResults.length > 0) {
                     this.showSearchSuggestions(filteredResults);
                 } else {
-                    this.hideSearchSuggestions('no_filtered_results');
+                    try {
+                        this.hideSearchSuggestions('no_filtered_results');
+                    } catch (e) {
+                        console.log('Browser blocked hideSearchSuggestions');
+                    }
                 }
             } else {
-                this.hideSearchSuggestions('no_api_results');
+                try {
+                    this.hideSearchSuggestions('no_api_results');
+                } catch (e) {
+                    console.log('Browser blocked hideSearchSuggestions');
+                }
             }
 
         } catch (error) {
@@ -624,7 +658,11 @@ class TheodoreUI {
                 return;
             }
             console.error('Search error:', error);
-            this.hideSearchSuggestions('search_error');
+            try {
+                this.hideSearchSuggestions('search_error');
+            } catch (e) {
+                console.log('Browser blocked hideSearchSuggestions');
+            }
         }
     }
 
@@ -968,7 +1006,11 @@ class TheodoreUI {
                     
                     // Hide suggestions after a small delay to ensure the value is set
                     setTimeout(() => {
-                        this.hideSearchSuggestions('suggestion_selected');
+                        try {
+                            this.hideSearchSuggestions('suggestion_selected');
+                        } catch (e) {
+                            console.log('Browser blocked hideSearchSuggestions');
+                        }
                     }, 50);
                 }
             });
@@ -978,15 +1020,20 @@ class TheodoreUI {
     }
 
     hideSearchSuggestions(reason = 'unknown') {
-        // Prevent hiding if suggestions were just shown (within 200ms)
-        if (this.suggestionsShownAt && (Date.now() - this.suggestionsShownAt) < 200) {
-            return;
-        }
-        
-        console.trace(); // Show stack trace to see what called this
-        const suggestions = document.getElementById('searchSuggestions');
-        if (suggestions) {
-            suggestions.classList.remove('show');
+        try {
+            // Prevent hiding if suggestions were just shown (within 200ms)
+            if (this.suggestionsShownAt && (Date.now() - this.suggestionsShownAt) < 200) {
+                return;
+            }
+            
+            // Skip console.trace() in restrictive browsers like Vivaldi
+            const suggestions = document.getElementById('searchSuggestions');
+            if (suggestions) {
+                suggestions.classList.remove('show');
+            }
+        } catch (e) {
+            // Silently handle browser restrictions (Vivaldi, etc.)
+            console.log('Search suggestions hiding blocked by browser security');
         }
     }
 
@@ -1466,13 +1513,15 @@ class TheodoreUI {
                 
                 // Create enhanced company object from /api/process-company response
                 const enhancedCompany = {
+                    id: data.company_id,
                     name: data.company_name,
                     company_name: data.company_name,  // Required by getResearchControls
                     website: website,
                     company_description: data.sales_intelligence,
                     // Add required research status fields
-                    is_researched: true,
+                    is_researched: false,  // Set to false so View Details button shows
                     research_status: 'success',
+                    database_id: data.company_id,  // Ensure database_id is set
                     // Add more fields as available from the response
                     processing_time: data.processing_time,
                     pages_processed: data.pages_processed,
@@ -1489,9 +1538,21 @@ class TheodoreUI {
                 // Update the result card with enhanced data
                 this.updateResultCardWithResearch(companyName, enhancedCompany);
                 
+                // Update the research button to show completed status
+                this.updateResearchButton(companyName, 'completed');
+                
                 // Hide progress container and cleanup
                 this.hideResearchProgressContainer(companyName);
                 this.cleanupResearchJob(companyName);
+                
+                // Automatically show the full company details modal after research completion
+                // Use viewCompanyDetails with the database_id since the company is now saved
+                if (data.company_id) {
+                    this.viewCompanyDetails(data.company_id, companyName);
+                } else {
+                    // Fallback to research details if no company_id
+                    this.viewResearchDetails(companyName);
+                }
                 
                 
             } else {
@@ -1633,45 +1694,78 @@ class TheodoreUI {
             const response = await fetch('/api/progress/current');
             const data = await response.json();
             
-            // FORCE SHOW the progress container in case it's hidden
-            if (progressContainer) {
-                progressContainer.style.display = 'block';
+            // FORCE SHOW the progress container in case it's hidden (with error handling)
+            try {
+                if (progressContainer) {
+                    progressContainer.style.display = 'block';
+                }
+            } catch (styleError) {
+                console.log('Progress container styling blocked by browser security');
             }
 
             // Handle different response statuses
             if (response.ok && data.status === 'recent_completion') {
                 
-                // Show completion in progress container
-                const progressFill = progressContainer.querySelector('.progress-fill');
-                const progressText = progressContainer.querySelector('.progress-text');
-                const progressDetails = progressContainer.querySelector('.progress-details');
-                
-                if (progressFill) {
-                    progressFill.style.width = '100%';
-                    progressFill.style.backgroundColor = '#43e97b'; // Green for success
-                }
-                
-                if (progressText) {
-                    progressText.textContent = '✅ Research Completed Successfully';
-                }
-                
-                if (progressDetails) {
-                    progressDetails.textContent = `Research completed for ${companyName}`;
-                    progressDetails.style.display = 'block';
-                    progressDetails.style.color = '#43e97b'; // Green text
+                // Show completion in progress container (with error handling for browser restrictions)
+                try {
+                    const progressFill = progressContainer.querySelector('.progress-fill');
+                    const progressText = progressContainer.querySelector('.progress-text');
+                    const progressDetails = progressContainer.querySelector('.progress-details');
+                    
+                    if (progressFill) {
+                        progressFill.style.width = '100%';
+                        progressFill.style.backgroundColor = '#43e97b'; // Green for success
+                    }
+                    
+                    if (progressText) {
+                        progressText.textContent = '✅ Research Completed Successfully';
+                    }
+                    
+                    if (progressDetails) {
+                        progressDetails.textContent = `Research completed for ${companyName}`;
+                        progressDetails.style.display = 'block';
+                        progressDetails.style.color = '#43e97b'; // Green text
+                    }
+                } catch (domError) {
+                    console.log('Progress DOM manipulation blocked by browser security:', domError);
                 }
                 
                 // Show success message
-                this.showSuccess(`Research completed successfully for ${companyName}!`);
+                try {
+                    this.showSuccess(`Research completed successfully for ${companyName}!`);
+                } catch (msgError) {
+                    console.log('Success message blocked by browser security');
+                }
                 
                 // Stop polling and update button
-                this.updateResearchButton(companyName, 'researched');
+                try {
+                    this.updateResearchButton(companyName, 'completed');
+                } catch (btnError) {
+                    console.log('Button update blocked by browser security');
+                }
                 
                 // Hide progress container after showing success
-                setTimeout(() => {
-                    this.hideResearchProgressContainer(companyName);
-                    this.cleanupResearchJob(companyName);
-                }, 3000); // Show success for 3 seconds
+                try {
+                    setTimeout(async () => {
+                        try {
+                            this.hideResearchProgressContainer(companyName);
+                            this.cleanupResearchJob(companyName);
+                            
+                            // Fetch the company data from database and show modal
+                            // First try to get the company ID from the progress data
+                            if (data.progress && data.progress.company_id) {
+                                await this.viewCompanyDetails(data.progress.company_id, companyName);
+                            } else {
+                                // Fallback to search by name
+                                await this.viewCompanyDetailsByName(companyName);
+                            }
+                        } catch (cleanupError) {
+                            console.log('Cleanup or modal display error:', cleanupError);
+                        }
+                    }, 3000); // Show success for 3 seconds
+                } catch (timeoutError) {
+                    console.log('setTimeout blocked by browser security');
+                }
                 
                 return; // Stop polling
             } else if (response.ok && data.status === 'recent_failure') {
@@ -2006,7 +2100,7 @@ class TheodoreUI {
         
 
         // Update the card with enhanced research data
-        if (researchedCompany.is_researched && researchedCompany.research_status === 'success') {
+        if (researchedCompany.research_status === 'success' || researchedCompany.research_status === 'completed') {
             
             // Add research data sections
             const businessContextDiv = resultCard.querySelector('.business-context');
@@ -2096,13 +2190,21 @@ class TheodoreUI {
                 statusBadge.innerHTML = '✅ Researched';
                 statusBadge.className = 'research-status-badge status-completed';
             }
+            
+            // Store company ID in the result card for later use
+            if (researchedCompany.company_id || researchedCompany.id) {
+                resultCard.dataset.companyId = researchedCompany.company_id || researchedCompany.id;
+            }
 
             // Update research controls
             const controlsDiv = resultCard.querySelector('.research-controls');
             if (controlsDiv) {
                 const newControls = this.getResearchControls({
-                    ...researchedCompany,
-                    research_status: 'completed'
+                    company_name: researchedCompany.company_name || researchedCompany.name,
+                    website: researchedCompany.website,
+                    research_status: 'completed',
+                    is_researched: false, // Set to false so it shows "View Details" button
+                    database_id: researchedCompany.company_id || researchedCompany.id
                 });
                 controlsDiv.innerHTML = newControls;
             }
@@ -2290,10 +2392,15 @@ class TheodoreUI {
             // Update controls based on new status
             if (controls) {
                 const website = resultCard.dataset.website || '';
+                // Get the company_id if it exists (for completed status)
+                const companyId = resultCard.dataset.companyId || '';
+                
                 const newControls = this.getResearchControls({
                     company_name: companyName,
                     website: website,
-                    research_status: status
+                    research_status: status,
+                    is_researched: false,  // Always false for database companies
+                    database_id: companyId
                 });
                 controls.innerHTML = newControls;
             }

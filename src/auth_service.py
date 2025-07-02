@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from pinecone import Pinecone
-from auth_models import User, UserRegistration, UserLogin, UserSession, UserNotFoundError, InvalidCredentialsError, UserAlreadyExistsError
+from src.auth_models import User, UserRegistration, UserLogin, UserSession, UserNotFoundError, InvalidCredentialsError, UserAlreadyExistsError
 
 logger = logging.getLogger(__name__)
 

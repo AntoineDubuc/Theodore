@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theodore Diagnostic</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.3);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .status-success { color: #4ade80; }
+        .status-error { color: #f87171; }
+        .section {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .component {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+        .error-details {
+            background: rgba(220, 38, 127, 0.2);
+            border: 1px solid rgba(220, 38, 127, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .refresh-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 1rem 0;
+        }
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        pre {
+            background: rgba(0,0,0,0.5);
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Theodore Pipeline Diagnostic</h1>
+        
+        <button class="refresh-btn" onclick="runDiagnostic()">🔄 Run Diagnostic</button>
+        
+        <div id="results">
+            <p>Click "Run Diagnostic" to check pipeline status...</p>
+        </div>
+    </div>
+
+    <script>
+        async function runDiagnostic() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>🔄 Running diagnostic...</p>';
+            
+            try {
+                const response = await fetch('/api/diagnostic');
+                const data = await response.json();
+                
+                let html = '';
+                
+                if (data.pipeline_status === 'success') {
+                    html += '<div class="section status-success">';
+                    html += '<h2>✅ Pipeline Status: SUCCESS</h2>';
+                    html += `<p>Pipeline Type: ${data.pipeline_type}</p>`;
+                    html += '<h3>Components:</h3>';
+                    for (const [component, status] of Object.entries(data.components)) {
+                        const statusClass = status ? 'status-success' : 'status-error';
+                        const statusIcon = status ? '✅' : '❌';
+                        html += `<div class="component ${statusClass}">${statusIcon} ${component}: ${status ? 'OK' : 'Missing'}</div>`;
+                    }
+                    html += '</div>';
+                } else {
+                    html += '<div class="section status-error">';
+                    html += '<h2>❌ Pipeline Status: FAILED</h2>';
+                    
+                    const errorDetails = data.error_details;
+                    if (errorDetails) {
+                        html += '<div class="error-details">';
+                        html += `<h3>🎯 Failed Stage: ${errorDetails.stage}</h3>`;
+                        html += `<p><strong>Error:</strong> ${errorDetails.error}</p>`;
+                        
+                        if (errorDetails.env_vars) {
+                            html += '<h4>🌍 Environment Variables:</h4>';
+                            for (const [varName, isSet] of Object.entries(errorDetails.env_vars)) {
+                                const statusClass = isSet ? 'status-success' : 'status-error';
+                                const statusIcon = isSet ? '✅' : '❌';
+                                html += `<div class="component ${statusClass}">${statusIcon} ${varName}: ${isSet ? 'Set' : 'Missing'}</div>`;
+                            }
+                        }
+                        
+                        if (errorDetails.component_status) {
+                            html += '<h4>🔧 Component Status:</h4>';
+                            for (const [component, status] of Object.entries(errorDetails.component_status)) {
+                                if (status === true) {
+                                    html += `<div class="component status-success">✅ ${component}: OK</div>`;
+                                } else {
+                                    html += `<div class="component status-error">❌ ${component}: ${status}</div>`;
+                                }
+                            }
+                        }
+                        
+                        if (errorDetails.full_traceback) {
+                            html += '<details style="margin-top: 1rem;">';
+                            html += '<summary>🐛 Full Error Traceback (click to expand)</summary>';
+                            html += `<pre>${errorDetails.full_traceback}</pre>`;
+                            html += '</details>';
+                        }
+                        
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                }
+                
+                html += `<div class="section"><small>Last checked: ${data.timestamp}</small></div>`;
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="section status-error">
+                        <h2>❌ Diagnostic Failed</h2>
+                        <p>Error: ${error.message}</p>
+                        <p>Make sure the Theodore app is running at http://localhost:5002</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Auto-run diagnostic on page load
+        document.addEventListener('DOMContentLoaded', runDiagnostic);
+    </script>
+</body>
+</html>

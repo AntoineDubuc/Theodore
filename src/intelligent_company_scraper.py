@@ -36,6 +36,9 @@ from src.ssl_config import get_aiohttp_connector, get_browser_args, should_verif
 
 logger = logging.getLogger(__name__)
 
+# Browser user agent to mimic Chrome on macOS for better compatibility
+BROWSER_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+
 
 class IntelligentCompanyScraper:
     """
@@ -320,7 +323,7 @@ class IntelligentCompanyScraper:
                 if job_id:
                     progress_logger.add_to_progress_log(job_id, f"❌ sitemap.xml failed: {e}")
             
-            # 3. Recursive page crawling for navigation links (with timeout check)
+            # 3. Recursive page crawling for navigation links using Crawl4AI (with timeout check)
             try:
                 elapsed = time.time() - start_time
                 if elapsed > 30:  # Maximum 30 seconds for link discovery
@@ -334,10 +337,18 @@ class IntelligentCompanyScraper:
                                            current_url=base_url, status_message="Recursive crawling")
                         progress_logger.add_to_progress_log(job_id, f"🔍 Starting recursive crawling from: {base_url}")
                     
-                    crawled_links = await self._recursive_link_discovery(
-                        session, base_url, domain, max_depth=self.max_depth, job_id=job_id
-                    )
-                    all_links.update(crawled_links)
+                    # ✅ Use Crawl4AI for recursive crawling instead of basic aiohttp
+                    browser_args = get_browser_args(ignore_ssl=not should_verify_ssl())
+                    async with AsyncWebCrawler(
+                        headless=True,
+                        browser_type="chromium",
+                        verbose=False,
+                        browser_args=browser_args
+                    ) as crawler:
+                        crawled_links = await self._recursive_link_discovery(
+                            crawler, base_url, domain, max_depth=self.max_depth, job_id=job_id
+                        )
+                        all_links.update(crawled_links)
                     
                     print(f"✅ Found {len(crawled_links)} links from recursive crawling", flush=True)
                     logger.info(f"Found {len(crawled_links)} links from recursive crawling")
@@ -452,7 +463,7 @@ class IntelligentCompanyScraper:
     
     async def _recursive_link_discovery(
         self, 
-        session: aiohttp.ClientSession, 
+        crawler: "AsyncWebCrawler", 
         base_url: str, 
         domain: str, 
         max_depth: int,
@@ -461,7 +472,7 @@ class IntelligentCompanyScraper:
         job_id: str = None
     ) -> Set[str]:
         """
-        Recursively discover links by crawling pages with safety limits
+        Recursively discover links by crawling pages with Crawl4AI for enhanced compatibility
         """
         if visited is None:
             visited = set()
@@ -483,47 +494,74 @@ class IntelligentCompanyScraper:
         visited.add(base_url)
         
         try:
-            print(f"🕷️  Crawling page (depth {current_depth}): {base_url}", flush=True)
+            print(f"🔍 Crawling depth {current_depth}: {base_url}")
             if job_id:
                 log_processing_phase(job_id, "Link Discovery", "running", 
                                    current_url=base_url, 
                                    status_message=f"Crawling depth {current_depth}")
-                progress_logger.add_to_progress_log(job_id, f"🕷️ Crawling depth {current_depth}: {base_url}")
+                progress_logger.add_to_progress_log(job_id, f"🔍 Crawling depth {current_depth}: {base_url}")
             
-            # Get page content with timeout
-            async with session.get(base_url) as response:
-                if response.status == 200:
-                    html_content = await response.text()
-                    soup = BeautifulSoup(html_content, 'html.parser')
+            # ✅ Use Crawl4AI for link discovery to handle JavaScript and complex sites
+            config = CrawlerRunConfig(
+                user_agent=BROWSER_USER_AGENT,
+                word_count_threshold=1,  # Very low threshold for link discovery
+                css_selector="a[href], nav, footer, .menu, .navigation",  # Focus on navigation elements
+                excluded_tags=["script", "style"],
+                cache_mode=CacheMode.ENABLED,
+                page_timeout=15000,  # Shorter timeout for link discovery
+                verbose=False,
+                simulate_user=True,      # Anti-bot bypass
+                magic=True,              # Enhanced compatibility
+                js_code=[
+                    # Simple JS to reveal hidden navigation
+                    """
+                    try {
+                        // Expand any collapsed menus
+                        document.querySelectorAll('[data-toggle], .dropdown-toggle, .menu-toggle').forEach(btn => {
+                            if (btn.click) btn.click();
+                        });
+                    } catch (e) { console.log('Menu expansion blocked:', e); }
+                    """
+                ]
+            )
+            
+            result = await crawler.arun(url=base_url, config=config)
+            
+            if result and result.html:
+                soup = BeautifulSoup(result.html, 'html.parser')
+                
+                # Extract all links
+                links_found = 0
+                for link in soup.find_all('a', href=True):
+                    href = link['href']
+                    full_url = urljoin(base_url, href)
                     
-                    # Extract all links
-                    links_found = 0
-                    for link in soup.find_all('a', href=True):
-                        href = link['href']
-                        full_url = urljoin(base_url, href)
+                    # Only follow links on same domain
+                    if urlparse(full_url).netloc == domain:
+                        discovered_links.add(full_url)
+                        links_found += 1
                         
-                        # Only follow links on same domain
-                        if urlparse(full_url).netloc == domain:
-                            discovered_links.add(full_url)
-                            links_found += 1
+                        # SAFETY: Limit links per page to prevent explosion
+                        if links_found >= 50:  # Max 50 links per page
+                            break
+                        
+                        # Recursively crawl if not visited and within depth limit
+                        if full_url not in visited and current_depth < max_depth - 1:
+                            recursive_links = await self._recursive_link_discovery(
+                                crawler, full_url, domain, max_depth, visited, current_depth + 1, job_id
+                            )
+                            discovered_links.update(recursive_links)
                             
-                            # SAFETY: Limit links per page to prevent explosion
-                            if links_found >= 50:  # Max 50 links per page
-                                break
-                            
-                            # Recursively crawl if not visited and within depth limit
-                            if full_url not in visited and current_depth < max_depth - 1:
-                                recursive_links = await self._recursive_link_discovery(
-                                    session, full_url, domain, max_depth, visited, current_depth + 1, job_id
-                                )
-                                discovered_links.update(recursive_links)
-                                
-                                # SAFETY: Add delay and check total time
-                                await asyncio.sleep(0.1)
-                    
+                            # SAFETY: Add delay and check total time
+                            await asyncio.sleep(0.2)
+                
+                print(f"  📄 Found {links_found} links on this page")
+            else:
+                print(f"  ❌ No content retrieved from {base_url}")
                                 
         except Exception as e:
             logger.warning(f"Error in recursive discovery for {base_url}: {e}")
+            print(f"  ❌ Error crawling {base_url}: {e}")
         
         return discovered_links
     
@@ -666,7 +704,7 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
             # Add timeout to prevent infinite hanging
             response = await asyncio.wait_for(
                 self._call_llm_async(prompt, job_id),
-                timeout=60  # 60 second timeout for page selection
+                timeout=120  # Increased to 120 second timeout for page selection
             )
             
             print(f"🧠 LLM Page Selection: Received response ({len(response)} chars)", flush=True)
@@ -785,7 +823,7 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
                 return self._heuristic_page_selection(all_links)
                 
         except asyncio.TimeoutError:
-            print(f"🧠 LLM Page Selection: TIMEOUT after 60 seconds, falling back to heuristic selection")
+            print(f"🧠 LLM Page Selection: TIMEOUT after 120 seconds, falling back to heuristic selection")
             logger.warning("LLM page selection timed out, using heuristic fallback")
             return self._heuristic_page_selection(all_links)
         except Exception as e:
@@ -876,23 +914,73 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
             browser_args=browser_args
         ) as crawler:
             
-            # ✅ FIXED: Modern configuration parameters
-            config = CrawlerRunConfig(
-                # Modern parameter instead of deprecated only_text
-                word_count_threshold=20,
+            # Try enhanced configuration first, fall back to basic if it fails
+            try:
+                # ✅ ENHANCED: Advanced Crawl4AI configuration with browser simulation
+                config = CrawlerRunConfig(
+                    # Browser simulation and anti-bot bypass
+                    user_agent=BROWSER_USER_AGENT,  # Mimic Chrome on macOS
+                    simulate_user=True,             # Simulate human-like interactions
+                    magic=True,                     # Advanced anti-bot detection bypass
+                    override_navigator=True,        # Override navigator properties
+                    
+                    # Content extraction optimization
+                    word_count_threshold=10,        # Lower threshold for short content
+                    css_selector="main, article, .content, .main-content, section",
+                    excluded_tags=["nav", "footer", "aside", "script", "style"],
+                    remove_overlay_elements=True,   # Remove popups/modals automatically
+                    process_iframes=True,          # Process iframe content
+                    
+                    # JavaScript interaction for dynamic content (with error handling)
+                    js_code=[
+                        """
+                        try {
+                            // Gentle scrolling with error handling
+                            if (document.body && document.body.scrollHeight) {
+                                window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+                            }
+                        } catch (e) { console.log('Scroll blocked:', e); }
+                        """,
+                        """
+                        try {
+                            // Safe button clicking with error handling
+                            ['load-more', 'show-more', 'view-all', 'read-more'].forEach(className => {
+                                const btn = document.querySelector('.' + className + ', button[class*="' + className + '"]');
+                                if (btn) btn.click();
+                            });
+                        } catch (e) { console.log('Button click blocked:', e); }
+                        """
+                    ],
+                    wait_for="css:.main-content, css:main, css:article",   # Wait for main content
+                    
+                    # Link and media handling
+                    exclude_external_links=False,      # Allow external discovery initially
+                    exclude_social_media_links=True,   # Skip social media
+                    exclude_domains=["ads.com", "tracking.com", "analytics.com"],
+                    
+                    # Performance and reliability
+                    cache_mode=CacheMode.ENABLED,
+                    page_timeout=45000,             # Increased timeout for JS execution
+                    verbose=False,
+                    
+                    # Note: Deliberately NOT using check_robots_txt=True to bypass restrictions
+                    # This allows crawling of sites that might block bots via robots.txt
+                )
                 
-                # Focused CSS selector (not overly broad)
-                css_selector="main, article, .content",
+                print(f"   🚀 Using enhanced configuration with anti-bot features...")
                 
-                # Minimal exclusions for better performance
-                excluded_tags=["script", "style"],
-                
-                # Performance optimizations
-                cache_mode=CacheMode.ENABLED,
-                wait_until="domcontentloaded",
-                page_timeout=30000,  # Appropriate timeout
-                verbose=False
-            )
+            except Exception as e:
+                print(f"   ⚠️  Enhanced config failed, using basic config: {e}")
+                # ✅ FALLBACK: Basic configuration without problematic features
+                config = CrawlerRunConfig(
+                    user_agent=BROWSER_USER_AGENT,
+                    word_count_threshold=20,
+                    css_selector="main, article, .content",
+                    excluded_tags=["script", "style"],
+                    cache_mode=CacheMode.ENABLED,
+                    page_timeout=30000,
+                    verbose=False
+                )
             
             print(f"   🚀 Processing all {total_pages} URLs concurrently with single browser...", flush=True)
             
@@ -1172,238 +1260,42 @@ class IntelligentCompanyScraperSync:
         if timeout is None:
             timeout = getattr(self.config, 'scraper_timeout', 120)  # Increased from 60 to 120 seconds
             
-        # Starting subprocess scrape
+        # Use direct async execution instead of subprocess (same as batch processing)
         
         try:
-            import subprocess
-            import json
-            import tempfile
-            import os
-            import sys
+            import asyncio
+            import time
             
+            # Update progress - starting direct async execution (same as batch processing)
+            if job_id:
+                from src.progress_logger import progress_logger
+                progress_logger.update_phase(job_id, "Intelligent Web Scraping", "running", {
+                    "status": "Running intelligent web scraper directly...",
+                    "direct_execution": True,
+                    "timeout_seconds": timeout
+                })
             
-            # Ensure job_id is properly formatted for script
-            safe_job_id = job_id if job_id else 'subprocess'
+            start_time = time.time()
             
-            # Use the working test script instead of generating inline
-            script_content = f'''#!/usr/bin/env python3
-import asyncio
-import json
-import sys
-import os
-sys.path.append("{os.getcwd()}")
-
-from src.intelligent_company_scraper import IntelligentCompanyScraper
-from src.models import CompanyData, CompanyIntelligenceConfig
-from src.bedrock_client import BedrockClient
-
-async def run_scraping():
-    try:
-        import logging
-        # Suppress debug output to keep stdout clean for JSON
-        logging.getLogger().setLevel(logging.CRITICAL)
-        
-        # Load environment variables from .env file
-        from dotenv import load_dotenv
-        load_dotenv()
-        
-        config = CompanyIntelligenceConfig()
-        bedrock_client = BedrockClient(config)
-        
-        company_data = CompanyData(
-            name="{company_data.name}",
-            website="{company_data.website}"
-        )
-        
-        scraper = IntelligentCompanyScraper(config, bedrock_client)
-        
-        # Capture the original print function and redirect to stderr
-        import builtins
-        original_print = builtins.print
-        def debug_print(*args, **kwargs):
-            kwargs['file'] = sys.stderr
-            original_print(*args, **kwargs)
-        builtins.print = debug_print
-        
-        try:
-            result = await scraper.scrape_company_intelligent(company_data, "{safe_job_id}")
-        finally:
-            # Restore original print
-            builtins.print = original_print
-        
-        result_dict = {{
-            "success": True,
-            "name": result.name,
-            "website": result.website,
-            "scrape_status": result.scrape_status,
-            "scrape_error": result.scrape_error,
-            "company_description": result.company_description,
-            "raw_content": result.raw_content,
-            "ai_summary": result.ai_summary,
-            "industry": result.industry,
-            "business_model": result.business_model,
-            "target_market": result.target_market,
-            "key_services": result.key_services or [],
-            "company_size": result.company_size,
-            "location": result.location,
-            "tech_stack": result.tech_stack or [],
-            "value_proposition": result.value_proposition,
-            "pain_points": result.pain_points or [],
-            "pages_crawled": result.pages_crawled or [],
-            "crawl_duration": result.crawl_duration,
-            "crawl_depth": result.crawl_depth
-        }}
-        
-        return result_dict
-        
-    except Exception as e:
-        import traceback
-        return {{
-            "success": False,
-            "error": str(e),
-            "traceback": traceback.format_exc(),
-            "scrape_status": "failed",
-            "scrape_error": str(e)
-        }}
-
-if __name__ == "__main__":
-    result = asyncio.run(run_scraping())
-    print(json.dumps(result, default=str))
-'''
+            # ✅ Direct async execution (same as batch processing) - no subprocess overhead
+            result = asyncio.run(asyncio.wait_for(
+                self.scraper.scrape_company_intelligent(company_data, job_id),
+                timeout=timeout
+            ))
             
-            # Write script to temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-                f.write(script_content)
-                script_path = f.name
+            end_time = time.time()
+            duration = end_time - start_time
             
-            try:
-                
-                # Update progress in main process before starting subprocess
-                if job_id:
-                    from src.progress_logger import progress_logger
-                    progress_logger.update_phase(job_id, "Intelligent Web Scraping", "running", {
-                        "status": "Running intelligent web scraper in subprocess...",
-                        "subprocess_started": True,
-                        "timeout_seconds": timeout
-                    })
-                
-                import time
-                start_time = time.time()
-                
-                # Run the script in a subprocess with timeout
-                # Add extra buffer to subprocess timeout to allow for startup/shutdown
-                subprocess_timeout = timeout + 35  # Extra time for subprocess overhead
-                result = subprocess.run(
-                    [sys.executable, script_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=subprocess_timeout,
-                    cwd=os.getcwd()
-                )
-                
-                end_time = time.time()
-                duration = end_time - start_time
-                
-                # Process subprocess output
-                
-                if result.returncode == 0:
-                    # Parse JSON result - extract from end of stdout since debug prints contaminate it
-                    try:
-                        # Find the last valid JSON in stdout
-                        stdout_lines = result.stdout.strip().split('\n')
-                        json_line = None
-                        
-                        # Look for JSON starting from the end
-                        for line in reversed(stdout_lines):
-                            line = line.strip()
-                            if line.startswith('{') and line.endswith('}'):
-                                try:
-                                    json.loads(line)  # Test if it's valid JSON
-                                    json_line = line
-                                    break
-                                except:
-                                    continue
-                        
-                        if json_line:
-                            result_data = json.loads(json_line)
-                        else:
-                            raise json.JSONDecodeError("No valid JSON found in subprocess output", result.stdout, 0)
-                        
-                        if result_data.get("success"):
-                            
-                            # Update progress - scraping phase completed
-                            if job_id:
-                                from src.progress_logger import progress_logger
-                                progress_logger.update_phase(job_id, "Intelligent Web Scraping", "completed", {
-                                    "subprocess_duration": duration,
-                                    "pages_extracted": result_data.get("crawl_depth", 0),
-                                    "content_length": len(result_data.get("company_description", "")),
-                                    "status": "Intelligent scraping completed successfully"
-                                })
-                            
-                            # Apply results to company_data
-                            company_data.scrape_status = result_data.get("scrape_status", "success")
-                            company_data.scrape_error = result_data.get("scrape_error")
-                            company_data.company_description = result_data.get("company_description")
-                            company_data.ai_summary = result_data.get("ai_summary")
-                            company_data.industry = result_data.get("industry")
-                            company_data.business_model = result_data.get("business_model") 
-                            company_data.target_market = result_data.get("target_market")
-                            company_data.key_services = result_data.get("key_services", [])
-                            company_data.company_size = result_data.get("company_size")
-                            company_data.location = result_data.get("location")
-                            company_data.tech_stack = result_data.get("tech_stack", [])
-                            company_data.value_proposition = result_data.get("value_proposition")
-                            company_data.pain_points = result_data.get("pain_points", [])
-                            company_data.pages_crawled = result_data.get("pages_crawled", [])
-                            company_data.crawl_duration = result_data.get("crawl_duration", 0)
-                            company_data.crawl_depth = result_data.get("crawl_depth", 0)
-                            
-                            # IMPORTANT: Store the extracted content as raw_content for AI analysis
-                            # This allows downstream AI analysis to extract all the detailed fields
-                            if result_data.get("raw_content"):
-                                company_data.raw_content = result_data.get("raw_content", "")
-                            elif result_data.get("company_description"):
-                                # Fallback if raw_content not provided
-                                company_data.raw_content = result_data.get("company_description", "")
-                            
-                        else:
-                            company_data.scrape_status = "failed" 
-                            company_data.scrape_error = result_data.get("error", "Unknown subprocess error")
-                            # Handle subprocess traceback if present
-                            pass
-                            
-                    except json.JSONDecodeError as e:
-                        company_data.scrape_status = "failed"
-                        company_data.scrape_error = f"Failed to parse scraper results: {e}"
-                        
-                        # Complete job tracking on JSON parsing failure
-                        if job_id:
-                            complete_company_processing(job_id, False, error=company_data.scrape_error)
-                else:
-                    company_data.scrape_status = "failed"
-                    company_data.scrape_error = f"Scraper subprocess failed (code {result.returncode}): {result.stderr}"
-                    
-                    # Complete job tracking on subprocess failure
-                    if job_id:
-                        complete_company_processing(job_id, False, error=company_data.scrape_error)
-                    
-            except subprocess.TimeoutExpired as e:
-                company_data.scrape_status = "failed"
-                company_data.scrape_error = f"Scraping timed out after {timeout} seconds - this may indicate a complex website or network issues"
-                
-                # CRITICAL: Complete job tracking on timeout to prevent restart loops
-                if job_id:
-                    complete_company_processing(job_id, False, error=company_data.scrape_error)
-                
-            finally:
-                # Clean up temporary file
-                try:
-                    os.unlink(script_path)
-                except:
-                    pass
+            # Update progress - scraping phase completed
+            if job_id:
+                progress_logger.update_phase(job_id, "Intelligent Web Scraping", "completed", {
+                    "direct_duration": duration,
+                    "pages_extracted": len(result.pages_crawled) if result.pages_crawled else 0,
+                    "content_length": len(result.company_description) if result.company_description else 0,
+                    "status": "Intelligent scraping completed successfully"
+                })
             
-            return company_data
+            return result
             
         except Exception as e:
             logger.error(f"Intelligent scraping error for {company_data.name}: {e}")
