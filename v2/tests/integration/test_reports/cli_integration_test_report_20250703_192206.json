@@ -1,0 +1,614 @@
+{
+  "test_execution_summary": {
+    "total_duration_seconds": 1.2036352157592773,
+    "total_suites": 8,
+    "passed_suites": 2,
+    "failed_suites": 6,
+    "total_tests": 22,
+    "total_passed": 11,
+    "total_failed": 11
+  },
+  "suite_results": {
+    "CLI Help & Version Tests": {
+      "success": false,
+      "duration_seconds": 0.22852182388305664,
+      "test_count": 4,
+      "passed_tests": 0,
+      "failed_tests": 4,
+      "details": {
+        "help_command": {
+          "test_name": "help_command",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py --help",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.07063174247741699,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 1,
+          "total_expected_outputs": 5
+        },
+        "version_command": {
+          "test_name": "version_command",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py --version",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.05103325843811035,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 2,
+          "total_expected_outputs": 2
+        },
+        "research_help": {
+          "test_name": "research_help",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research --help",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.05279994010925293,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 1,
+          "total_expected_outputs": 4
+        },
+        "discover_help": {
+          "test_name": "discover_help",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py discover --help",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.053832292556762695,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 4
+        }
+      },
+      "metrics": {
+        "average_duration_seconds": 0.05707430839538574,
+        "success_rate": 0.0
+      }
+    },
+    "Configuration Management Tests": {
+      "success": false,
+      "duration_seconds": 0.1079261302947998,
+      "test_count": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "details": {
+        "config_help": {
+          "test_name": "config_help",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py config --help",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.05440187454223633,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 4
+        },
+        "config_list_default": {
+          "test_name": "config_list_default",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py config list",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.053404808044433594,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 2
+        }
+      },
+      "metrics": {
+        "average_duration_seconds": 0.05390334129333496,
+        "success_rate": 0.5
+      }
+    },
+    "Research Command Integration": {
+      "success": false,
+      "duration_seconds": 0.16347479820251465,
+      "test_count": 3,
+      "passed_tests": 2,
+      "failed_tests": 1,
+      "details": {
+        "research_dry_run": {
+          "test_name": "research_dry_run",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research Test Company --dry-run",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.056146860122680664,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 3
+        },
+        "research_invalid_company": {
+          "test_name": "research_invalid_company",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research ",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.053843021392822266,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 1,
+          "total_expected_outputs": 3
+        },
+        "research_output_formats": {
+          "test_name": "research_output_formats",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research Test Company --output json --dry-run",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.05331683158874512,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 2
+        }
+      },
+      "metrics": {
+        "average_duration_seconds": 0.05443557103474935,
+        "success_rate": 0.6666666666666666
+      }
+    },
+    "Discovery Command Integration": {
+      "success": true,
+      "duration_seconds": 0.16334009170532227,
+      "test_count": 3,
+      "passed_tests": 3,
+      "failed_tests": 0,
+      "details": {
+        "discover_dry_run": {
+          "test_name": "discover_dry_run",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py discover Test Company --dry-run",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.05524897575378418,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 3
+        },
+        "discover_with_filters": {
+          "test_name": "discover_with_filters",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py discover Test Company --business-model saas --dry-run",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.053193092346191406,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 3
+        },
+        "discover_limit_option": {
+          "test_name": "discover_limit_option",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py discover Test Company --limit 5 --dry-run",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.05471992492675781,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 2
+        }
+      },
+      "metrics": {
+        "average_duration_seconds": 0.05438733100891113,
+        "success_rate": 1.0
+      }
+    },
+    "Batch Processing Integration": {
+      "success": false,
+      "duration_seconds": 0.16399502754211426,
+      "test_count": 3,
+      "passed_tests": 2,
+      "failed_tests": 1,
+      "details": {
+        "batch_help": {
+          "test_name": "batch_help",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py batch --help",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.055229902267456055,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 4
+        },
+        "batch_csv_dry_run": {
+          "test_name": "batch_csv_dry_run",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py batch research /var/folders/gw/xdlgjpb16l9g376vz6tzlx6m0000gn/T/tmp2_jmyzga/test_companies.csv --dry-run",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.053993940353393555,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 4
+        },
+        "batch_invalid_file": {
+          "test_name": "batch_invalid_file",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py batch research nonexistent.csv",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.05426311492919922,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 2,
+          "total_expected_outputs": 4
+        }
+      },
+      "metrics": {
+        "average_duration_seconds": 0.054495652516682945,
+        "success_rate": 0.6666666666666666
+      }
+    },
+    "Export Functionality Tests": {
+      "success": true,
+      "duration_seconds": 0.106353759765625,
+      "test_count": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "details": {
+        "export_help": {
+          "test_name": "export_help",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py export --help",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.05315828323364258,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 5
+        },
+        "export_formats": {
+          "test_name": "export_formats",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py export --format json --dry-run",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.053054094314575195,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 3
+        }
+      },
+      "metrics": {
+        "average_duration_seconds": 0.05310618877410889,
+        "success_rate": 1.0
+      }
+    },
+    "Error Handling Validation": {
+      "success": false,
+      "duration_seconds": 0.16082382202148438,
+      "test_count": 3,
+      "passed_tests": 1,
+      "failed_tests": 2,
+      "details": {
+        "invalid_command": {
+          "test_name": "invalid_command",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py invalid_command",
+          "success": true,
+          "exit_code": 1,
+          "duration_seconds": 0.05289101600646973,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 2,
+          "total_expected_outputs": 4
+        },
+        "missing_arguments": {
+          "test_name": "missing_arguments",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.05309176445007324,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 1,
+          "total_expected_outputs": 4
+        },
+        "invalid_option_value": {
+          "test_name": "invalid_option_value",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research Test --output invalid_format",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.054620981216430664,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 1,
+          "total_expected_outputs": 4
+        }
+      },
+      "metrics": {
+        "average_duration_seconds": 0.05353458722432455,
+        "success_rate": 0.3333333333333333
+      }
+    },
+    "Performance & Timeout Tests": {
+      "success": false,
+      "duration_seconds": 0.10887312889099121,
+      "test_count": 2,
+      "passed_tests": 0,
+      "failed_tests": 2,
+      "details": {
+        "help_response_time": {
+          "test_name": "help_response_time",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py --help",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.053347110748291016,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 0,
+          "total_expected_outputs": 1
+        },
+        "command_timeout": {
+          "test_name": "command_timeout",
+          "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research Test Company --timeout 1",
+          "success": false,
+          "exit_code": 1,
+          "duration_seconds": 0.055361032485961914,
+          "output_length": 0,
+          "error_length": 251,
+          "expected_outputs_found": 1,
+          "total_expected_outputs": 3
+        }
+      },
+      "metrics": {
+        "average_duration_seconds": 0.054354071617126465,
+        "success_rate": 0.0
+      }
+    }
+  },
+  "cli_readiness_score": 16,
+  "recommendations": [
+    "Fix CLI help and version display functionality",
+    "Implement or fix configuration management commands",
+    "Resolve research command integration issues",
+    "Implement or fix batch processing capabilities",
+    "Improve CLI error handling and user feedback",
+    "Optimize CLI performance and timeout handling",
+    "Ensure all CLI commands have comprehensive help documentation",
+    "Add unit tests for CLI command parsing and execution"
+  ],
+  "detailed_test_results": [
+    {
+      "test_name": "help_command",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py --help",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.07063174247741699,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 1,
+      "total_expected_outputs": 5
+    },
+    {
+      "test_name": "version_command",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py --version",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.05103325843811035,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 2,
+      "total_expected_outputs": 2
+    },
+    {
+      "test_name": "research_help",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research --help",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.05279994010925293,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 1,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "discover_help",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py discover --help",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.053832292556762695,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "config_help",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py config --help",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.05440187454223633,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "config_list_default",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py config list",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.053404808044433594,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 2
+    },
+    {
+      "test_name": "research_dry_run",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research Test Company --dry-run",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.056146860122680664,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 3
+    },
+    {
+      "test_name": "research_invalid_company",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research ",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.053843021392822266,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 1,
+      "total_expected_outputs": 3
+    },
+    {
+      "test_name": "research_output_formats",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research Test Company --output json --dry-run",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.05331683158874512,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 2
+    },
+    {
+      "test_name": "discover_dry_run",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py discover Test Company --dry-run",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.05524897575378418,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 3
+    },
+    {
+      "test_name": "discover_with_filters",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py discover Test Company --business-model saas --dry-run",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.053193092346191406,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 3
+    },
+    {
+      "test_name": "discover_limit_option",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py discover Test Company --limit 5 --dry-run",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.05471992492675781,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 2
+    },
+    {
+      "test_name": "batch_help",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py batch --help",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.055229902267456055,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "batch_csv_dry_run",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py batch research /var/folders/gw/xdlgjpb16l9g376vz6tzlx6m0000gn/T/tmp2_jmyzga/test_companies.csv --dry-run",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.053993940353393555,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "batch_invalid_file",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py batch research nonexistent.csv",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.05426311492919922,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 2,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "export_help",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py export --help",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.05315828323364258,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 5
+    },
+    {
+      "test_name": "export_formats",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py export --format json --dry-run",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.053054094314575195,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 3
+    },
+    {
+      "test_name": "invalid_command",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py invalid_command",
+      "success": true,
+      "exit_code": 1,
+      "duration_seconds": 0.05289101600646973,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 2,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "missing_arguments",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.05309176445007324,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 1,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "invalid_option_value",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research Test --output invalid_format",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.054620981216430664,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 1,
+      "total_expected_outputs": 4
+    },
+    {
+      "test_name": "help_response_time",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py --help",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.053347110748291016,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 0,
+      "total_expected_outputs": 1
+    },
+    {
+      "test_name": "command_timeout",
+      "command": "python3 /Users/antoinedubuc/Desktop/AI_Goodies/Theodore/v2/src/cli/main.py research Test Company --timeout 1",
+      "success": false,
+      "exit_code": 1,
+      "duration_seconds": 0.055361032485961914,
+      "output_length": 0,
+      "error_length": 251,
+      "expected_outputs_found": 1,
+      "total_expected_outputs": 3
+    }
+  ]
+}

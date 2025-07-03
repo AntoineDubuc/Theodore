@@ -1,0 +1,70 @@
+# Theodore AI Company Intelligence Configuration
+# Copy this file to ~/.theodore/config.yml and customize
+
+# Application Environment
+environment: development  # development, staging, production
+debug: false
+log_level: INFO
+verbose: false
+
+# AI Provider Configuration
+# Configure at least one AI provider
+
+# Google Gemini (Recommended)
+gemini_api_key: null  # Get from https://aistudio.google.com/
+gemini_model: "gemini-2.0-flash-exp"
+
+# AWS Bedrock (Cost-optimized)
+aws_region: "us-west-2"
+aws_access_key_id: null
+aws_secret_access_key: null
+bedrock_analysis_model: "amazon.nova-pro-v1:0"
+
+# OpenAI (Fallback)
+openai_api_key: null  # Get from https://platform.openai.com/
+openai_model: "gpt-4o-mini"
+
+# Vector Database (Required)
+pinecone_api_key: null  # Get from https://pinecone.io/
+pinecone_index_name: "theodore-companies"
+pinecone_environment: "us-west1-gcp-free"
+
+# MCP Search Tools (Optional)
+mcp_tools_enabled:
+  - perplexity
+  - tavily
+perplexity_api_key: null
+tavily_api_key: null
+
+# Research Configuration
+research:
+  max_pages_per_company: 50
+  timeout_seconds: 30
+  parallel_requests: 5
+  enable_javascript: true
+  respect_robots_txt: true
+  primary_analysis_model: "gemini-2.0-flash-exp"
+  cost_optimization_enabled: true
+  max_cost_per_company: 5.0
+
+# Search and Discovery
+search:
+  default_similarity_limit: 10
+  min_confidence_threshold: 0.5
+  enable_mcp_search: true
+  enable_google_fallback: true
+
+# Storage and Caching
+storage:
+  cache_enabled: true
+  cache_ttl_hours: 24
+  backup_enabled: true
+  max_backup_files: 10
+
+# Output Configuration
+default_output_format: table  # table, json, csv
+colored_output: true
+progress_bars: true
+
+# Security
+enable_secure_storage: true  # Use system keyring for credentials
