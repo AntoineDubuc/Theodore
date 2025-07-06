@@ -33,6 +33,9 @@ class ApplicationContainer(containers.DeclarativeContainer):
     """
     
     # Container metadata - wiring disabled for initial CLI testing
+    __version__ = "2.0.0"
+    __name__ = "Theodore v2 Application Container"
+    
     # wiring_config = containers.WiringConfiguration(
     #     modules=[
     #         "src.application.cli",

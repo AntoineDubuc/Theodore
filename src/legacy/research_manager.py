@@ -19,7 +19,7 @@ import uuid
 from src.models import CompanyData
 from src.intelligent_company_scraper import IntelligentCompanyScraperSync
 from src.pinecone_client import PineconeClient
-from src.research_prompts import research_prompt_library, ResearchPrompt
+from src.legacy.research_prompts import research_prompt_library, ResearchPrompt
 
 logger = logging.getLogger(__name__)
 

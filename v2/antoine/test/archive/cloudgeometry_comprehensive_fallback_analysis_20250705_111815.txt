@@ -1,0 +1,725 @@
+CLOUDGEOMETRY COMPREHENSIVE FALLBACK ANALYSIS REPORT\n================================================================================\n\nDomain: cloudgeometry.com\nBase URL: https://www.cloudgeometry.com\nAnalysis Date: 2025-07-05 11:18:15\nTotal Analysis Time: 8.95 seconds\n\nEXECUTIVE SUMMARY\n----------------------------------------\nTotal Paths Discovered: 304\nPaths Selected by Nova Pro: 8\nSuccessful Content Extractions: 8\nPages Using Fallback: 2\nTotal Content Extracted: 15,145 characters\nNova Pro Cost: $0.0055\n\nPHASE 1: PATH DISCOVERY RESULTS\n========================================\nDiscovery Method: Critter (Sitemap + Robots.txt + Header/Footer)\nDiscovery Time: 1.74 seconds\nTotal Paths Found: 304\n\nALL DISCOVERED PATHS:\n------------------------------\n  1. /\n  2. /about\n  3. /advanced\n  4. /advanced/b2b-customer-engineering-services\n  5. /advanced/ci-cd\n  6. /advanced/devops-monitoring-observability\n  7. /advanced/enterprise-grade-saas\n  8. /advanced/full-stack-modern-cloud-app-dev\n  9. /advanced/growth-ready-multi-tenancy-architecture\n 10. /advanced/infrastructure-management-gitops\n 11. /advanced/managed-full-stack-development\n 12. /advanced/platform-engineering\n 13. /advanced/workload-management\n 14. /ai-agents-retail-operational-excellence\n 15. /ai-data-platforms\n 16. /ai-for-better-bi-with-the-data\n 17. /ai-ml-data\n 18. /ai-ml-data/ai-crash-course\n 19. /ai-ml-data/ai-ml-development\n 20. /ai-ml-data/ai-ml-engineering\n 21. /ai-ml-data/data-engineering-for-mlops\n 22. /ai-ml-data/engineering\n 23. /ai-ml-data/free-online-crash-course-1-hour-biz\n 24. /ai-ml-data/free-online-crash-course-4-hours-custom-biz\n 25. /ai-ml-data/free-online-crash-course-4-hours-custom-tech\n 26. /ai-ml-data/free-online-crash-courses-biz\n 27. /ai-ml-data/free-online-crash-courses-custom-biz\n 28. /ai-ml-data/free-online-crash-courses-custom-tech\n 29. /ai-ml-data/free-online-crash-courses-tech\n 30. /ai-ml-data/generative-ai\n 31. /ai-ml-data/ml-data-analytics\n 32. /ai-ml-data/ml-engineering\n 33. /ai-ml-data/tech-ai-tech-crash-course-webinar\n 34. /ai-ml-data/technical-ai-agents-crash-course\n 35. /ai-ml-data/traditional\n 36. /ai-partnerships\n 37. /application-modernization\n 38. /balance-between-reliability-and-cost-optimization-in-a-k8s-environments\n 39. /blog\n 40. /blog/14-cloud-modernization-mistakes-to-avoid\n 41. /blog/5-challenges-how-to-make-your-lakehouse-the-reservoir-powering-genai-and-bi-success\n 42. /blog/5-reasons-to-start-developing-for-iot\n 43. /blog/50-shades-of-grey-or-how-a-web-theme-drives-b2b-saas-product-consistency\n 44. /blog/7-ways-to-build-enterprise-readiness-into-your-saas-roadmap\n 45. /blog/ai-agents-vs-rpa-decoding-the-automation-revolution\n 46. /blog/ai-crash-course-recap\n 47. /blog/aiops-insights-from-an-article-close-to-my-heart\n 48. /blog/announcing-cgdevx-the-next-step-forward-in-platform-engineering\n 49. /blog/announcing-the-cgdevx-cloud-native-application-starter-kit\n 50. /blog/apn-awards-cloudgeometry-amazon-kinesis-service-designation-for-advanced-data-architectures\n 51. /blog/aws-partner-network-endorses-cloudgeometry-for-amazon-redshift-customers-4th-award-in-4-months\n 52. /blog/aws-partner-network-recognizes-cloudgeometry-as-certified-service-provider-for-database-migration-services\n 53. /blog/beyond-big-data-for-health-care-with-data-science-pipelines\n 54. /blog/beyond-frankencloud-living-with-your-once-and-future-saas-architecture\n 55. /blog/beyond-the-migration-horizon\n 56. /blog/blockchains-next-challenges\n 57. /blog/breaking-down-data-silos-empowering-cross-departmental-collaboration-with-a-collective-data-fabric\n 58. /blog/building-ai-agent-infrastructure-mcp-a2a-nanda-new-web-stack\n 59. /blog/cloud-computing-and-bi-through-cloudgeometrys-lens\n 60. /blog/cloud-native-programming-isnt-bog-standard-easy-yet\n 61. /blog/cloud-native-success-as-a-cncf-kubernetes-certified-service-provider\n 62. /blog/cloudgeometry-is-now-an-aws-advanced-consulting-partner\n 63. /blog/cloudgeometry-joins-the-linux-foundation-data-ai-initiative\n 64. /blog/cloudgeometry-now-a-certified-service-provider-for-lambda-services-by-aws\n 65. /blog/cloudgeometry-streamlines-software-delivery-with-in-open-source-platform-engineering-tool-cgdevx\n 66. /blog/code-llama-empowering-developers-with-the-power-of-ai----part-1-intro\n 67. /blog/code-llama-empowering-developers-with-the-power-of-ai----part-2-using-code-llama-directly-and-with-an-ide\n 68. /blog/creating-a-lean-mean-requirements-machine\n 69. /blog/crowdstroke-a-wake-up-call-for-it-security\n 70. /blog/data-driven-personalized-medicine-gali-health-case-study\n 71. /blog/embracing-the-ai-agent-revolution-a-practical-roadmap-for-business-leaders\n 72. /blog/enterprise-saas-platform-for-asset-management-and-remote-operations\n 73. /blog/figuring-out-if-kubernetes-on-aws-eks-is-right-for-you-second-of-2-posts\n 74. /blog/four-key-pillars-of-a-data-centric-approach-to-ai\n 75. /blog/from-devops-to-dataops\n 76. /blog/from-devops-to-gitops\n 77. /blog/from-legacy-to-leading-edge-a-business-leaders-guide-to-aws-app-modernization\n 78. /blog/gdpr-compliance-by-design\n 79. /blog/genai-is-finally-boring-in-a-good-way-agentic-systems-are-the-next-big-thing\n 80. /blog/hands-on-cloud-lifecycle-virtualization-for-hands-free-automation\n 81. /blog/hands-on-end-to-end-mlops-with-mlflow-and-kubeflow\n 82. /blog/how-do-you-know-devops-is-working\n 83. /blog/how-ethereum-smart-contracts-work\n 84. /blog/how-the-right-data-makes-process-agents-effective\n 85. /blog/how-to-cut-the-cost-of-gpu-instances-for-ai\n 86. /blog/how-to-manage-an-api-lifecycle\n 87. /blog/hugging-face\n 88. /blog/infrastructure-testing-as-a-part-of-gdpr-compliance-according-to-owasp-ncsc\n 89. /blog/interview-the-empress-of-remote\n 90. /blog/introducing-our-new-data-engineering-data-science-pipeline-practice-offerings\n 91. /blog/ipaas-the-way-to-integrate-modern-cloud-based-solutions\n 92. /blog/lowering-the-cost-of-failure\n 93. /blog/maximizing-databricks-roi-a-strategic-guide-for-data-driven-leadership\n 94. /blog/measurement-what-saas-platform-builders-need-to-know-to-prepare-for-growth-part-3\n 95. /blog/meet-cloudgeometry-at-msp-global-nurbergring\n 96. /blog/meet-us-in-vilnius-at-big-data-europe-2023\n 97. /blog/monetization-what-saas-platform-builders-need-to-know-to-prepare-for-growth-part-2\n 98. /blog/moving-beyond-lift-and-shift-the-value-of-kubernetes-first-thinking\n 99. /blog/moving-from-vmware-to-kubernetes-one-step-at-a-time\n100. /blog/overcoming-common-hurdles-in-cloud-native-development-with-kubernetes\n101. /blog/owasp-zap-penetration-security-testing-tool\n102. /blog/pursuing-devops-momentum-measuring-what-matters\n103. /blog/saas-platform-builders-prepare-for-growth-part-1-of-3\n104. /blog/set-up-cloud-workloads\n105. /blog/success-with-cloud-native\n106. /blog/taking-cloud-logging-from-good-to-better-to-best\n107. /blog/technical-debt-vs-frankencloud-in-your-saas\n108. /blog/ten-things-to-know-about-kubernetes-on-amazon-eks-first-of-2-posts\n109. /blog/the-anti-fragile-ai-agent-building-systems-that-thrive-on-disruption-not-just-efficiency\n110. /blog/the-api-for-ai-agents-how-mcp-is-standardizing-tool-use-and-collaboration\n111. /blog/the-best-practices-of-building-api-for-your-saas\n112. /blog/the-biggest-trends-and-challenges-in-saas-integration\n113. /blog/the-data-engineering-checklist-for-data-science\n114. /blog/the-data-science-myth-is-not-about-data-scientists\n115. /blog/the-european-union-sets-itself-up-as-ai-police\n116. /blog/the-hidden-costs-and-benefits-of-cloud-migration\n117. /blog/the-lambda-architecture-for-near-real-time-data-processing\n118. /blog/the-rise-of-multimodal-ai-openai-google-meta-blaze-a-trail-to-more-human-interactions\n119. /blog/the-saas-balancing-act-always-be-modernizing\n120. /blog/the-state-of-platform-engineering-where-are-we-now\n121. /blog/the-zeroops-journey-mind-the-gap\n122. /blog/time-boxing-across-time-zones-agile-with-remote-teams\n123. /blog/ua\n124. /blog/understanding-amazon-elastic-vmware-service-evs-and-its-practical-applications\n125. /blog/understanding-multi-tenancy-the-keystone-of-saas\n126. /blog/using-scrum-in-the-development-process\n127. /blog/when-kubernetes-met-spark-what-native-kubernetes-support-means-for-big-data-and-data-science\n128. /blog/why-better-architected-is-better-than-well-architected\n129. /blog/why-text-to-sql-isnt-enough-the-case-for-knowledge-graphs-in-data-management\n130. /blog/why-we-recommended-databricks-for-a-green-energy-company\n131. /blog/why-you-need-to-worry-about-openwashing\n132. /blog/why-your-data-scientist-needs-a-flexible-data\n133. /book-a-discovery-call\n134. /careers\n135. /case-studies\n136. /case-studies/ai-driven-analytics-upgrades-operational-efficiency-and-cloud-resilience-for-dental-service-organizations-dsos\n137. /case-studies/ai-driven-industrial-iot-solutions\n138. /case-studies/aws-cloud-cost-optimization-pipeline\n139. /case-studies/cloud-native-modernization-and-aws-migration\n140. /case-studies/cloud-native-upgrade-drives-accelerated-saas-market-success\n141. /case-studies/cost-optimization-with-opencost-as-major-retailer-migrates-from-vmware-to-kubernetes\n142. /case-studies/empowering-transparency-how-generative-ai-revolutionized-faceups-whistleblowing-platform\n143. /case-studies/enterprise-saas-platform-for-asset-management-and-remote-operations\n144. /case-studies/gemini-health-optimizing-prescription-drug-costs-with-cloud-modernization\n145. /case-studies/kasasa-migrates-to-amazon-eks\n146. /case-studies/migrating-health-data-to-aws-cloud\n147. /case-studies/ott-ad-platform-processes-10-billion-ad-calls-a-day\n148. /case-studies/revolutionizing-road-safety-cloudgeometrys-real-time-dashcam-solutions\n149. /case-studies/royal-onward-when-you-dont-need-an-ambulance-to-reach-medical-care\n150. /case-studies/saas-app-platform-for-global-non-profits-and-ngos\n151. /case-studies/saas-microservices-unlock-new-revenue-beyond-enterprise\n152. /case-studies/saas-multitenancy-for-putting-industrial-data-to-work\n153. /case-studies/secure-data-driven-mobile-ai-delivers-personalized-medicine\n154. /case-studies/semiconductor-fab-uses-iiot-for-real-time-equipment-health-check\n155. /case-studies/streamlining-green-energy-operations-longroad-energys-data-integration-transformation\n156. /case-studies/tetrascience-elevating-cloud-multitenancy-for-scientific-discovery\n157. /cloud-upgrade-kubernetes-adoption\n158. /contact\n159. /customer-success-engineering\n160. /ebook-zeroing-in-on-cloud-technical-risk\n161. /expertise-portfolio\n162. /foundation\n163. /foundation/analytics-data-science-pipelines\n164. /foundation/aws-data-science-pipeline\n165. /foundation/aws-database-migration\n166. /foundation/aws-wafr-cloud-infrastructure-upgrade\n167. /foundation/cloud-migration\n168. /foundation/cost-optimization-services\n169. /foundation/data-engineering-operations\n170. /foundation/data-integration\n171. /foundation/dataflow-integration-platform\n172. /foundation/devops\n173. /foundation/disaster-recovery-continuity-backup\n174. /foundation/kubernetes-adoption\n175. /foundation/managed\n176. /foundation/monitoring-security-compliance\n177. /foundation/new-product-saas-services\n178. /foundation/saas-acceleration\n179. /foundation/saas-boost-quickstart\n180. /free-ml-ai-consultancy\n181. /gdpr-compliance-statement\n182. /https://cloudgeometry.com/blog?e0cf3cb8_page=2\n183. /https://cloudgeometry.com/case-studies?a4434818_page=2\n184. /https://cloudgeometry.com/case-study-thank-you\n185. /https://cloudgeometry.com/job\n186. /https://cloudgeometry.com/meeting-booked\n187. /https://cloudgeometry.com/services-2\n188. /https://cloudgeometry.com/stule-guide\n189. /https://www.cloudgeometry.com/author/cgteam\n190. /https://www.cloudgeometry.com/author/david\n191. /https://www.cloudgeometry.com/author/dfishman\n192. /https://www.cloudgeometry.com/author/dfishman?b76a41bf_page=1\n193. /https://www.cloudgeometry.com/author/dfishman?b76a41bf_page=2\n194. /https://www.cloudgeometry.com/author/dfishman?b76a41bf_page=2&e0cf3cb8_page=2\n195. /https://www.cloudgeometry.com/author/dfishman?e0cf3cb8_page=2\n196. /https://www.cloudgeometry.com/author/michael\n197. /https://www.cloudgeometry.com/author/michael?1c5b6838_page=1\n198. /https://www.cloudgeometry.com/author/michael?e0cf3cb8_page=1\n199. /https://www.cloudgeometry.com/blueprints\n200. /https://www.cloudgeometry.com/post/build-operate-and-transfer-to-your-own-development-center\n201. /https://www.cloudgeometry.com/post/cornerstones-for-todays-global-workplace-how-upteam-works\n202. /https://www.cloudgeometry.com/post/is-the-software-industry-prepared-for-chatgpt\n203. /https://www.cloudgeometry.com/post/nearshoring-eastern-europe-top-locations\n204. /https://www.cloudgeometry.com/post/not-gelling-with-your-team-try-these-conflict-resolution-tips\n205. /https://www.cloudgeometry.com/post/watch-out-for-these-signs-that-the-company-or-team-youre-interviewing-for-has-a-toxic-work-culture\n206. /https://www.cloudgeometry.com/search\n207. /https://www.cloudgeometry.com/tag/startups\n208. /insights\n209. /insights/ai-agents\n210. /insights/ai-crash-course\n211. /insights/ai-driven-industrial-iot-solutions\n212. /insights/ai-for-better-bi-with-the-data\n213. /insights/ai-ml\n214. /insights/ai-security\n215. /insights/aws-cloud-cost-optimization-pipeline\n216. /insights/balance-between-reliability-and-cost-optimization-in-a-k8s-environments\n217. /insights/big-data-analytics-for-industrial-iot\n218. /insights/bigdata\n219. /insights/blockchain\n220. /insights/cgdevx\n221. /insights/cloud-native\n222. /insights/cloud-native-modernization-and-aws-migration\n223. /insights/cloud-native-upgrade-drives-accelerated-saas-market-success\n224. /insights/continuous-integration-drives-operational-readiness\n225. /insights/convert-any-cpg-into-iot\n226. /insights/cost-optimization-with-opencost-as-major-retailer-migrates-from-vmware-to-kubernetes\n227. /insights/devops\n228. /insights/empowering-transparency-how-generative-ai-revolutionized-faceups-whistleblowing-platform\n229. /insights/engineering-process\n230. /insights/enterprise-saas-platform-for-asset-management-and-remote-operations\n231. /insights/events\n232. /insights/gemini-health-optimizing-prescription-drug-costs-with-cloud-modernization\n233. /insights/integration\n234. /insights/machine-learning-powers-real-time-marketing-campaign-analytics\n235. /insights/marketing\n236. /insights/migrating-health-data-to-aws-cloud\n237. /insights/migration-modernization\n238. /insights/ml-ai-data\n239. /insights/mobile\n240. /insights/news\n241. /insights/ott-ad-platform-processes-10-billion-ad-calls-a-day\n242. /insights/platform-engineering\n243. /insights/process\n244. /insights/real-time-asset-intelligence-and-remote-operations\n245. /insights/real-time-marketing-performance-analytics-saas-platform\n246. /insights/revolutionizing-road-safety-cloudgeometrys-real-time-dashcam-solutions\n247. /insights/royal-onward-when-you-dont-need-an-ambulance-to-reach-medical-care\n248. /insights/saas\n249. /insights/saas-app-platform-for-global-non-profits-and-ngos\n250. /insights/saas-iot-unifies-marketing-supply-chain-analytics-for-global-cpg\n251. /insights/saas-microservices-unlock-new-revenue-beyond-enterprise\n252. /insights/saas-multitenancy-for-putting-industrial-data-to-work\n253. /insights/secrets-management-distributed-cloud\n254. /insights/secure-data-driven-mobile-ai-delivers-personalized-medicine\n255. /insights/semiconductor-fab-uses-iiot-for-real-time-equipment-health-check\n256. /insights/services\n257. /insights/startups\n258. /insights/streamlining-green-energy-operations-longroad-energys-data-integration-transformation\n259. /insights/tech-ai-tech-crash-course-webinar\n260. /insights/tech-lead\n261. /insights/tetrascience-elevating-cloud-multitenancy-for-scientific-discovery\n262. /insights/thought-leadership\n263. /insights/ux\n264. /job/ai-developer\n265. /job/backend-developer1747374281000\n266. /job/backend-developer1751381020000\n267. /job/backend-developer1751443803000\n268. /job/data-engineer-7bc211751468698000\n269. /job/data-engineer-7bc211751478622000\n270. /job/data-engineer1751467960000\n271. /job/databricks-data-engineer\n272. /job/full-stack-developer-2\n273. /job/full-stack-developer-3\n274. /job/machine-learning-platform-engineer1744627179000\n275. /job/manual-qa-engineer-5\n276. /job/platform-engineer\n277. /job/qa-lead1751443825000\n278. /job/senior-data-engineer1747403497000\n279. /job/senior-data-engineer1751443784000\n280. /job/senior-devops-engineer\n281. /job/senior-devops-engineer-62cde1751461683000\n282. /managed-data-engineering-services\n283. /managed-services-provider\n284. /open-position\n285. /partners\n286. /pricing\n287. /privacy-policy\n288. /project/ai-driven-optimization-vehicle-production-scheduling-dashboard\n289. /project/cgdevx-kubernetes-application-delivery-upgrade-cloud-native-saas-fintech\n290. /project/modernization-vmware-cloud-ready-workloads\n291. /scale-smart-product-devops-support-startups\n292. /services\n293. /sitemap.xml\n294. /solutions\n295. /solutions/ai-data\n296. /solutions/application-modernization\n297. /solutions/cgdevx\n298. /solutions/cgdevx-landing\n299. /solutions/cgdevx-toolset\n300. /solutions/cloud-cost-management\n301. /solutions/security\n302. /using-generative-ai-dont-forget-your-structured-data\n303. /www.cloudgeometry.com/management\n304. /www.cloudgeometry.com/onboarding\n\nPHASE 2: NOVA PRO LLM SELECTION RESULTS\n========================================\nLLM Model: amazon/nova-pro-v1\nSelection Time: 4.70 seconds\nTokens Used: 6,917\nCost: $0.0055\nConfidence Threshold: 0.6\nSelected: 8 paths\n\nCOMPLETE LLM PROMPT SENT TO NOVA PRO:\n--------------------------------------------------\nSystem: You are an expert AI web analyst. Your task is to scan a list of website URL paths and pick out only those most likely to contain substantive company intelligence.
+
+User:  
+I will supply a JSON array of URL paths under the variable `url_paths_list`. Your output must be a JSON object with selected paths and explanations (no extra text).
+
+url_paths_list = [
+  "/",
+  "/about",
+  "/advanced",
+  "/advanced/b2b-customer-engineering-services",
+  "/advanced/ci-cd",
+  "/advanced/devops-monitoring-observability",
+  "/advanced/enterprise-grade-saas",
+  "/advanced/full-stack-modern-cloud-app-dev",
+  "/advanced/growth-ready-multi-tenancy-architecture",
+  "/advanced/infrastructure-management-gitops",
+  "/advanced/managed-full-stack-development",
+  "/advanced/platform-engineering",
+  "/advanced/workload-management",
+  "/ai-agents-retail-operational-excellence",
+  "/ai-data-platforms",
+  "/ai-for-better-bi-with-the-data",
+  "/ai-ml-data",
+  "/ai-ml-data/ai-crash-course",
+  "/ai-ml-data/ai-ml-development",
+  "/ai-ml-data/ai-ml-engineering",
+  "/ai-ml-data/data-engineering-for-mlops",
+  "/ai-ml-data/engineering",
+  "/ai-ml-data/free-online-crash-course-1-hour-biz",
+  "/ai-ml-data/free-online-crash-course-4-hours-custom-biz",
+  "/ai-ml-data/free-online-crash-course-4-hours-custom-tech",
+  "/ai-ml-data/free-online-crash-courses-biz",
+  "/ai-ml-data/free-online-crash-courses-custom-biz",
+  "/ai-ml-data/free-online-crash-courses-custom-tech",
+  "/ai-ml-data/free-online-crash-courses-tech",
+  "/ai-ml-data/generative-ai",
+  "/ai-ml-data/ml-data-analytics",
+  "/ai-ml-data/ml-engineering",
+  "/ai-ml-data/tech-ai-tech-crash-course-webinar",
+  "/ai-ml-data/technical-ai-agents-crash-course",
+  "/ai-ml-data/traditional",
+  "/ai-partnerships",
+  "/application-modernization",
+  "/balance-between-reliability-and-cost-optimization-in-a-k8s-environments",
+  "/blog",
+  "/blog/14-cloud-modernization-mistakes-to-avoid",
+  "/blog/5-challenges-how-to-make-your-lakehouse-the-reservoir-powering-genai-and-bi-success",
+  "/blog/5-reasons-to-start-developing-for-iot",
+  "/blog/50-shades-of-grey-or-how-a-web-theme-drives-b2b-saas-product-consistency",
+  "/blog/7-ways-to-build-enterprise-readiness-into-your-saas-roadmap",
+  "/blog/ai-agents-vs-rpa-decoding-the-automation-revolution",
+  "/blog/ai-crash-course-recap",
+  "/blog/aiops-insights-from-an-article-close-to-my-heart",
+  "/blog/announcing-cgdevx-the-next-step-forward-in-platform-engineering",
+  "/blog/announcing-the-cgdevx-cloud-native-application-starter-kit",
+  "/blog/apn-awards-cloudgeometry-amazon-kinesis-service-designation-for-advanced-data-architectures",
+  "/blog/aws-partner-network-endorses-cloudgeometry-for-amazon-redshift-customers-4th-award-in-4-months",
+  "/blog/aws-partner-network-recognizes-cloudgeometry-as-certified-service-provider-for-database-migration-services",
+  "/blog/beyond-big-data-for-health-care-with-data-science-pipelines",
+  "/blog/beyond-frankencloud-living-with-your-once-and-future-saas-architecture",
+  "/blog/beyond-the-migration-horizon",
+  "/blog/blockchains-next-challenges",
+  "/blog/breaking-down-data-silos-empowering-cross-departmental-collaboration-with-a-collective-data-fabric",
+  "/blog/building-ai-agent-infrastructure-mcp-a2a-nanda-new-web-stack",
+  "/blog/cloud-computing-and-bi-through-cloudgeometrys-lens",
+  "/blog/cloud-native-programming-isnt-bog-standard-easy-yet",
+  "/blog/cloud-native-success-as-a-cncf-kubernetes-certified-service-provider",
+  "/blog/cloudgeometry-is-now-an-aws-advanced-consulting-partner",
+  "/blog/cloudgeometry-joins-the-linux-foundation-data-ai-initiative",
+  "/blog/cloudgeometry-now-a-certified-service-provider-for-lambda-services-by-aws",
+  "/blog/cloudgeometry-streamlines-software-delivery-with-in-open-source-platform-engineering-tool-cgdevx",
+  "/blog/code-llama-empowering-developers-with-the-power-of-ai----part-1-intro",
+  "/blog/code-llama-empowering-developers-with-the-power-of-ai----part-2-using-code-llama-directly-and-with-an-ide",
+  "/blog/creating-a-lean-mean-requirements-machine",
+  "/blog/crowdstroke-a-wake-up-call-for-it-security",
+  "/blog/data-driven-personalized-medicine-gali-health-case-study",
+  "/blog/embracing-the-ai-agent-revolution-a-practical-roadmap-for-business-leaders",
+  "/blog/enterprise-saas-platform-for-asset-management-and-remote-operations",
+  "/blog/figuring-out-if-kubernetes-on-aws-eks-is-right-for-you-second-of-2-posts",
+  "/blog/four-key-pillars-of-a-data-centric-approach-to-ai",
+  "/blog/from-devops-to-dataops",
+  "/blog/from-devops-to-gitops",
+  "/blog/from-legacy-to-leading-edge-a-business-leaders-guide-to-aws-app-modernization",
+  "/blog/gdpr-compliance-by-design",
+  "/blog/genai-is-finally-boring-in-a-good-way-agentic-systems-are-the-next-big-thing",
+  "/blog/hands-on-cloud-lifecycle-virtualization-for-hands-free-automation",
+  "/blog/hands-on-end-to-end-mlops-with-mlflow-and-kubeflow",
+  "/blog/how-do-you-know-devops-is-working",
+  "/blog/how-ethereum-smart-contracts-work",
+  "/blog/how-the-right-data-makes-process-agents-effective",
+  "/blog/how-to-cut-the-cost-of-gpu-instances-for-ai",
+  "/blog/how-to-manage-an-api-lifecycle",
+  "/blog/hugging-face",
+  "/blog/infrastructure-testing-as-a-part-of-gdpr-compliance-according-to-owasp-ncsc",
+  "/blog/interview-the-empress-of-remote",
+  "/blog/introducing-our-new-data-engineering-data-science-pipeline-practice-offerings",
+  "/blog/ipaas-the-way-to-integrate-modern-cloud-based-solutions",
+  "/blog/lowering-the-cost-of-failure",
+  "/blog/maximizing-databricks-roi-a-strategic-guide-for-data-driven-leadership",
+  "/blog/measurement-what-saas-platform-builders-need-to-know-to-prepare-for-growth-part-3",
+  "/blog/meet-cloudgeometry-at-msp-global-nurbergring",
+  "/blog/meet-us-in-vilnius-at-big-data-europe-2023",
+  "/blog/monetization-what-saas-platform-builders-need-to-know-to-prepare-for-growth-part-2",
+  "/blog/moving-beyond-lift-and-shift-the-value-of-kubernetes-first-thinking",
+  "/blog/moving-from-vmware-to-kubernetes-one-step-at-a-time",
+  "/blog/overcoming-common-hurdles-in-cloud-native-development-with-kubernetes",
+  "/blog/owasp-zap-penetration-security-testing-tool",
+  "/blog/pursuing-devops-momentum-measuring-what-matters",
+  "/blog/saas-platform-builders-prepare-for-growth-part-1-of-3",
+  "/blog/set-up-cloud-workloads",
+  "/blog/success-with-cloud-native",
+  "/blog/taking-cloud-logging-from-good-to-better-to-best",
+  "/blog/technical-debt-vs-frankencloud-in-your-saas",
+  "/blog/ten-things-to-know-about-kubernetes-on-amazon-eks-first-of-2-posts",
+  "/blog/the-anti-fragile-ai-agent-building-systems-that-thrive-on-disruption-not-just-efficiency",
+  "/blog/the-api-for-ai-agents-how-mcp-is-standardizing-tool-use-and-collaboration",
+  "/blog/the-best-practices-of-building-api-for-your-saas",
+  "/blog/the-biggest-trends-and-challenges-in-saas-integration",
+  "/blog/the-data-engineering-checklist-for-data-science",
+  "/blog/the-data-science-myth-is-not-about-data-scientists",
+  "/blog/the-european-union-sets-itself-up-as-ai-police",
+  "/blog/the-hidden-costs-and-benefits-of-cloud-migration",
+  "/blog/the-lambda-architecture-for-near-real-time-data-processing",
+  "/blog/the-rise-of-multimodal-ai-openai-google-meta-blaze-a-trail-to-more-human-interactions",
+  "/blog/the-saas-balancing-act-always-be-modernizing",
+  "/blog/the-state-of-platform-engineering-where-are-we-now",
+  "/blog/the-zeroops-journey-mind-the-gap",
+  "/blog/time-boxing-across-time-zones-agile-with-remote-teams",
+  "/blog/ua",
+  "/blog/understanding-amazon-elastic-vmware-service-evs-and-its-practical-applications",
+  "/blog/understanding-multi-tenancy-the-keystone-of-saas",
+  "/blog/using-scrum-in-the-development-process",
+  "/blog/when-kubernetes-met-spark-what-native-kubernetes-support-means-for-big-data-and-data-science",
+  "/blog/why-better-architected-is-better-than-well-architected",
+  "/blog/why-text-to-sql-isnt-enough-the-case-for-knowledge-graphs-in-data-management",
+  "/blog/why-we-recommended-databricks-for-a-green-energy-company",
+  "/blog/why-you-need-to-worry-about-openwashing",
+  "/blog/why-your-data-scientist-needs-a-flexible-data",
+  "/book-a-discovery-call",
+  "/careers",
+  "/case-studies",
+  "/case-studies/ai-driven-analytics-upgrades-operational-efficiency-and-cloud-resilience-for-dental-service-organizations-dsos",
+  "/case-studies/ai-driven-industrial-iot-solutions",
+  "/case-studies/aws-cloud-cost-optimization-pipeline",
+  "/case-studies/cloud-native-modernization-and-aws-migration",
+  "/case-studies/cloud-native-upgrade-drives-accelerated-saas-market-success",
+  "/case-studies/cost-optimization-with-opencost-as-major-retailer-migrates-from-vmware-to-kubernetes",
+  "/case-studies/empowering-transparency-how-generative-ai-revolutionized-faceups-whistleblowing-platform",
+  "/case-studies/enterprise-saas-platform-for-asset-management-and-remote-operations",
+  "/case-studies/gemini-health-optimizing-prescription-drug-costs-with-cloud-modernization",
+  "/case-studies/kasasa-migrates-to-amazon-eks",
+  "/case-studies/migrating-health-data-to-aws-cloud",
+  "/case-studies/ott-ad-platform-processes-10-billion-ad-calls-a-day",
+  "/case-studies/revolutionizing-road-safety-cloudgeometrys-real-time-dashcam-solutions",
+  "/case-studies/royal-onward-when-you-dont-need-an-ambulance-to-reach-medical-care",
+  "/case-studies/saas-app-platform-for-global-non-profits-and-ngos",
+  "/case-studies/saas-microservices-unlock-new-revenue-beyond-enterprise",
+  "/case-studies/saas-multitenancy-for-putting-industrial-data-to-work",
+  "/case-studies/secure-data-driven-mobile-ai-delivers-personalized-medicine",
+  "/case-studies/semiconductor-fab-uses-iiot-for-real-time-equipment-health-check",
+  "/case-studies/streamlining-green-energy-operations-longroad-energys-data-integration-transformation",
+  "/case-studies/tetrascience-elevating-cloud-multitenancy-for-scientific-discovery",
+  "/cloud-upgrade-kubernetes-adoption",
+  "/contact",
+  "/customer-success-engineering",
+  "/ebook-zeroing-in-on-cloud-technical-risk",
+  "/expertise-portfolio",
+  "/foundation",
+  "/foundation/analytics-data-science-pipelines",
+  "/foundation/aws-data-science-pipeline",
+  "/foundation/aws-database-migration",
+  "/foundation/aws-wafr-cloud-infrastructure-upgrade",
+  "/foundation/cloud-migration",
+  "/foundation/cost-optimization-services",
+  "/foundation/data-engineering-operations",
+  "/foundation/data-integration",
+  "/foundation/dataflow-integration-platform",
+  "/foundation/devops",
+  "/foundation/disaster-recovery-continuity-backup",
+  "/foundation/kubernetes-adoption",
+  "/foundation/managed",
+  "/foundation/monitoring-security-compliance",
+  "/foundation/new-product-saas-services",
+  "/foundation/saas-acceleration",
+  "/foundation/saas-boost-quickstart",
+  "/free-ml-ai-consultancy",
+  "/gdpr-compliance-statement",
+  "/https://cloudgeometry.com/blog?e0cf3cb8_page=2",
+  "/https://cloudgeometry.com/case-studies?a4434818_page=2",
+  "/https://cloudgeometry.com/case-study-thank-you",
+  "/https://cloudgeometry.com/job",
+  "/https://cloudgeometry.com/meeting-booked",
+  "/https://cloudgeometry.com/services-2",
+  "/https://cloudgeometry.com/stule-guide",
+  "/https://www.cloudgeometry.com/author/cgteam",
+  "/https://www.cloudgeometry.com/author/david",
+  "/https://www.cloudgeometry.com/author/dfishman",
+  "/https://www.cloudgeometry.com/author/dfishman?b76a41bf_page=1",
+  "/https://www.cloudgeometry.com/author/dfishman?b76a41bf_page=2",
+  "/https://www.cloudgeometry.com/author/dfishman?b76a41bf_page=2&e0cf3cb8_page=2",
+  "/https://www.cloudgeometry.com/author/dfishman?e0cf3cb8_page=2",
+  "/https://www.cloudgeometry.com/author/michael",
+  "/https://www.cloudgeometry.com/author/michael?1c5b6838_page=1",
+  "/https://www.cloudgeometry.com/author/michael?e0cf3cb8_page=1",
+  "/https://www.cloudgeometry.com/blueprints",
+  "/https://www.cloudgeometry.com/post/build-operate-and-transfer-to-your-own-development-center",
+  "/https://www.cloudgeometry.com/post/cornerstones-for-todays-global-workplace-how-upteam-works",
+  "/https://www.cloudgeometry.com/post/is-the-software-industry-prepared-for-chatgpt",
+  "/https://www.cloudgeometry.com/post/nearshoring-eastern-europe-top-locations",
+  "/https://www.cloudgeometry.com/post/not-gelling-with-your-team-try-these-conflict-resolution-tips",
+  "/https://www.cloudgeometry.com/post/watch-out-for-these-signs-that-the-company-or-team-youre-interviewing-for-has-a-toxic-work-culture",
+  "/https://www.cloudgeometry.com/search",
+  "/https://www.cloudgeometry.com/tag/startups",
+  "/insights",
+  "/insights/ai-agents",
+  "/insights/ai-crash-course",
+  "/insights/ai-driven-industrial-iot-solutions",
+  "/insights/ai-for-better-bi-with-the-data",
+  "/insights/ai-ml",
+  "/insights/ai-security",
+  "/insights/aws-cloud-cost-optimization-pipeline",
+  "/insights/balance-between-reliability-and-cost-optimization-in-a-k8s-environments",
+  "/insights/big-data-analytics-for-industrial-iot",
+  "/insights/bigdata",
+  "/insights/blockchain",
+  "/insights/cgdevx",
+  "/insights/cloud-native",
+  "/insights/cloud-native-modernization-and-aws-migration",
+  "/insights/cloud-native-upgrade-drives-accelerated-saas-market-success",
+  "/insights/continuous-integration-drives-operational-readiness",
+  "/insights/convert-any-cpg-into-iot",
+  "/insights/cost-optimization-with-opencost-as-major-retailer-migrates-from-vmware-to-kubernetes",
+  "/insights/devops",
+  "/insights/empowering-transparency-how-generative-ai-revolutionized-faceups-whistleblowing-platform",
+  "/insights/engineering-process",
+  "/insights/enterprise-saas-platform-for-asset-management-and-remote-operations",
+  "/insights/events",
+  "/insights/gemini-health-optimizing-prescription-drug-costs-with-cloud-modernization",
+  "/insights/integration",
+  "/insights/machine-learning-powers-real-time-marketing-campaign-analytics",
+  "/insights/marketing",
+  "/insights/migrating-health-data-to-aws-cloud",
+  "/insights/migration-modernization",
+  "/insights/ml-ai-data",
+  "/insights/mobile",
+  "/insights/news",
+  "/insights/ott-ad-platform-processes-10-billion-ad-calls-a-day",
+  "/insights/platform-engineering",
+  "/insights/process",
+  "/insights/real-time-asset-intelligence-and-remote-operations",
+  "/insights/real-time-marketing-performance-analytics-saas-platform",
+  "/insights/revolutionizing-road-safety-cloudgeometrys-real-time-dashcam-solutions",
+  "/insights/royal-onward-when-you-dont-need-an-ambulance-to-reach-medical-care",
+  "/insights/saas",
+  "/insights/saas-app-platform-for-global-non-profits-and-ngos",
+  "/insights/saas-iot-unifies-marketing-supply-chain-analytics-for-global-cpg",
+  "/insights/saas-microservices-unlock-new-revenue-beyond-enterprise",
+  "/insights/saas-multitenancy-for-putting-industrial-data-to-work",
+  "/insights/secrets-management-distributed-cloud",
+  "/insights/secure-data-driven-mobile-ai-delivers-personalized-medicine",
+  "/insights/semiconductor-fab-uses-iiot-for-real-time-equipment-health-check",
+  "/insights/services",
+  "/insights/startups",
+  "/insights/streamlining-green-energy-operations-longroad-energys-data-integration-transformation",
+  "/insights/tech-ai-tech-crash-course-webinar",
+  "/insights/tech-lead",
+  "/insights/tetrascience-elevating-cloud-multitenancy-for-scientific-discovery",
+  "/insights/thought-leadership",
+  "/insights/ux",
+  "/job/ai-developer",
+  "/job/backend-developer1747374281000",
+  "/job/backend-developer1751381020000",
+  "/job/backend-developer1751443803000",
+  "/job/data-engineer-7bc211751468698000",
+  "/job/data-engineer-7bc211751478622000",
+  "/job/data-engineer1751467960000",
+  "/job/databricks-data-engineer",
+  "/job/full-stack-developer-2",
+  "/job/full-stack-developer-3",
+  "/job/machine-learning-platform-engineer1744627179000",
+  "/job/manual-qa-engineer-5",
+  "/job/platform-engineer",
+  "/job/qa-lead1751443825000",
+  "/job/senior-data-engineer1747403497000",
+  "/job/senior-data-engineer1751443784000",
+  "/job/senior-devops-engineer",
+  "/job/senior-devops-engineer-62cde1751461683000",
+  "/managed-data-engineering-services",
+  "/managed-services-provider",
+  "/open-position",
+  "/partners",
+  "/pricing",
+  "/privacy-policy",
+  "/project/ai-driven-optimization-vehicle-production-scheduling-dashboard",
+  "/project/cgdevx-kubernetes-application-delivery-upgrade-cloud-native-saas-fintech",
+  "/project/modernization-vmware-cloud-ready-workloads",
+  "/scale-smart-product-devops-support-startups",
+  "/services",
+  "/sitemap.xml",
+  "/solutions",
+  "/solutions/ai-data",
+  "/solutions/application-modernization",
+  "/solutions/cgdevx",
+  "/solutions/cgdevx-landing",
+  "/solutions/cgdevx-toolset",
+  "/solutions/cloud-cost-management",
+  "/solutions/security",
+  "/using-generative-ai-dont-forget-your-structured-data",
+  "/www.cloudgeometry.com/management",
+  "/www.cloudgeometry.com/onboarding"
+]
+
+Steps:
+1. Identify Primary Content Pages  
+   - Look for pages that directly host company intelligence (About, Leadership, Products, Careers, Press, etc.).
+
+2. Match Against the Target Information Profile  
+   We need to extract these specific fields from company websites:
+   
+   - Core Company Info:
+     * Company Name, Website, Company Description, Value Proposition
+     * Industry, Location, Founding Year, Company Size, Employee Count Range
+     
+   - Business Model & Classification:
+     * Business Model Type, Business Model, SaaS Classification, Is SaaS
+     * Classification Confidence, Classification Justification, Classification Timestamp
+     
+   - Products & Services:
+     * Products/Services Offered, Key Services, Target Market, Pain Points
+     * Competitive Advantages, Tech Stack
+     
+   - Company Stage & Metrics:
+     * Company Stage, Detailed Funding Stage, Funding Status
+     * Stage Confidence, Tech Sophistication, Tech Confidence, Industry Confidence
+     * Geographic Scope, Sales Complexity
+     
+   - People & Leadership:
+     * Key Decision Makers, Leadership Team, Decision Maker Type
+     
+   - Growth & Activity Indicators:
+     * Has Job Listings, Job Listings Count, Job Listings Details
+     * Recent News/Events, Recent News
+     
+   - Technology & Digital Presence:
+     * Sales/Marketing Tools, Has Chat Widget, Has Forms
+     * Social Media, Contact Info
+     
+   - Recognition & Partnerships:
+     * Company Culture, Awards, Certifications, Partnerships
+     
+   - Technical Metadata:
+     * Pages Crawled, Crawl Depth, Crawl Duration (seconds)
+     * Raw Content, AI Summary, Vector Embedding
+     * Scrape Status, Scrape Error, Created At, Last Updated  
+
+3. Exclude Non-Primary Pages  
+   - Legal/policy (`/privacy`, `/terms`)  
+   - Account/utilities (`/login`, `/signup`, `/cart`, `/search`)  
+   - Support/FAQ (`/help`, `/support`, `/faq`)  
+   - Structural (`/sitemap`, pagination links)  
+
+4. Output  
+   - Return a JSON object with selected paths and explanations for each path:
+     ```json
+     {
+       "selected_paths": [
+         "/about",
+         "/company/team", 
+         "/products",
+         "/careers",
+         "/press",
+         "/partners"
+       ],
+       "path_explanations": {
+         "/about": "Company description, founding year, value proposition, company size",
+         "/company/team": "Leadership team, key decision makers, management structure",
+         "/products": "Products/services offered, competitive advantages, tech stack",
+         "/careers": "Employee count indicators, job listings, company culture",
+         "/press": "Recent news/events, awards, partnerships, funding status",
+         "/partners": "Business partnerships, technology partnerships, certifications"
+       }
+     }
+     ```\n\nNOVA PRO SELECTED PATHS WITH EXPLANATIONS:\n--------------------------------------------------\n 1. /about\n    Nova Pro Reasoning: Fields expected: Provides company description, founding year, value proposition, and company size.\n\n 2. /careers\n    Nova Pro Reasoning: Fields expected: Indicates employee count, job listings, and company culture.\n\n 3. /case-studies\n    Nova Pro Reasoning: Fields expected: Details specific projects, client successes, and industry applications.\n\n 4. /expertise-portfolio\n    Nova Pro Reasoning: Fields expected: Outlines the company's areas of expertise and service offerings.\n\n 5. /foundation\n    Nova Pro Reasoning: Fields expected: Describes foundational services and solutions provided by the company.\n\n 6. /insights\n    Nova Pro Reasoning: Fields expected: Offers thought leadership, industry trends, and company news.\n\n 7. /partners\n    Nova Pro Reasoning: Fields expected: Details business and technology partnerships, certifications, and awards.\n\n 8. /solutions\n    Nova Pro Reasoning: Fields expected: Presents the company's solutions and services, targeting specific market needs.\n\nPHASE 3: CONTENT EXTRACTION RESULTS\n========================================\nExtraction Time: 2.52 seconds\nSuccess Rate: 8/8\nTotal Content Length: 15,145 characters\nTrafilatura Extractions: 6\nBeautifulSoup Fallback Extractions: 2\nFailed Extractions: 0\n\nDETAILED PAGE EXTRACTION RESULTS:\n==================================================\n\nPAGE 1: ABOUT\nURL: https://www.cloudgeometry.com/about\nExtraction Method: TRAFILATURA\nSuccess: YES\nContent Length: 898 characters\nExtraction Time: 1.11 seconds\nTitle: About Us — Expert Cloud Solutions — CloudGeometry\n\nEXTRACTED CONTENT:\n----------------------------------------\nHow We Work
+Our mission is to deliver intelligent, integrated & scalable solutions that help organizations unlock the potential of their data and prepare for an AI-driven future.
+01
+Consult & Educate
+Get consultation & custom training from our domain experts.
+See what leaders your industry are already doing.
+Find the latest AI-powered solutions for your business.
+02
+Get Custom Tailored Solutions
+We partner with all hyperscalers (AWS, Azure, GCP) leading technology companies & innovative startups, alongside active members of CNCF community.
+Depending on your business goals, system criticality and budgets we will help you to select the best options from top commercial & Open Source products.
+Cost awareness.
+03
+Build & Integrate
+Built-In scalability for custom apps & AI agents from our library components.
+AI powered APIs Integrations & Data Solutions.
+Time-to-market is always top of mind.\n\n================================================================================\n\nPAGE 2: CAREERS\nURL: https://www.cloudgeometry.com/careers\nExtraction Method: TRAFILATURA\nSuccess: YES\nContent Length: 1,290 characters\nExtraction Time: 0.21 seconds\nTitle: Careers: Join Our Team and Shape the Future — CloudGeometry\n\nEXTRACTED CONTENT:\n----------------------------------------\nAt CloudGeometry, we design and build SaaS platforms for top Silicon Valley based technology startups and consult to global corporations on multi-cloud migration and implementation.
+Solution architects and DevOps practitioners come to CloudGeometry to build careers on AWS, GCP and Azure. Put both your technical and managerial leadership skills to the test. Balance your real world design and cloud software experience with essential soft skills — vision, communications, and influence — to guide developers and customers to achieve the results that the business needs.
+Our clients are the companies betting on their business on cloud-native product & solution architectures, driven by cloud-native software development, automated application integration, distributed data platforms, DevOps infrastructure as code, machine learning pipelines and more. CloudGeometry is your chance to prove yourself to the technology companies that matter.
+There’s more to being a great Solutions Architect than technical mastery and proven systems thinking. At CloudGeometry, put your soft skills to work leading the customer and the dev team to success. Sharpen your collaborative leadership, communications skills, and technical vision all at the same time, by solving real world challenges that matter.\n\n================================================================================\n\nPAGE 3: CASE-STUDIES\nURL: https://www.cloudgeometry.com/case-studies\nExtraction Method: TRAFILATURA\nSuccess: YES\nContent Length: 7,881 characters\nExtraction Time: 0.19 seconds\nTitle: Case Studies: Accelerating Success — CloudGeometry\n\nEXTRACTED CONTENT:\n----------------------------------------\nCloudGeometry Portfolio
+Select case studies
+Helping clients accelerate on every dimension up and down the stack.
+Helping clients accelerate on every dimension up and down the stack.
+Fintech
+Kasasa Migrates to Amazon EKS for Automatic Cluster Scalability and Upgrades
+Kasasa, a financial technology and marketing services company, partnered with CloudGeometry and AWS to migrate over 200 services from their self-managed Kubernetes environment to Amazon Elastic Kubernetes Service (EKS), cutting costs by 20%-30%
+Healthcare Technology / Dental Service Organizations (DSOs)
+AI-driven Analytics Upgrades Operational Efficiency and Cloud Resilience for Dental Service Organizations (DSOs)
+Scalable, secure, and AI-driven operational analytics for growing Dental Service Organizations, unlocking fast onboarding, versatile low-code dashboards, and enterprise-grade performance.
+Compliance and Ethics
+Empowering Transparency: How Generative AI Revolutionized FaceUp’s Whistleblowing Platform
+FaceUp, a secure SaaS platform for whistleblowing, partnered with CloudGeometry to overcome scalability and operational challenges using AWS-powered Generative AI.
+Retail
+Cost Optimization with OpenCost as Major Retailer Migrates from VMware to Kubernetes
+Discover how a major retailer achieved significant cost savings by migrating from VMware to Kubernetes with OpenCost integration, improving scalability, resource efficiency, and real-time cost visibility.
+AdTech
+Cloud-native modernization and AWS migration by US Media leader turbocharges innovation, cuts cloud costs
+Discover how CloudGeometry transformed a major U.S. media firm's digital ad platform with AWS migration and microservices, achieving unparalleled scalability, agility, and security while reducing costs, resulting in enhanced innovation and a competitive edge.
+Healthcare, Technology, Cloud Computing, Ride-Sharing, Transportation
+Digitize Medical Transportation: DevOps and Modernization
+See how CloudGeometry helped Onward through a DevOps-centric migration to microservices, transforming a proof of concept hosted in a data center to a cloud-native platform with automated CI/CD and HIPAA-compliant integration with Uber and Lyft.
+Renewable Energy, Technology, Utilities and Energy Management, Cloud Computing, Data Analytics and Business Intelligence
+Streamlining Green Energy Operations: Longroad Energy's Data Integration Transformation
+Longroad Energy (LRE) transforms clean energy management with an extensive wind and solar project portfolio. Learn how they overcame data integration hurdles for more efficient operations.
+healthcare, Pharma, Technology
+Microservices Modernization for Prescription Cost Management
+Discover how CloudGeometry helped deliver the transition to a microservices architecture, unlocking faster iteration, integration, and compliance for enterprise cost prescription management and healthcare services.
+Scientific Data Cloud
+Securing Cross-platform Data Access for Life Sciences on AWS
+See how CloudGeometry helped TetraScience upgrade data security and SSO for its leading-edge life sciences platform, streamline compliance, and secure multi-tenancy.
+AI and Machine Learning, Data Analytics and Big Data, Edge Computing, Public Safety, Automotive Technology, Mobile Application Development
+Driving Road Safety Innovation with Kubernetes and AI
+Learn how CloudGeometry helped Nexar transform everyday dashcams into real-time edge nodes, using Kubernetes and AI to solve for enhanced driver safety and building out digital twins of real-world cities.
+Industrial Enterprise
+AI-Driven Industrial IoT Solutions for GE Digital
+Discover how GE Digital's AI-driven IIoT transformation revolutionized data integration, providing real-time insights and enhanced security for multi-tenant environments.
+SaaS, IoT, Fintech, Retail, eGaming
+Solving for Cross-Platform Data Streaming with Microservices
+Explore how CloudGeometry helped DiffusionData solve for secure cross-platform microservices, both for improved internal development agility and easier end-customer deployment.
+Financial Services, FinTech
+AWS Cloud Cost Optimization Analytics Pipeline
+Optimize cloud economics for SaaS architecture, up-level cost observability, and integrate with financial controls – no more waiting for end-of-month bills
+Manufacturing & operations across sectors: aviation, energy, water/wastewater, automotive and more
+SaaS Multitenancy for Putting Industrial Data to Work
+Aligning physical and virtual assets drives improved productivity and reliability, optimized maintenance, and operational intelligence – straight to the bottom line
+Energy
+Real-Time Asset Intelligence and Remote Operations
+High-value asset monitoring platform leverages AI and ML in SaaS platform, to blend real-time and historical data – cutting downtime worldwide
+Printed Electronics Manufacturing, Supply Chain and Industrial Systems Management
+SaaS IoT Unifies Marketing & Supply Chain Analytics for Global CPG
+Thinfilm’s Multi-tenant SaaS platform transforms discrete hardware devices into coherent and scalable data strategy
+Personalized Medicine
+Secure, Data-driven, Mobile: AI Delivers Personalized Medicine
+HIPAA-compliant, integrated platform creates collaboration between patients and providers to yield better outcomes for chronic diseases
+Digital Media and Marketing
+OTT Ad Platform Processes 10 Billion Ad Calls a Day
+Real-time AdTech delivers hi-speed audience selection analytics with seamless OTT video inventory delivery
+Digital Media and Marketing
+Machine Learning Powers Real-Time Marketing Campaign Analytics
+Use data science to precisely measure marketing ROI, ingesting a broad base of source integrations via a flexible data pipeline architecture
+Solar Power and Energy Grid
+Continuous Integration drives Operational Readiness
+Resilient data supply chain enables machine learning to expose event anomalies across global energy grid
+Healthcare, HCM/EPM
+Streamlining Mental Health Data Migration to AWS Cloud
+Neurotech’s browser-based application ran on a monolithic LAMP stack. They needed an upgrade to comply with modern clinical security and data integration practices.
+Enterprise SaaS Platform for Asset Management and Remote Operations
+Almost any piece of industrial equipment today produces its own rich and steady stream of…
+Semiconductor Manufacturing
+Get Control of Semiconductor Manufacturing Challenges with AI
+Discover how CloudGeometry helped Imantics leverage AI to solve for enhanced equipment health checks, integrating AI-driven analytics for predictive malfunction alerts and real-time preventive measures in semiconductor fabrication.
+Digital Media and Marketing
+Real-Time Marketing Performance Analytics SaaS Platform
+Origami Logic (acquired by Intuit) delivers precision 24×7 tracking of the billions spent by global brands on digital media, using data science to track 1000s of adtech data sources
+Digital Marketing, Supply Chain and Consumer Packaged Goods
+Convert any CPG into IoT
+Thinfilm’s NFC cloud uses smart labels to connect consumer, industrial, and location-based IoT with unified analytics and logistics worldwide, slashes cost of tracking any product anywhere any time
+Industrial Enterprise
+Big Data Analytics for Industrial IoT
+Data converged across industrial equipment — from aircraft engines to assembly line robots — drives streamlined analytics to track up-to-the-minute asset health.
+Non-profits & NGOs, enterprise social networking, engagement management, events
+SaaS App Platform for Global Non-profits and NGOs
+Multi-tenant collaboration unlocks digital productivity for hands-on charity, community, NGOs and global community orgs
+Digital Media and Marketing
+SaaS Microservices Unlock New Revenue Beyond Enterprise
+2020’s pandemic caused digital media to skyrocket. Our client leveraged SaaS to win new revenue for precision-targeted OTT video ads by small businesses.\n\n================================================================================\n\nPAGE 4: EXPERTISE-PORTFOLIO\nURL: https://www.cloudgeometry.com/expertise-portfolio\nExtraction Method: BEAUTIFULSOUP_FALLBACK\nSuccess: YES\nContent Length: 1,342 characters\nExtraction Time: 0.25 seconds\nTitle: Battle-Tested Technology Solutions — CloudGeometry\n\nEXTRACTED CONTENT:\n----------------------------------------\nManaged CloudOps Cloud Spend Optimization Managed Cloud Operations Cloud-Native & Kubernetes Adoption Kubernetes Adoption Modernization & Migration AI Agents & MLOps Generative AI Data Engineering for MLOps Professional Services & Customer Success Engineering Customer Success Engineering We got our start creating world-acclaimed products for Silicon Valley technology leaders. By trying all kinds of approaches and technologies (fashionable and otherwise), we know exactly what works — and what doesn’t. At CloudGeometry , we make sure you can deliver great results, at scale, through every curve and angle, at every point of your continuing cloud lifecycle. Partnerships and Platforms Our roots are in complex multi-platform cloud systems. We’ve mastered the strengths and weaknesses of commercial vendors and open source projects, so we know how to push the limits of distributed cloud infrastructure at global scale. Count on CloudGeometry for the outcome-driven expertise you need — certified engineers, solution architects and DevOps practitioners — to build and operate scalable and robust systems for continuous optimization and growth. Get the latest news about CloudGeometry, AI Agents, GenAI, Data, Kubernetes & Application Modernization solutions in your Inbox Join Our Newsletter and Network with 1502 + Data & AI Professionals.\n\n================================================================================\n\nPAGE 5: FOUNDATION\nURL: https://www.cloudgeometry.com/foundation\nExtraction Method: TRAFILATURA\nSuccess: YES\nContent Length: 1,414 characters\nExtraction Time: 0.14 seconds\nTitle: Foundation Services — CloudGeometry\n\nEXTRACTED CONTENT:\n----------------------------------------\nCloud Infrastructure & Operations
+Modernization & Migration
+Application Modernization
+Sustain and improve the business value systems you already have, making it easier today to reliably add new features and efficiencies to meet tomorrow's business opportunities.
+Kubernetes Adoption
+Succeed with Kubernetes applications and environments via expert guidance to resolve dependencies, implement persistent storage, update networking security, and more.
+Database Migration
+Cut time and cost to land your data on the AWS, featuring zero downtime, faster data ROI, and radically reduce administration, license, and lifecycle costs.
+Data Engineering Operations
+Create a virtuous cycle of data insights and business process changes to empower your stakeholders with drill-down to accurate insights faster and reliably.
+Data Integration Services
+Get a coherent and reliable data supply infrastructure, by engineering the range of streaming, APIs, logs, social media, search, e-commerce, enterprise data, and into a resilient data platform.
+SaaS Migration
+Tame the challenges of building and managing SaaS infrastructure with continuous optimization of feature development, operational effectiveness, and resource leverage.
+Cloud Migration & Adoption
+Make the move to the cloud on your terms with a range of integrations and upgrades — backed by comprehensive automation of development, deployment and production operations.\n\n================================================================================\n\nPAGE 6: INSIGHTS\nURL: https://www.cloudgeometry.com/insights\nExtraction Method: BEAUTIFULSOUP_FALLBACK\nSuccess: YES\nContent Length: 846 characters\nExtraction Time: 0.23 seconds\nTitle: Insights.CloudGeometry — AI & Cloud Learning Hub — Courses, Webinars, and Expert Insights\n\nEXTRACTED CONTENT:\n----------------------------------------\nManaged CloudOps Cloud Spend Optimization Managed Cloud Operations Cloud-Native & Kubernetes Adoption Kubernetes Adoption Modernization & Migration AI Agents & MLOps Generative AI Data Engineering for MLOps Professional Services & Customer Success Engineering Customer Success Engineering Our Speakers Learn from the Builders Join Us Anton Weiss Chief Evangelist PerfectScale Rob Giardina Founder Claritype Joel Mjolsness VP, Business Development Nick Chase AI/ML Practice Director / Senior Director of Product Management Serg Shalavin Chief DevOps Architect Alex Ulyanov CTO David Fishman VP Products & Services David Frenkel Data Science Team Lead Get the latest news about CloudGeometry, AI Agents, GenAI, Data, Kubernetes & Application Modernization solutions in your Inbox Join Our Newsletter and Network with 1502 + Data & AI Professionals.\n\n================================================================================\n\nPAGE 7: PARTNERS\nURL: https://www.cloudgeometry.com/partners\nExtraction Method: TRAFILATURA\nSuccess: YES\nContent Length: 971 characters\nExtraction Time: 0.22 seconds\nTitle: Partners — CloudGeometry\n\nEXTRACTED CONTENT:\n----------------------------------------\nThe CloudGeometry Partner Ecosystem
+The CloudGeometry partner ecosystem consists of technology providers, domain experts & managed service providers (MSPs)
+and enables us to scale and provide custom solutions across different industries and technology stacks.
+Consultants
+Harness your specialized industry experience to lead business case analysis and coordinate project implementations with our product and technology professionals.
+Technology Companies
+Make your technology an integral part of our solution offering. Let our development teams integrate it with our clients' systems, and seamlessly acquire new customers.
+MSPs
+Combine your specialized support service with our overall customer success strategy. Help us handle unique client workloads and requests, and grow your MSP business.
+Service Companies
+We continuously seek partnerships with other technology services firms that have complementary skills, to deliver holistic solutions and penetrate new markets.\n\n================================================================================\n\nPAGE 8: SOLUTIONS\nURL: https://www.cloudgeometry.com/solutions\nExtraction Method: TRAFILATURA\nSuccess: YES\nContent Length: 503 characters\nExtraction Time: 0.16 seconds\nTitle: Technology Solutions — CloudGeometry\n\nEXTRACTED CONTENT:\n----------------------------------------\nCGDevX empowers teams to build, deploy, and scale applications faster without compromising security, scalability, or maintainability. By enabling self-service capabilities and the “you build it, you run it” approach, CGDevX minimizes friction between development and operations. The platform abstracts away cloud infrastructure complexity, integrating DevSecOps practices and continuous quality checks. With CGDevX, developers can focus on innovation, delivering robust, scalable applications with ease.\n\n================================================================================\n\nFULL AGGREGATED CONTENT FROM ALL PAGES:\n==================================================\n\nCOMPANY WEBSITE CONTENT ANALYSIS
+Website: www.cloudgeometry.com
+Content extracted from 8 pages
+Total content length: 15,145 characters
+============================================================
+
+PAGE 1: https://www.cloudgeometry.com/about
+Title: About Us — Expert Cloud Solutions — CloudGeometry
+Content length: 898 characters
+----------------------------------------
+
+How We Work
+Our mission is to deliver intelligent, integrated & scalable solutions that help organizations unlock the potential of their data and prepare for an AI-driven future.
+01
+Consult & Educate
+Get consultation & custom training from our domain experts.
+See what leaders your industry are already doing.
+Find the latest AI-powered solutions for your business.
+02
+Get Custom Tailored Solutions
+We partner with all hyperscalers (AWS, Azure, GCP) leading technology companies & innovative startups, alongside active members of CNCF community.
+Depending on your business goals, system criticality and budgets we will help you to select the best options from top commercial & Open Source products.
+Cost awareness.
+03
+Build & Integrate
+Built-In scalability for custom apps & AI agents from our library components.
+AI powered APIs Integrations & Data Solutions.
+Time-to-market is always top of mind.
+
+
+PAGE 2: https://www.cloudgeometry.com/careers
+Title: Careers: Join Our Team and Shape the Future — CloudGeometry
+Content length: 1,290 characters
+----------------------------------------
+
+At CloudGeometry, we design and build SaaS platforms for top Silicon Valley based technology startups and consult to global corporations on multi-cloud migration and implementation.
+Solution architects and DevOps practitioners come to CloudGeometry to build careers on AWS, GCP and Azure. Put both your technical and managerial leadership skills to the test. Balance your real world design and cloud software experience with essential soft skills — vision, communications, and influence — to guide developers and customers to achieve the results that the business needs.
+Our clients are the companies betting on their business on cloud-native product & solution architectures, driven by cloud-native software development, automated application integration, distributed data platforms, DevOps infrastructure as code, machine learning pipelines and more. CloudGeometry is your chance to prove yourself to the technology companies that matter.
+There’s more to being a great Solutions Architect than technical mastery and proven systems thinking. At CloudGeometry, put your soft skills to work leading the customer and the dev team to success. Sharpen your collaborative leadership, communications skills, and technical vision all at the same time, by solving real world challenges that matter.
+
+
+PAGE 3: https://www.cloudgeometry.com/case-studies
+Title: Case Studies: Accelerating Success — CloudGeometry
+Content length: 7,881 characters
+----------------------------------------
+
+CloudGeometry Portfolio
+Select case studies
+Helping clients accelerate on every dimension up and down the stack.
+Helping clients accelerate on every dimension up and down the stack.
+Fintech
+Kasasa Migrates to Amazon EKS for Automatic Cluster Scalability and Upgrades
+Kasasa, a financial technology and marketing services company, partnered with CloudGeometry and AWS to migrate over 200 services from their self-managed Kubernetes environment to Amazon Elastic Kubernetes Service (EKS), cutting costs by 20%-30%
+Healthcare Technology / Dental Service Organizations (DSOs)
+AI-driven Analytics Upgrades Operational Efficiency and Cloud Resilience for Dental Service Organizations (DSOs)
+Scalable, secure, and AI-driven operational analytics for growing Dental Service Organizations, unlocking fast onboarding, versatile low-code dashboards, and enterprise-grade performance.
+Compliance and Ethics
+Empowering Transparency: How Generative AI Revolutionized FaceUp’s Whistleblowing Platform
+FaceUp, a secure SaaS platform for whistleblowing, partnered with CloudGeometry to overcome scalability and operational challenges using AWS-powered Generative AI.
+Retail
+Cost Optimization with OpenCost as Major Retailer Migrates from VMware to Kubernetes
+Discover how a major retailer achieved significant cost savings by migrating from VMware to Kubernetes with OpenCost integration, improving scalability, resource efficiency, and real-time cost visibility.
+AdTech
+Cloud-native modernization and AWS migration by US Media leader turbocharges innovation, cuts cloud costs
+Discover how CloudGeometry transformed a major U.S. media firm's digital ad platform with AWS migration and microservices, achieving unparalleled scalability, agility, and security while reducing costs, resulting in enhanced innovation and a competitive edge.
+Healthcare, Technology, Cloud Computing, Ride-Sharing, Transportation
+Digitize Medical Transportation: DevOps and Modernization
+See how CloudGeometry helped Onward through a DevOps-centric migration to microservices, transforming a proof of concept hosted in a data center to a cloud-native platform with automated CI/CD and HIPAA-compliant integration with Uber and Lyft.
+Renewable Energy, Technology, Utilities and Energy Management, Cloud Computing, Data Analytics and Business Intelligence
+Streamlining Green Energy Operations: Longroad Energy's Data Integration Transformation
+Longroad Energy (LRE) transforms clean energy management with an extensive wind and solar project portfolio. Learn how they overcame data integration hurdles for more efficient operations.
+healthcare, Pharma, Technology
+Microservices Modernization for Prescription Cost Management
+Discover how CloudGeometry helped deliver the transition to a microservices architecture, unlocking faster iteration, integration, and compliance for enterprise cost prescription management and healthcare services.
+Scientific Data Cloud
+Securing Cross-platform Data Access for Life Sciences on AWS
+See how CloudGeometry helped TetraScience upgrade data security and SSO for its leading-edge life sciences platform, streamline compliance, and secure multi-tenancy.
+AI and Machine Learning, Data Analytics and Big Data, Edge Computing, Public Safety, Automotive Technology, Mobile Application Development
+Driving Road Safety Innovation with Kubernetes and AI
+Learn how CloudGeometry helped Nexar transform everyday dashcams into real-time edge nodes, using Kubernetes and AI to solve for enhanced driver safety and building out digital twins of real-world cities.
+Industrial Enterprise
+AI-Driven Industrial IoT Solutions for GE Digital
+Discover how GE Digital's AI-driven IIoT transformation revolutionized data integration, providing real-time insights and enhanced security for multi-tenant environments.
+SaaS, IoT, Fintech, Retail, eGaming
+Solving for Cross-Platform Data Streaming with Microservices
+Explore how CloudGeometry helped DiffusionData solve for secure cross-platform microservices, both for improved internal development agility and easier end-customer deployment.
+Financial Services, FinTech
+AWS Cloud Cost Optimization Analytics Pipeline
+Optimize cloud economics for SaaS architecture, up-level cost observability, and integrate with financial controls – no more waiting for end-of-month bills
+Manufacturing & operations across sectors: aviation, energy, water/wastewater, automotive and more
+SaaS Multitenancy for Putting Industrial Data to Work
+Aligning physical and virtual assets drives improved productivity and reliability, optimized maintenance, and operational intelligence – straight to the bottom line
+Energy
+Real-Time Asset Intelligence and Remote Operations
+High-value asset monitoring platform leverages AI and ML in SaaS platform, to blend real-time and historical data – cutting downtime worldwide
+Printed Electronics Manufacturing, Supply Chain and Industrial Systems Management
+SaaS IoT Unifies Marketing & Supply Chain Analytics for Global CPG
+Thinfilm’s Multi-tenant SaaS platform transforms discrete hardware devices into coherent and scalable data strategy
+Personalized Medicine
+Secure, Data-driven, Mobile: AI Delivers Personalized Medicine
+HIPAA-compliant, integrated platform creates collaboration between patients and providers to yield better outcomes for chronic diseases
+Digital Media and Marketing
+OTT Ad Platform Processes 10 Billion Ad Calls a Day
+Real-time AdTech delivers hi-speed audience selection analytics with seamless OTT video inventory delivery
+Digital Media and Marketing
+Machine Learning Powers Real-Time Marketing Campaign Analytics
+Use data science to precisely measure marketing ROI, ingesting a broad base of source integrations via a flexible data pipeline architecture
+Solar Power and Energy Grid
+Continuous Integration drives Operational Readiness
+Resilient data supply chain enables machine learning to expose event anomalies across global energy grid
+Healthcare, HCM/EPM
+Streamlining Mental Health Data Migration to AWS Cloud
+Neurotech’s browser-based application ran on a monolithic LAMP stack. They needed an upgrade to comply with modern clinical security and data integration practices.
+Enterprise SaaS Platform for Asset Management and Remote Operations
+Almost any piece of industrial equipment today produces its own rich and steady stream of…
+Semiconductor Manufacturing
+Get Control of Semiconductor Manufacturing Challenges with AI
+Discover how CloudGeometry helped Imantics leverage AI to solve for enhanced equipment health checks, integrating AI-driven analytics for predictive malfunction alerts and real-time preventive measures in semiconductor fabrication.
+Digital Media and Marketing
+Real-Time Marketing Performance Analytics SaaS Platform
+Origami Logic (acquired by Intuit) delivers precision 24×7 tracking of the billions spent by global brands on digital media, using data science to track 1000s of adtech data sources
+Digital Marketing, Supply Chain and Consumer Packaged Goods
+Convert any CPG into IoT
+Thinfilm’s NFC cloud uses smart labels to connect consumer, industrial, and location-based IoT with unified analytics and logistics worldwide, slashes cost of tracking any product anywhere any time
+Industrial Enterprise
+Big Data Analytics for Industrial IoT
+Data converged across industrial equipment — from aircraft engines to assembly line robots — drives streamlined analytics to track up-to-the-minute asset health.
+Non-profits & NGOs, enterprise social networking, engagement management, events
+SaaS App Platform for Global Non-profits and NGOs
+Multi-tenant collaboration unlocks digital productivity for hands-on charity, community, NGOs and global community orgs
+Digital Media and Marketing
+SaaS Microservices Unlock New Revenue Beyond Enterprise
+2020’s pandemic caused digital media to skyrocket. Our client leveraged SaaS to win new revenue for precision-targeted OTT video ads by small businesses.
+
+
+PAGE 4: https://www.cloudgeometry.com/expertise-portfolio
+Title: Battle-Tested Technology Solutions — CloudGeometry
+Content length: 1,342 characters
+----------------------------------------
+
+Managed CloudOps Cloud Spend Optimization Managed Cloud Operations Cloud-Native & Kubernetes Adoption Kubernetes Adoption Modernization & Migration AI Agents & MLOps Generative AI Data Engineering for MLOps Professional Services & Customer Success Engineering Customer Success Engineering We got our start creating world-acclaimed products for Silicon Valley technology leaders. By trying all kinds of approaches and technologies (fashionable and otherwise), we know exactly what works — and what doesn’t. At CloudGeometry , we make sure you can deliver great results, at scale, through every curve and angle, at every point of your continuing cloud lifecycle. Partnerships and Platforms Our roots are in complex multi-platform cloud systems. We’ve mastered the strengths and weaknesses of commercial vendors and open source projects, so we know how to push the limits of distributed cloud infrastructure at global scale. Count on CloudGeometry for the outcome-driven expertise you need — certified engineers, solution architects and DevOps practitioners — to build and operate scalable and robust systems for continuous optimization and growth. Get the latest news about CloudGeometry, AI Agents, GenAI, Data, Kubernetes & Application Modernization solutions in your Inbox Join Our Newsletter and Network with 1502 + Data & AI Professionals.
+
+
+PAGE 5: https://www.cloudgeometry.com/foundation
+Title: Foundation Services — CloudGeometry
+Content length: 1,414 characters
+----------------------------------------
+
+Cloud Infrastructure & Operations
+Modernization & Migration
+Application Modernization
+Sustain and improve the business value systems you already have, making it easier today to reliably add new features and efficiencies to meet tomorrow's business opportunities.
+Kubernetes Adoption
+Succeed with Kubernetes applications and environments via expert guidance to resolve dependencies, implement persistent storage, update networking security, and more.
+Database Migration
+Cut time and cost to land your data on the AWS, featuring zero downtime, faster data ROI, and radically reduce administration, license, and lifecycle costs.
+Data Engineering Operations
+Create a virtuous cycle of data insights and business process changes to empower your stakeholders with drill-down to accurate insights faster and reliably.
+Data Integration Services
+Get a coherent and reliable data supply infrastructure, by engineering the range of streaming, APIs, logs, social media, search, e-commerce, enterprise data, and into a resilient data platform.
+SaaS Migration
+Tame the challenges of building and managing SaaS infrastructure with continuous optimization of feature development, operational effectiveness, and resource leverage.
+Cloud Migration & Adoption
+Make the move to the cloud on your terms with a range of integrations and upgrades — backed by comprehensive automation of development, deployment and production operations.
+
+
+PAGE 6: https://www.cloudgeometry.com/insights
+Title: Insights.CloudGeometry — AI & Cloud Learning Hub — Courses, Webinars, and Expert Insights
+Content length: 846 characters
+----------------------------------------
+
+Managed CloudOps Cloud Spend Optimization Managed Cloud Operations Cloud-Native & Kubernetes Adoption Kubernetes Adoption Modernization & Migration AI Agents & MLOps Generative AI Data Engineering for MLOps Professional Services & Customer Success Engineering Customer Success Engineering Our Speakers Learn from the Builders Join Us Anton Weiss Chief Evangelist PerfectScale Rob Giardina Founder Claritype Joel Mjolsness VP, Business Development Nick Chase AI/ML Practice Director / Senior Director of Product Management Serg Shalavin Chief DevOps Architect Alex Ulyanov CTO David Fishman VP Products & Services David Frenkel Data Science Team Lead Get the latest news about CloudGeometry, AI Agents, GenAI, Data, Kubernetes & Application Modernization solutions in your Inbox Join Our Newsletter and Network with 1502 + Data & AI Professionals.
+
+
+PAGE 7: https://www.cloudgeometry.com/partners
+Title: Partners — CloudGeometry
+Content length: 971 characters
+----------------------------------------
+
+The CloudGeometry Partner Ecosystem
+The CloudGeometry partner ecosystem consists of technology providers, domain experts & managed service providers (MSPs)
+and enables us to scale and provide custom solutions across different industries and technology stacks.
+Consultants
+Harness your specialized industry experience to lead business case analysis and coordinate project implementations with our product and technology professionals.
+Technology Companies
+Make your technology an integral part of our solution offering. Let our development teams integrate it with our clients' systems, and seamlessly acquire new customers.
+MSPs
+Combine your specialized support service with our overall customer success strategy. Help us handle unique client workloads and requests, and grow your MSP business.
+Service Companies
+We continuously seek partnerships with other technology services firms that have complementary skills, to deliver holistic solutions and penetrate new markets.
+
+
+PAGE 8: https://www.cloudgeometry.com/solutions
+Title: Technology Solutions — CloudGeometry
+Content length: 503 characters
+----------------------------------------
+
+CGDevX empowers teams to build, deploy, and scale applications faster without compromising security, scalability, or maintainability. By enabling self-service capabilities and the “you build it, you run it” approach, CGDevX minimizes friction between development and operations. The platform abstracts away cloud infrastructure complexity, integrating DevSecOps practices and continuous quality checks. With CGDevX, developers can focus on innovation, delivering robust, scalable applications with ease.
+
+
+============================================================
+CONTENT AGGREGATION SUMMARY
+Total pages processed: 8
+Average content per page: 1,893 characters
+URLs processed:
+  - https://www.cloudgeometry.com/about
+  - https://www.cloudgeometry.com/careers
+  - https://www.cloudgeometry.com/case-studies
+  - https://www.cloudgeometry.com/expertise-portfolio
+  - https://www.cloudgeometry.com/foundation
+  - https://www.cloudgeometry.com/insights
+  - https://www.cloudgeometry.com/partners
+  - https://www.cloudgeometry.com/solutions\n\nEND OF COMPREHENSIVE FALLBACK ANALYSIS REPORT\n

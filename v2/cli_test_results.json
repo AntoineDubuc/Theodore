@@ -1,0 +1,54 @@
+{
+  "test_type": "CLI_Integration",
+  "timestamp": "2025-07-03 13:59:08",
+  "total_tests": 5,
+  "passed_tests": 5,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "total_duration_seconds": 0.2677009105682373,
+  "test_results": [
+    {
+      "test_name": "CLI Help Command",
+      "success": true,
+      "expected_texts": 4,
+      "found_texts": 4,
+      "duration": 0.0531001091003418,
+      "exit_code": 0
+    },
+    {
+      "test_name": "CLI Version Command",
+      "success": true,
+      "duration": 0.051651954650878906,
+      "exit_code": 0,
+      "version_found": true
+    },
+    {
+      "test_name": "CLI Test Command",
+      "success": true,
+      "expected_texts": 2,
+      "found_texts": 2,
+      "duration": 0.05301785469055176,
+      "exit_code": 0
+    },
+    {
+      "test_name": "CLI Verbose Mode",
+      "success": true,
+      "duration": 0.0548090934753418,
+      "exit_code": 0,
+      "verbose_found": true
+    },
+    {
+      "test_name": "CLI Invalid Command",
+      "success": true,
+      "duration": 0.0549931526184082,
+      "exit_code": 2,
+      "properly_failed": true
+    }
+  ],
+  "cli_functionality_score": {
+    "score": 100.0,
+    "level": "EXCELLENT",
+    "tests_passed": 5,
+    "tests_total": 5
+  }
+}

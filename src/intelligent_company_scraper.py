@@ -951,7 +951,7 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
                         } catch (e) { console.log('Button click blocked:', e); }
                         """
                     ],
-                    wait_for="css:.main-content, css:main, css:article",   # Wait for main content
+                    # wait_for removed - causing timeouts on sites without <main> element
                     
                     # Link and media handling
                     exclude_external_links=False,      # Allow external discovery initially
@@ -1141,69 +1141,93 @@ Write in a professional, concise style suitable for sales team consumption."""
                 call_info["model"] = "Gemini 2.0 Flash"
                 print(f"🧠 LLM CALL #{self.llm_call_count}: Using Gemini 2.0 Flash ({len(prompt):,} chars prompt)", flush=True)
                 
-                # Log to UI progress if job_id provided
-                if job_id:
-                    from src.progress_logger import progress_logger
-                    progress_logger.log_llm_call(job_id, self.llm_call_count, "Gemini 2.0 Flash", len(prompt))
-                    progress_logger.add_to_progress_log(job_id, f"🧠 Calling Gemini with {len(prompt):,} character prompt...")
+                # CRITICAL FIX: Move progress logging AFTER the LLM call to avoid hang
+                # The hang occurs during progress logger operations, so we'll log success/failure after
                 
-                print(f"🧠 About to make Gemini API call...", flush=True)
+                print(f"🧠 About to make Gemini API call with asyncio timeout...", flush=True)
+                
+                # Configure generation parameters
+                generation_config = genai_types.GenerationConfig(
+                    max_output_tokens=1000,
+                    temperature=0.7,
+                    candidate_count=1,
+                )
+                
+                safety_settings = [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+                ]
+                
+                # CRITICAL FIX: Use asyncio.wait_for() with async Gemini call
+                timeout_seconds = 30
+                print(f"⏰ Applying {timeout_seconds}s timeout with asyncio.wait_for()", flush=True)
+                
                 try:
-                    # Add timeout for Gemini call with proper configuration
-                    generation_config = genai_types.GenerationConfig(
-                        max_output_tokens=1000,  # Reasonable limit for JSON response
-                        temperature=0.7,
-                        candidate_count=1,
-                    )
-                    
-                    # Safety settings to prevent blocks
-                    safety_settings = [
-                        {
-                            "category": "HARM_CATEGORY_HARASSMENT",
-                            "threshold": "BLOCK_NONE"
-                        },
-                        {
-                            "category": "HARM_CATEGORY_HATE_SPEECH", 
-                            "threshold": "BLOCK_NONE"
-                        },
-                        {
-                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                            "threshold": "BLOCK_NONE"
-                        },
-                        {
-                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                            "threshold": "BLOCK_NONE"
-                        }
-                    ]
-                    
+                    # This is the proven solution from research - use async call with timeout
                     response = await asyncio.wait_for(
-                        asyncio.get_event_loop().run_in_executor(
-                            None, 
-                            lambda: self.gemini_client.generate_content(
-                                prompt,
-                                generation_config=generation_config,
-                                safety_settings=safety_settings
-                            )
+                        self.gemini_client.generate_content_async(
+                            prompt,
+                            generation_config=generation_config,
+                            safety_settings=safety_settings
                         ),
-                        timeout=30  # 30 second timeout for LLM calls
+                        timeout=timeout_seconds
                     )
-                    print(f"🧠 Gemini API call completed! Response length: {len(response.text)} chars", flush=True)
+                    print(f"✅ Gemini call completed successfully! Response: {len(response.text)} chars", flush=True)
+                    
                 except asyncio.TimeoutError:
-                    print(f"❌ Gemini API call timed out after 30 seconds", flush=True)
-                    logger.error(f"Gemini API timeout for {company_data.name}")
-                    raise Exception("LLM timeout - API not responding")
+                    timeout_msg = f"⏰ Gemini API call timed out after {timeout_seconds} seconds"
+                    print(timeout_msg, flush=True)
+                    logger.warning(f"Gemini timeout for call #{self.llm_call_count} - falling back to Bedrock")
+                    
+                    # Log timeout to progress tracker AFTER the timeout (safe)
+                    if job_id:
+                        try:
+                            from src.progress_logger import progress_logger
+                            progress_logger.add_to_progress_log(job_id, timeout_msg)
+                            progress_logger.add_to_progress_log(job_id, "🔄 Attempting Bedrock fallback...")
+                        except Exception as e:
+                            logger.error(f"Progress logging failed: {e}")
+                    
+                    # Don't raise exception - let it fall through to Bedrock fallback
+                    call_info["error"] = f"Gemini timeout after {timeout_seconds}s"
+                    self.llm_call_log.append(call_info)
+                    # Continue to Bedrock fallback below
+                    response = None
+                    
+                except Exception as e:
+                    error_msg = f"❌ Gemini API call failed: {e}"
+                    print(error_msg, flush=True)
+                    logger.error(f"Gemini exception for call #{self.llm_call_count}: {e}")
+                    
+                    # Log error AFTER the failure (safe)
+                    if job_id:
+                        try:
+                            from src.progress_logger import progress_logger
+                            progress_logger.add_to_progress_log(job_id, error_msg)
+                        except Exception as pe:
+                            logger.error(f"Progress logging failed: {pe}")
+                    
+                    call_info["error"] = str(e)
+                    self.llm_call_log.append(call_info)
+                    response = None
                 
-                call_info["response_length"] = len(response.text)
-                call_info["success"] = True
-                self.llm_call_log.append(call_info)
-                
-                # Log completion to UI progress
-                if job_id:
-                    progress_logger.log_llm_call(job_id, self.llm_call_count, "Gemini 2.0 Flash", len(prompt), len(response.text))
-                    progress_logger.add_to_progress_log(job_id, f"✅ Gemini response received: {len(response.text)} characters")
-                
-                print(f"🧠 Returning Gemini response preview: {response.text[:200]}...", flush=True)
-                return response.text
+                # If Gemini succeeded, log success and return
+                if response and response.text:
+                    # Log success AFTER completion (safe)
+                    if job_id:
+                        try:
+                            from src.progress_logger import progress_logger
+                            progress_logger.log_llm_call(job_id, self.llm_call_count, "Gemini 2.0 Flash", len(prompt))
+                            progress_logger.add_to_progress_log(job_id, f"✅ Gemini completed: {len(response.text)} chars")
+                        except Exception as e:
+                            logger.error(f"Progress logging failed: {e}")
+                    
+                    call_info["response_length"] = len(response.text)
+                    call_info["success"] = True
+                    self.llm_call_log.append(call_info)
+                    return response.text.strip()
             except Exception as e:
                 call_info["error"] = str(e)
                 self.llm_call_log.append(call_info)

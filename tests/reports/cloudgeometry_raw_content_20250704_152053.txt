@@ -1,0 +1,90 @@
+================================================================================
+CLOUDGEOMETRY RAW CONTENT DUMP
+================================================================================
+Generated: 2025-07-04T15:20:53.102764
+Company: Cloud Geometry
+Website: https://cloudgeometry.io
+Pages Crawled: []
+Crawl Duration: Nones
+================================================================================
+
+❌ NO RAW CONTENT AVAILABLE (Phase 4 failed)
+
+❌ NO INDIVIDUAL PAGE CONTENT AVAILABLE
+
+
+ALL COMPANY DATA FIELDS:
+------------------------------------------------------------
+ai_summary: None
+awards: []
+business_model: Unknown
+business_model_framework: None
+business_model_type: Unknown
+certifications: []
+classification_confidence: None
+classification_justification: None
+classification_model_version: v1.0
+classification_timestamp: None
+company_culture: None
+company_description: None
+company_size: Unknown
+company_stage: Unknown
+competitive_advantages: []
+contact_info: {}
+content_analysis_prompt: None
+crawl_depth: 1
+crawl_duration: None
+created_at: 2025-07-04 21:20:52.922221
+decision_maker_type: Unknown
+embedding: [EMBEDDING VECTOR - 0 dimensions]
+employee_count_range: None
+founding_year: None
+funding_stage_detailed: None
+funding_status: 
+geographic_scope: Unknown
+has_chat_widget: False
+has_forms: False
+has_job_listings: None
+id: dd2c18dc-b692-4682-b048-5a5062ff811c
+industry: Based on the company description, Cloud Geometry operates in the **Cloud Consulting Services** industry.
+
+They are a specialized cloud systems integrator that provides professional services for cloud ... (truncated, 331 total chars)
+industry_confidence: None
+is_saas: None
+job_listings: None
+job_listings_count: None
+job_listings_details: []
+key_decision_makers: {}
+key_services: []
+last_updated: 2025-07-04 21:20:52.922225
+leadership_team: []
+llm_calls_breakdown: []
+llm_prompts_sent: []
+location: None
+name: Cloud Geometry
+page_selection_prompt: None
+pages_crawled: []
+pain_points: []
+partnerships: []
+products_services_offered: []
+raw_content: None
+recent_news: []
+recent_news_events: []
+saas_classification: None
+sales_complexity: None
+sales_marketing_tools: []
+scrape_error: None
+scrape_status: pending
+scraped_content_details: {}
+scraped_urls: []
+social_media: {}
+stage_confidence: None
+target_market: Unknown
+tech_confidence: None
+tech_sophistication: Unknown
+tech_stack: []
+total_cost_usd: 0.0
+total_input_tokens: 0
+total_output_tokens: 0
+value_proposition: None
+website: https://cloudgeometry.io

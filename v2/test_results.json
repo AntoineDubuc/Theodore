@@ -1,0 +1,56 @@
+{
+  "test_run_id": "1751572748.087184",
+  "timestamp": "2025-07-03T19:59:08.087188+00:00",
+  "total_tests": 5,
+  "passed_tests": 5,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "total_duration_seconds": 0.4102809429168701,
+  "test_results": [
+    {
+      "test_name": "Basic Module Imports",
+      "success": true,
+      "duration_seconds": 0.2928812503814697,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "test_name": "Container Creation",
+      "success": true,
+      "duration_seconds": 0.00034928321838378906,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "test_name": "CLI Functionality",
+      "success": true,
+      "duration_seconds": 0.11641502380371094,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "test_name": "File Structure Validation",
+      "success": true,
+      "duration_seconds": 0.0001239776611328125,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "test_name": "Configuration Loading",
+      "success": true,
+      "duration_seconds": 0.0004832744598388672,
+      "errors": [],
+      "warnings": []
+    }
+  ],
+  "enterprise_readiness": {
+    "overall_score": 100.0,
+    "readiness_level": "PRODUCTION_READY",
+    "factors": {
+      "infrastructure_stability": 100.0,
+      "cli_functionality": 100,
+      "container_architecture": 100,
+      "file_organization": 100
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "test_type": "Container_Integration",
+  "timestamp": "2025-07-03T19:59:08.569797+00:00",
+  "total_tests": 5,
+  "passed_tests": 3,
+  "failed_tests": 2,
+  "success_rate": 60.0,
+  "total_duration_seconds": 0.1376481056213379,
+  "test_results": [
+    {
+      "test_name": "Container Instantiation",
+      "success": false,
+      "duration": 0.1368861198425293,
+      "details": {
+        "error": "Container should have version"
+      }
+    },
+    {
+      "test_name": "Provider Setup",
+      "success": true,
+      "duration": 0.00024700164794921875,
+      "details": {
+        "available_providers": [
+          "config",
+          "storage",
+          "ai_services",
+          "mcp_search",
+          "use_cases",
+          "external_services"
+        ],
+        "total_providers": 6
+      }
+    },
+    {
+      "test_name": "Configuration System",
+      "success": true,
+      "duration": 0.00025963783264160156,
+      "details": {
+        "config_type": "<class 'dependency_injector.providers.Configuration'>"
+      }
+    },
+    {
+      "test_name": "Container Factory",
+      "success": true,
+      "duration": 3.0994415283203125e-06,
+      "details": {
+        "factory_available": true
+      }
+    },
+    {
+      "test_name": "Lifecycle Management",
+      "success": false,
+      "duration": 0.0002448558807373047,
+      "details": {
+        "error": "'DynamicContainer' object has no attribute 'health_check'"
+      }
+    }
+  ],
+  "container_architecture_score": {
+    "score": 60.0,
+    "level": "DEVELOPMENT_READY",
+    "tests_passed": 3,
+    "tests_total": 5,
+    "architecture_quality": "DEVELOPMENT_READY"
+  }
+}

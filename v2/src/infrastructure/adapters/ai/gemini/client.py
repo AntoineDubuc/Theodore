@@ -24,6 +24,7 @@ from google.generativeai.types import GenerateContentResponse, AsyncGenerateCont
 from google.api_core import exceptions as google_exceptions
 
 from .config import GeminiConfig, calculate_gemini_cost
+from .rate_limiter import GeminiRateLimiter
 
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,9 @@ class GeminiClient:
         self._daily_costs: Dict[str, float] = {}
         self._request_count = 0
         self._session_created_at = time.time()
-        self._rate_limiter = asyncio.Semaphore(config.max_concurrent_requests)
+        
+        # Use the advanced rate limiter instead of simple semaphore
+        self._rate_limiter = GeminiRateLimiter(config)
         
         # Configure the API
         if config.api_key:
@@ -215,7 +218,7 @@ class GeminiClient:
         max_tokens: Optional[int] = None
     ) -> GeminiResponse:
         """
-        Generate content using Gemini model.
+        Generate content using Gemini model with robust timeout handling.
         
         Args:
             prompt: Text prompt for generation
@@ -225,33 +228,82 @@ class GeminiClient:
             
         Returns:
             GeminiResponse with content and usage information
+            
+        Raises:
+            GeminiError: If generation fails after retries
+            asyncio.TimeoutError: If generation times out
         """
+        model_key = model_name or self.config.model
+        estimated_tokens = len(prompt) // 4  # Rough token estimate
+        
+        # Log the request details for debugging  
+        logger.info(f"🧠 Gemini request: {len(prompt)} chars (~{estimated_tokens} tokens) to {model_key}")
+        
+        # Use advanced rate limiter with circuit breaker
         async with self._rate_limiter:
-            model_key = model_name or self.config.model
-            model = self._get_model(model_key)
+            # Acquire rate limit permission (includes circuit breaker check)
+            wait_time = await self._rate_limiter.acquire_with_wait(estimated_tokens)
+            if wait_time > 0:
+                logger.info(f"⏳ Rate limited, waited {wait_time:.2f}s")
             
-            # Override generation config if specified
-            generation_config = {}
-            if temperature is not None:
-                generation_config["temperature"] = temperature
-            if max_tokens is not None:
-                generation_config["max_output_tokens"] = max_tokens
-            
-            async def _generate():
-                if generation_config:
-                    # Create temporary model with custom config
-                    temp_model = genai.GenerativeModel(
-                        model_name=model_key,
-                        generation_config=generation_config
-                    )
-                    response = await temp_model.generate_content_async(prompt)
-                else:
-                    response = await model.generate_content_async(prompt)
+            async def _generate_with_timeout():
+                """Internal generation with timeout wrapper"""
+                model = self._get_model(model_key)
                 
-                return response
+                # Override generation config if specified
+                generation_config = {}
+                if temperature is not None:
+                    generation_config["temperature"] = temperature
+                if max_tokens is not None:
+                    generation_config["max_output_tokens"] = max_tokens
+                
+                async def _generate():
+                    if generation_config:
+                        # Create temporary model with custom config
+                        temp_model = genai.GenerativeModel(
+                            model_name=model_key,
+                            generation_config=generation_config
+                        )
+                        response = await temp_model.generate_content_async(prompt)
+                    else:
+                        response = await model.generate_content_async(prompt)
+                    
+                    return response
+                
+                # Execute with timeout - this is the critical fix
+                try:
+                    response = await asyncio.wait_for(
+                        _generate(), 
+                        timeout=self.config.timeout_seconds
+                    )
+                    return response
+                except asyncio.TimeoutError as e:
+                    logger.warning(f"⏰ Gemini timeout after {self.config.timeout_seconds}s for {model_key}")
+                    raise GeminiError(f"Gemini API timeout after {self.config.timeout_seconds} seconds") from e
             
-            # Execute with retry logic
-            response = await self._retry_with_backoff(_generate)
+            # Execute with retry logic and timeout
+            start_time = time.time()
+            try:
+                response = await self._retry_with_backoff(_generate_with_timeout)
+                
+                # Report success to rate limiter
+                response_time = time.time() - start_time
+                await self._rate_limiter.on_request_success(response_time, estimated_tokens)
+                
+            except GeminiError as e:
+                # Report failure to rate limiter
+                error_type = "timeout" if "timeout" in str(e).lower() else "generation_error"
+                await self._rate_limiter.on_request_failure(error_type)
+                
+                # If it's a timeout error, let it bubble up for fallback handling
+                if "timeout" in str(e).lower():
+                    logger.error(f"❌ Gemini generation timed out: {e}")
+                    raise asyncio.TimeoutError(f"Gemini generation timed out: {e}") from e
+                raise
+            except Exception as e:
+                # Report unexpected failure to rate limiter
+                await self._rate_limiter.on_request_failure("unexpected_error")
+                raise GeminiError(f"Unexpected error during generation: {e}") from e
             
             # Extract usage and track costs
             usage = self._extract_usage_from_response(response, model_key)
@@ -328,9 +380,12 @@ class GeminiClient:
                 
                 return response
             
-            # Execute with retry logic
+            # Execute with retry logic and timeout
             try:
-                response = await self._retry_with_backoff(_generate_stream)
+                response = await asyncio.wait_for(
+                    self._retry_with_backoff(_generate_stream),
+                    timeout=self.config.stream_timeout_seconds
+                )
                 
                 total_tokens = 0
                 content_length = 0
@@ -349,6 +404,9 @@ class GeminiClient:
                 
                 logger.debug(f"🌊 Streamed ~{estimated_tokens} tokens, cost: ${cost:.4f}")
                 
+            except asyncio.TimeoutError as e:
+                logger.error(f"⏰ Streaming timeout after {self.config.stream_timeout_seconds}s")
+                raise GeminiError(f"Streaming timeout after {self.config.stream_timeout_seconds} seconds") from e
             except Exception as e:
                 logger.error(f"❌ Streaming failed: {e}")
                 raise GeminiError(f"Streaming generation failed: {e}")

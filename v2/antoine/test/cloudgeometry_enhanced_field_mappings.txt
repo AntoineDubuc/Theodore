@@ -1,0 +1,150 @@
+CloudGeometry Enhanced Field Mappings - With Operational Metadata
+================================================================
+
+COMPANY INFORMATION
+==================
+Company name: CloudGeometry
+Website: www.cloudgeometry.com
+Company Description: CloudGeometry designs and builds SaaS platforms for top Silicon Valley-based technology startups and consults to global corporations on multi-cloud migration and implementation.
+Value Proposition: Delivering intelligent, integrated & scalable solutions that help organizations unlock the potential of their data and prepare for an AI-driven future.
+Industry: Cloud Computing, SaaS, AI, Data Analytics
+Location: Silicon Valley, California, USA
+Company Size: Medium
+Employee Count Range: 50-200
+
+BUSINESS MODEL
+=============
+Business Model Type: B2B
+Business Model: Consulting, custom SaaS platform development, managed services, and professional services.
+SaaS Classification: SaaS
+Is SaaS: true
+Classification Confidence: 0.9
+Classification Justification: The company builds SaaS platforms and offers managed services.
+
+PRODUCTS & SERVICES
+==================
+Products/Services Offered:
+- SaaS platform development
+- Cloud migration and modernization
+- Kubernetes adoption
+- Managed cloud operations
+- AI and data engineering
+- Customer success engineering
+
+Key Services:
+- Cloud-Native & Kubernetes Adoption
+- Modernization & Migration
+- Managed Data Engineering
+- AI, Data & MLOps
+- Managed CloudOps
+
+Target Market: Technology startups, global corporations, enterprises in various industries including fintech, healthcare, retail, and manufacturing.
+Pain Points: Scalability, cost optimization, cloud migration challenges, data integration, and AI implementation.
+Competitive Advantages: Expertise in multi-cloud environments, deep technical knowledge, custom solutions, and strong partnerships.
+Tech Stack: AWS, Azure, GCP, Kubernetes, AI/ML tools, DevOps infrastructure
+
+COMPANY STAGE & METRICS
+======================
+Company Stage: Growth
+Stage Confidence: 0.8
+Tech Sophistication: High
+Tech Confidence: 0.9
+Industry Confidence: 0.9
+Geographic Scope: International
+Sales Complexity: Complex
+
+PEOPLE & LEADERSHIP
+==================
+Key Decision Makers:
+- Rob Giardina: Founder
+- Alex Ulyanov: CTO
+
+Leadership Team:
+- Anton Weiss: Chief Evangelist
+- Joel Mjolsness: VP, Business Development
+- Nick Chase: AI/ML Practice Director / Senior Director of Product Management
+- Serg Shalavin: Chief DevOps Architect
+- David Fishman: VP Products & Services
+- David Frenkel: Data Science Team Lead
+
+Decision Maker Type: Mixed
+
+GROWTH & ACTIVITY
+================
+Has Job Listings: true
+Job Listings Details:
+- Solution architects
+- DevOps practitioners
+- AI/ML experts
+- Data engineers
+
+PARTNERSHIPS
+===========
+Company Culture: Innovative, collaborative, customer-centric.
+Partnerships:
+- AWS
+- Azure
+- GCP
+- Various technology providers and managed service providers (MSPs)
+
+AI SUMMARY
+=========
+AI Summary: CloudGeometry is a Silicon Valley-based company that specializes in designing and building SaaS platforms for technology startups and providing consulting services to global corporations for multi-cloud migration and implementation. They offer a range of services including cloud-native and Kubernetes adoption, modernization and migration, managed data engineering, AI and data MLOps, and managed cloud operations.
+
+OPERATIONAL METADATA
+====================
+LLM Model Used: amazon/nova-pro-v1
+Field Extraction Tokens: 7,857
+Total Tokens: 14,778
+Total Cost USD: $0.0118
+Scrape Duration: 5.22 seconds
+Field Extraction Duration: 16.32 seconds
+
+PIPELINE PERFORMANCE
+===================
+Total Pipeline Time: 27.43 seconds
+Total Pipeline Cost: $0.0118
+Pages Crawled: 9
+Total Content: 28,614 characters
+Extraction Success Rate: 100% (9/9 pages)
+Fields Extracted: 17 categories with detailed sub-fields
+
+SOURCE PAGES ANALYZED
+=====================
+1. /about - Trafilatura (898 chars)
+2. /careers - Trafilatura (1,290 chars)
+3. /case-studies - Trafilatura (7,881 chars)
+4. /expertise-portfolio - BeautifulSoup Fallback (1,342 chars)
+5. /foundation - Trafilatura (1,414 chars)
+6. /insights - BeautifulSoup Fallback (846 chars)
+7. /partners - Trafilatura (971 chars)
+8. /services - BeautifulSoup Fallback (13,469 chars)
+9. /solutions - Trafilatura (503 chars)
+
+FIELDS NOT FOUND
+===============
+- Founding year
+- Detailed funding stage
+- Funding status
+- Job listings count
+- Recent news/events
+- Recent news
+- Sales/marketing tools
+- Chat widget presence
+- Contact forms presence
+- Social media presence
+- Contact info
+- Awards
+- Certifications
+
+TECHNICAL NOTES
+==============
+Analysis Date: 2025-07-05 18:01:49
+Data Source: 100% Real Pipeline Execution
+Nova Pro Path Selection: 9/304 paths (97% rejection rate)
+Fallback System Usage: 3/9 pages required BeautifulSoup fallback
+Content Extraction Methods: 6 Trafilatura + 3 BeautifulSoup
+Overall Confidence: 0.74
+Cost Per Field: $0.0007 (per successfully extracted field)
+
+This enhanced extraction demonstrates Theodore's ability to capture comprehensive company intelligence including operational transparency with AI processing costs, token usage, and performance metrics.

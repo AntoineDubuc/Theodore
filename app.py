@@ -339,34 +339,33 @@ def test_discovery():
         
         print(f"Testing fast discovery for: {company_name}")
         
-        # Test the discovery service directly with timeout
-        if not pipeline or not pipeline.similarity_pipeline.discovery_service:
-            return jsonify({'error': 'Discovery service not available'}), 500
+        # Check if pipeline is available
+        if not pipeline:
+            return jsonify({'error': 'Theodore pipeline not available'}), 500
         
-        # Create a test company object
-        from src.models import CompanyData
-        test_company = CompanyData(
-            name=company_name,
-            website="https://visterrainc.com",
-            industry="Biotechnology",
-            business_model="B2B",
-            company_description="Biotechnology company focused on developing therapeutic antibodies"
+        # Use SimpleEnhancedDiscovery (same pattern as main discovery endpoint)
+        from src.simple_enhanced_discovery import SimpleEnhancedDiscovery
+        
+        enhanced_discovery = SimpleEnhancedDiscovery(
+            ai_client=pipeline.bedrock_client,
+            pinecone_client=pipeline.pinecone_client,
+            scraper=pipeline.scraper
         )
         
-        # Test discovery (simple version)
-        discovery_result = pipeline.similarity_pipeline.discovery_service.discover_similar_companies(
-            test_company, 
+        # Test discovery (limit to 3 for testing)
+        discovery_results = enhanced_discovery.discover_similar_companies(
+            company_name=company_name,
             limit=3
         )
         
         # Format results
         suggestions = []
-        for suggestion in discovery_result.suggestions:
+        for company_data in discovery_results:
             suggestions.append({
-                'company_name': suggestion.company_name,
-                'website_url': suggestion.website_url,
-                'reason': suggestion.suggested_reason,
-                'confidence': suggestion.confidence_score
+                'company_name': company_data.get('company_name', ''),
+                'website_url': company_data.get('website', ''),
+                'reason': company_data.get('similarity_explanation', 'Similar business characteristics'),
+                'confidence': company_data.get('similarity_score', 0.0)
             })
         
         return jsonify({
@@ -674,48 +673,15 @@ def research_company():
             print(f"🐍 FLASK: This will use the subprocess approach via IntelligentCompanyScraperSync...")
             
             import time
-            import signal
-            from contextlib import contextmanager
             start_time = time.time()
             
-            @contextmanager
-            def timeout_context(seconds):
-                def timeout_handler(signum, frame):
-                    raise TimeoutError(f"Research timeout after {seconds} seconds")
-                
-                # Set up the timeout
-                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-                signal.alarm(seconds)
-                
-                try:
-                    yield
-                finally:
-                    # Clean up the timeout
-                    signal.alarm(0)
-                    signal.signal(signal.SIGALRM, old_handler)
-            
-            # Use the original process_single_company method with timeout
-            try:
-                with timeout_context(60):  # 60 second timeout for research
-                    scraped_company = pipeline.process_single_company(
-                        company_name,
-                        company_website,
-                        job_id=job_id
-                    )
-            except TimeoutError as e:
-                print(f"🐍 FLASK: ⏱️ Research timed out: {e}")
-                from src.progress_logger import complete_company_processing
-                complete_company_processing(
-                    job_id=job_id, 
-                    success=False, 
-                    error="Research timed out after 60 seconds"
-                )
-                return jsonify({
-                    "success": False,
-                    "error": "Research timed out. The company website may be taking too long to analyze.",
-                    "company": {},
-                    "timeout": True
-                }), 408
+            # Use the original process_single_company method without signal-based timeout
+            # (The scraper has its own built-in timeout handling)
+            scraped_company = pipeline.process_single_company(
+                company_name,
+                company_website,
+                job_id=job_id
+            )
             
             end_time = time.time()
             duration = end_time - start_time
@@ -869,7 +835,7 @@ def get_settings():
         
         # Extraction settings
         extraction_settings = {
-            'timeout': 25,
+            'timeout': 300,  # 5 minutes for CloudGeometry testing
             'max_pages': 50,
             'enhanced_enabled': True,
             'patterns_count': get_patterns_count()
@@ -3994,6 +3960,15 @@ def export_field_metrics():
         logger.error(f"Error exporting field metrics: {e}")
         return jsonify({'error': f'Failed to export field metrics: {str(e)}'}), 500
 
+
+@app.route('/ping')
+def ping():
+    """Simple ping endpoint for health checks"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'message': 'Theodore API is running'
+    })
 
 @app.route('/favicon.ico')
 def favicon():
