@@ -1,13 +1,14 @@
 """
-Organization Finder for Pinecone Vector Database
-================================================
+Organization Finder for Pinecone Vector Database - V3 CLI Integration
+====================================================================
 
-Standalone module to find and retrieve complete organization data from Pinecone.
-Extracts and adapts the core Pinecone client functionality from the main Theodore system.
+Enhanced module to find and retrieve complete organization data from Pinecone.
+Adapted from the proven V2 antoine code with 51-field retrieval capability.
 
 This module provides:
-- Complete organization data retrieval (all 50+ fields)
-- Search by company name (exact and partial matching)
+- Complete organization data retrieval (all 51 available fields)
+- Search by company name (exact and partial matching)  
+- Similarity search for discovery functionality
 - Full error handling and logging
 - Direct Pinecone integration using existing credentials
 
@@ -20,7 +21,7 @@ Usage:
     if company:
         print(f"Found: {company.name}")
         print(f"Industry: {company.industry}")
-        # ... all other fields available
+        # ... all 51 fields available
     else:
         print("Company not found")
 """
@@ -51,12 +52,10 @@ logger = logging.getLogger(__name__)
 
 class OrganizationFinder:
     """
-    Standalone Pinecone client for finding organization data.
+    Enhanced Pinecone client for V3 CLI with complete organization data retrieval.
     
-    Extracts core functionality from the main Theodore Pinecone client
-    to provide complete organization data retrieval capabilities.
-    
-    Enhanced to retrieve all 51 available Pinecone fields including:
+    Adapted from proven V2 antoine code to provide comprehensive company intelligence.
+    Retrieves all 51 available Pinecone fields including:
     - Core business intelligence (descriptions, value propositions)
     - Technology information (tech stacks, services, pain points)
     - Contact information (email, phone, social media)
@@ -73,9 +72,23 @@ class OrganizationFinder:
         """
         # Load environment variables from root .env file
         if env_file_path is None:
-            # Default to root .env file (3 levels up from this file)
-            root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            env_file_path = os.path.join(root_dir, '.env')
+            # Default to root .env file - check multiple possible locations
+            current_dir = os.path.dirname(__file__)
+            possible_paths = [
+                os.path.join(current_dir, '..', '..', '.env'),  # v3/core -> root
+                os.path.join(current_dir, '..', '.env'),         # v3/core -> v3
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'),  # 3 levels up
+                '.env'  # Current working directory
+            ]
+            
+            env_file_path = None
+            for path in possible_paths:
+                if os.path.exists(path):
+                    env_file_path = path
+                    break
+            
+            if not env_file_path:
+                raise ValueError("Could not find .env file in any expected locations")
         
         load_dotenv(env_file_path)
         
@@ -142,7 +155,7 @@ class OrganizationFinder:
             if companies:
                 logger.info(f"Found exact match for: {company_name}")
                 match_data = companies[0]
-                return self._metadata_to_company_data(match_data["company_id"], match_data["metadata"])
+                return self._build_complete_company_data(match_data["company_id"], match_data["metadata"])
             
             # Try partial matching if exact fails
             logger.info(f"No exact match found, trying partial matching for: {company_name}")
@@ -153,7 +166,7 @@ class OrganizationFinder:
                 stored_name = company_data["metadata"].get('company_name', '').lower()
                 if search_name in stored_name or stored_name in search_name:
                     logger.info(f"Found partial match: {stored_name} for search: {company_name}")
-                    return self._metadata_to_company_data(company_data["company_id"], company_data["metadata"])
+                    return self._build_complete_company_data(company_data["company_id"], company_data["metadata"])
             
             logger.info(f"No matches found for: {company_name}")
             return None
@@ -197,6 +210,77 @@ class OrganizationFinder:
             logger.error(f"Failed to get company data for ID '{company_id}': {e}")
             return None
     
+    def search_similar_companies(self, query: str, limit: int = 10, industry_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Search for similar companies using text query and optional filters.
+        
+        Args:
+            query: Search query (company name, description, or industry term)
+            limit: Maximum number of results to return
+            industry_filter: Optional industry filter
+            
+        Returns:
+            List of company dictionaries with similarity scores
+        """
+        try:
+            logger.info(f"Searching for similar companies: {query}")
+            
+            # Build filter
+            filters = {}
+            if industry_filter:
+                filters["industry"] = {"$eq": industry_filter}
+            
+            # For text-based similarity, we'll search by partial name matching
+            # and industry matching. In a full implementation, this would use
+            # text embeddings for semantic similarity
+            companies = self._find_companies_by_filters(filters=filters, top_k=limit * 3)
+            
+            # Filter by query relevance
+            query_lower = query.lower()
+            relevant_companies = []
+            
+            for company_data in companies:
+                metadata = company_data["metadata"]
+                company_name = metadata.get('company_name', '').lower()
+                industry = metadata.get('industry', '').lower()
+                description = metadata.get('company_description', '').lower()
+                
+                # Calculate relevance score
+                relevance_score = 0.0
+                
+                if query_lower in company_name:
+                    relevance_score += 1.0
+                elif any(word in company_name for word in query_lower.split()):
+                    relevance_score += 0.7
+                
+                if query_lower in industry:
+                    relevance_score += 0.8
+                elif any(word in industry for word in query_lower.split()):
+                    relevance_score += 0.5
+                
+                if query_lower in description:
+                    relevance_score += 0.6
+                elif any(word in description for word in query_lower.split()):
+                    relevance_score += 0.3
+                
+                if relevance_score > 0:
+                    relevant_companies.append({
+                        'name': metadata.get('company_name', 'Unknown'),
+                        'industry': metadata.get('industry', 'Unknown'),
+                        'description': metadata.get('company_description', 'No description'),
+                        'website': metadata.get('website', ''),
+                        'similarity_score': relevance_score,
+                        'company_id': company_data["company_id"]
+                    })
+            
+            # Sort by relevance and return top results
+            relevant_companies.sort(key=lambda x: x['similarity_score'], reverse=True)
+            return relevant_companies[:limit]
+            
+        except Exception as e:
+            logger.error(f"Failed to search similar companies for '{query}': {e}")
+            return []
+    
     def _find_companies_by_filters(self, filters: Dict[str, Any], top_k: int = 50) -> List[Dict[str, Any]]:
         """Find companies using metadata filters"""
         try:
@@ -223,37 +307,10 @@ class OrganizationFinder:
             logger.error(f"Failed to find companies with filters {filters}: {e}")
             return []
     
-    def _metadata_to_company_data(self, company_id: str, metadata: Dict[str, Any]) -> CompanyData:
-        """Convert metadata to basic CompanyData object"""
-        company = CompanyData(
-            id=company_id,
-            name=metadata.get('company_name', ''),
-            website=metadata.get('website', ''),
-            industry=metadata.get('industry', ''),
-            business_model=metadata.get('business_model', ''),
-            target_market=metadata.get('target_market', ''),
-            company_size=metadata.get('company_size', ''),
-            funding_status=metadata.get('funding_status', '')
-        )
-        
-        # Add similarity-specific fields
-        company.company_stage = metadata.get('company_stage')
-        company.tech_sophistication = metadata.get('tech_sophistication')
-        company.business_model_type = metadata.get('business_model_type')
-        company.geographic_scope = metadata.get('geographic_scope')
-        company.decision_maker_type = metadata.get('decision_maker_type')
-        
-        # Add confidence scores
-        company.stage_confidence = metadata.get('stage_confidence')
-        company.tech_confidence = metadata.get('tech_confidence')
-        company.industry_confidence = metadata.get('industry_confidence')
-        
-        return company
-    
     def _build_complete_company_data(self, company_id: str, metadata: Dict[str, Any], values: Optional[List[float]] = None) -> CompanyData:
         """
         Build complete CompanyData object with ALL fields from metadata.
-        This is the full reconstruction method that restores all 51 available fields.
+        This is the enhanced method that restores all 51 available fields.
         
         Enhanced to retrieve:
         - AI summaries and LLM cost tracking
@@ -415,6 +472,23 @@ class OrganizationFinder:
             return {}
 
 
+# V3 CLI specific functions
+def search_similar_companies(query: str, limit: int = 10, industry_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Convenience function for V3 CLI discover command.
+    
+    Args:
+        query: Search query (company name, description, or industry term)
+        limit: Maximum number of results to return
+        industry_filter: Optional industry filter
+        
+    Returns:
+        List of company dictionaries with similarity scores
+    """
+    finder = OrganizationFinder()
+    return finder.search_similar_companies(query, limit, industry_filter)
+
+
 # Convenience functions for easy usage
 def find_organization(company_name: str) -> Optional[CompanyData]:
     """
@@ -446,14 +520,14 @@ def get_organization_by_id(company_id: str) -> Optional[CompanyData]:
 
 if __name__ == "__main__":
     """Test the OrganizationFinder with a sample search"""
-    print("Testing OrganizationFinder...")
+    print("Testing V3 OrganizationFinder...")
     
     try:
         finder = OrganizationFinder()
         print(f"Database stats: {finder.get_database_stats()}")
         
         # Test search
-        test_company = "CloudGeometry"
+        test_company = "Cloud Geometry"
         print(f"\nSearching for: {test_company}")
         
         company = finder.find_by_name(test_company)
@@ -469,6 +543,13 @@ if __name__ == "__main__":
             print(f"Tech Stack: {company.tech_stack}")
         else:
             print(f"L Company '{test_company}' not found")
+            
+        # Test similarity search
+        print(f"\nTesting similarity search for 'cloud consulting'...")
+        similar = finder.search_similar_companies("cloud consulting", limit=3)
+        print(f"Found {len(similar)} similar companies:")
+        for i, comp in enumerate(similar, 1):
+            print(f"  {i}. {comp['name']} (score: {comp['similarity_score']:.2f})")
             
     except Exception as e:
         print(f"L Error testing OrganizationFinder: {e}")

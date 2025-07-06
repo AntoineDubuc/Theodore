@@ -1,0 +1,190 @@
+{
+  "company_name": "Cloudgeometry",
+  "base_url": "https://www.cloudgeometry.com",
+  "start_time": 1751814004.6267111,
+  "phases": {
+    "phase1_discovery": {
+      "success": true,
+      "paths_discovered": 304,
+      "processing_time": 1.5592942237854004
+    },
+    "phase2_selection": {
+      "success": true,
+      "paths_selected": 9,
+      "model_used": "amazon/nova-pro-v1",
+      "cost_usd": 0.005532800000000001,
+      "tokens_used": 6916,
+      "processing_time": 4.101428985595703
+    },
+    "phase3_extraction": {
+      "success": true,
+      "total_pages": 9,
+      "successful_pages": 9,
+      "total_content_length": 15838,
+      "processing_time": 2.4727160930633545
+    },
+    "phase4_fields": {
+      "success": true,
+      "extracted_fields": {
+        "core_company_information": {
+          "company_name": "CloudGeometry",
+          "website": "www.cloudgeometry.com",
+          "company_description": "CloudGeometry delivers intelligent, integrated & scalable solutions that help organizations unlock the potential of their data and prepare for an AI-driven future.",
+          "value_proposition": "Custom tailored solutions, built-in scalability for custom apps & AI agents, AI-powered APIs integrations & data solutions.",
+          "industry": "Cloud Computing, IT Consulting, Software Development",
+          "location": "Silicon Valley, California, USA",
+          "founding_year": null,
+          "company_size": "Medium",
+          "employee_count_range": "51-200"
+        },
+        "business_model_and_classification": {
+          "business_model_type": "B2B",
+          "business_model": "Consulting, custom training, custom tailored solutions, and managed services.",
+          "saas_classification": "SaaS",
+          "is_saas": true,
+          "classification_confidence": 0.9,
+          "classification_justification": "The company offers SaaS platforms and managed services."
+        },
+        "products_services_offered": {
+          "products_services_offered": [
+            "Consulting & Education",
+            "Custom Tailored Solutions",
+            "Cloud Infrastructure & Operations",
+            "Modernization & Migration",
+            "Kubernetes Adoption",
+            "Database Migration",
+            "Data Engineering Operations",
+            "Data Integration Services",
+            "SaaS Migration",
+            "Cloud Migration & Adoption",
+            "CGDevX Platform"
+          ],
+          "key_services": [
+            "Consulting & Custom Training",
+            "Custom Tailored Solutions",
+            "Cloud Migration & Modernization"
+          ],
+          "target_market": "Technology startups, global corporations, and enterprises across various industries.",
+          "pain_points": "Scalability, cost optimization, data integration, cloud resilience, and AI-driven solutions.",
+          "competitive_advantages": "Expertise in multi-cloud environments, partnerships with leading technology companies, and innovative solutions.",
+          "tech_stack": "AWS, Azure, GCP, Kubernetes, AI/ML, DevOps, CNCF community tools."
+        },
+        "company_stage_and_metrics": {
+          "company_stage": "Growth",
+          "detailed_funding_stage": null,
+          "funding_status": null,
+          "stage_confidence": 0.8,
+          "tech_sophistication": "High",
+          "tech_confidence": 0.9,
+          "industry_confidence": 0.9,
+          "geographic_scope": "International",
+          "sales_complexity": "Complex"
+        },
+        "people_and_leadership": {
+          "key_decision_makers": [
+            {
+              "name": "Anton Weiss",
+              "role": "Chief Evangelist"
+            },
+            {
+              "name": "Rob Giardina",
+              "role": "Founder"
+            },
+            {
+              "name": "Joel Mjolsness",
+              "role": "VP, Business Development"
+            },
+            {
+              "name": "Nick Chase",
+              "role": "AI/ML Practice Director / Senior Director of Product Management"
+            },
+            {
+              "name": "Serg Shalavin",
+              "role": "Chief DevOps Architect"
+            },
+            {
+              "name": "Alex Ulyanov",
+              "role": "CTO"
+            },
+            {
+              "name": "David Fishman",
+              "role": "VP Products & Services"
+            },
+            {
+              "name": "David Frenkel",
+              "role": "Data Science Team Lead"
+            }
+          ],
+          "leadership_team": "Anton Weiss, Rob Giardina, Joel Mjolsness, Nick Chase, Serg Shalavin, Alex Ulyanov, David Fishman, David Frenkel",
+          "decision_maker_type": "Mixed"
+        },
+        "growth_and_activity_indicators": {
+          "has_job_listings": true,
+          "job_listings_count": null,
+          "job_listings_details": "Solution architects, DevOps practitioners, technical and managerial leadership roles.",
+          "recent_news_events": null,
+          "recent_news": null
+        },
+        "technology_and_digital_presence": {
+          "sales_marketing_tools": null,
+          "has_chat_widget": false,
+          "has_forms": true,
+          "social_media": null,
+          "contact_info": null
+        },
+        "recognition_and_partnerships": {
+          "company_culture": "Innovative, collaborative, customer-centric.",
+          "awards": null,
+          "certifications": null,
+          "partnerships": "AWS, Azure, GCP, CNCF community, various technology providers, domain experts, and managed service providers (MSPs)."
+        },
+        "operational_metadata": {
+          "ai_summary": "CloudGeometry provides intelligent, integrated, and scalable cloud solutions to help organizations leverage data and AI for future-ready operations.",
+          "ai_summary_tokens": 35,
+          "field_extraction_tokens": 1500,
+          "total_tokens": 1535,
+          "llm_model_used": "GPT-3.5",
+          "total_cost_usd": 0.31,
+          "scrape_duration_seconds": 60,
+          "field_extraction_duration_seconds": 30
+        },
+        "ai_summary": "",
+        "ai_summary_tokens": 0,
+        "field_extraction_tokens": 5625,
+        "total_tokens": 12541,
+        "llm_model_used": "amazon/nova-pro-v1",
+        "total_cost_usd": 0.010032800000000001,
+        "scrape_duration_seconds": 2.4727160930633545,
+        "field_extraction_duration_seconds": 14.696370840072632
+      },
+      "field_confidence_scores": {
+        "core_company_information": 0.7,
+        "business_model_and_classification": 0.7,
+        "products_services_offered": 0.7,
+        "company_stage_and_metrics": 0.7,
+        "people_and_leadership": 0.7,
+        "growth_and_activity_indicators": 0.7,
+        "technology_and_digital_presence": 0.7,
+        "recognition_and_partnerships": 0.7,
+        "operational_metadata": 0.7,
+        "ai_summary": 0.0,
+        "ai_summary_tokens": 0.8,
+        "field_extraction_tokens": 0.8,
+        "total_tokens": 0.8,
+        "llm_model_used": 0.8,
+        "total_cost_usd": 0.8,
+        "scrape_duration_seconds": 0.8,
+        "field_extraction_duration_seconds": 0.8
+      },
+      "overall_confidence": 0.74375,
+      "model_used": "amazon/nova-pro-v1",
+      "cost_usd": 0.0045000000000000005,
+      "tokens_used": 5625,
+      "processing_time": 14.69660496711731
+    }
+  },
+  "success": true,
+  "total_time": 22.83469581604004,
+  "total_cost": 0.010032800000000001,
+  "timestamp": "2025-07-06T09:00:27.461411"
+}

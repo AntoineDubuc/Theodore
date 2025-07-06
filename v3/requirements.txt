@@ -1,0 +1,32 @@
+# Theodore v3 - Complete Dependencies
+# Based on proven antoine modules + CLI framework
+
+# Core pipeline dependencies (from working antoine code)
+requests>=2.31.0
+aiohttp>=3.8.0
+asyncio
+beautifulsoup4>=4.12.0
+trafilatura>=1.6.0
+crawl4ai>=0.6.3
+python-dotenv>=1.0.0
+
+# AI clients
+openai>=1.0.0
+google-generativeai>=0.3.0
+pinecone-client[grpc]>=3.0.0
+
+# CLI framework (from v2)
+click>=8.0.0
+rich>=13.0.0
+pydantic>=2.0.0
+
+# Data handling
+pandas>=2.0.0
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=1.0.0
+
+# Utilities
+lxml>=4.9.0
+xml

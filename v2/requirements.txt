@@ -5,6 +5,12 @@ click>=8.0.0
 rich>=13.0.0
 PyYAML>=6.0
 
+# Environment configuration
+python-dotenv>=1.0.0
+
+# Vector database
+pinecone-client[grpc]>=7.0.0
+
 # Security
 keyring>=24.0.0
 
