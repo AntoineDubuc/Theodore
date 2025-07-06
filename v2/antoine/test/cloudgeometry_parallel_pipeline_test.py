@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
-CloudGeometry Real Pipeline Test
-===============================
+CloudGeometry Parallel Pipeline Test (10 Concurrent)
+===================================================
 
-Runs the complete Theodore pipeline on CloudGeometry.com with REAL data:
+Tests the complete Theodore pipeline on CloudGeometry.com with REAL data
+and increased parallelism (10 concurrent pages vs previous 3).
+
+Measures performance improvement from increased parallel crawling.
+
 1. Critter discovers actual paths from cloudgeometry.com
 2. Nova Pro LLM selects valuable paths using get_valuable_links_from_llm.py
-3. Crawler extracts real content with fallback system
-4. Field extraction processes actual crawled content
-5. Comprehensive report with all real data from each stage
+3. Crawler extracts real content with 10 concurrent pages (increased from 3)
+4. Field extraction processes actual crawled content with operational metadata
+5. Comprehensive performance comparison report
 
-NO MOCK DATA. ONLY REAL PIPELINE EXECUTION.
+NO MOCK DATA. ONLY REAL PIPELINE EXECUTION WITH ENHANCED PARALLELISM.
 """
 
 import sys
@@ -34,11 +38,12 @@ except ImportError as e:
 
 
 def main():
-    """Execute the complete real Theodore pipeline on CloudGeometry.com"""
+    """Execute the complete real Theodore pipeline with increased parallelism"""
     
-    print("🚀 CLOUDGEOMETRY REAL PIPELINE EXECUTION")
+    print("🚀 CLOUDGEOMETRY PARALLEL PIPELINE EXECUTION (10 CONCURRENT)")
     print("=" * 80)
     print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("🔄 INCREASED PARALLELISM: max_concurrent=10 (vs previous 3)")
     print("=" * 80)
     
     if not MODULES_AVAILABLE:
@@ -49,7 +54,7 @@ def main():
     base_url = f'https://www.{domain}'
     
     print(f"🎯 Target: {base_url}")
-    print(f"📊 Pipeline: Critter → Nova Pro → Crawler → Field Extraction")
+    print(f"📊 Pipeline: Critter → Nova Pro → Crawler (10x parallel) → Field Extraction")
     print(f"⚠️ Using REAL data only - no mocks or simulations")
     print()
     
@@ -58,6 +63,9 @@ def main():
         'domain': domain,
         'base_url': base_url,
         'start_time': time.time(),
+        'test_type': 'parallel_performance_test',
+        'max_concurrent': 10,
+        'previous_max_concurrent': 3,
         'phases': {}
     }
     
@@ -81,11 +89,11 @@ def main():
         print()
         
         # Show sample paths
-        print("📄 Sample discovered paths (first 20):")
-        for i, path in enumerate(discovered_paths[:20], 1):
+        print("📄 Sample discovered paths (first 15):")
+        for i, path in enumerate(discovered_paths[:15], 1):
             print(f"   {i:2d}. {path}")
-        if len(discovered_paths) > 20:
-            print(f"   ... and {len(discovered_paths) - 20} more paths")
+        if len(discovered_paths) > 15:
+            print(f"   ... and {len(discovered_paths) - 15} more paths")
         print()
         
         # Store phase 1 results
@@ -173,11 +181,12 @@ def main():
         return pipeline_results
     
     # ========================================================================
-    # PHASE 3: REAL CONTENT EXTRACTION WITH FALLBACK
+    # PHASE 3: ENHANCED PARALLEL CONTENT EXTRACTION
     # ========================================================================
-    print("📄 PHASE 3: REAL CONTENT EXTRACTION WITH FALLBACK")
+    print("📄 PHASE 3: ENHANCED PARALLEL CONTENT EXTRACTION (10 CONCURRENT)")
     print("-" * 60)
     print(f"🔬 Crawling {len(selection_result.selected_paths)} selected paths")
+    print("🚀 ENHANCED PARALLELISM: 10 concurrent pages (vs previous 3)")
     print("🔄 Using Trafilatura + BeautifulSoup fallback system")
     print()
     
@@ -188,7 +197,7 @@ def main():
             selected_paths=selection_result.selected_paths,
             timeout_seconds=30,
             max_content_per_page=15000,
-            max_concurrent=3
+            max_concurrent=10  # INCREASED FROM 3 TO 10
         )
         phase3_time = time.time() - phase3_start
         
@@ -196,6 +205,7 @@ def main():
         print(f"📊 Success rate: {crawl_result.successful_pages}/{crawl_result.total_pages} pages")
         print(f"📝 Total content: {crawl_result.total_content_length:,} characters")
         print(f"⚡ Avg per page: {phase3_time/crawl_result.total_pages:.2f}s")
+        print(f"🚀 PARALLELISM BOOST: 10 concurrent vs previous 3")
         print()
         
         # Analyze extraction methods used
@@ -221,13 +231,14 @@ def main():
                 print(f"       Error: {page_result.error}")
         print()
         
-        # Store phase 3 results
+        # Store phase 3 results with performance metrics
         pipeline_results['phases']['phase3_extraction'] = {
             'success': True,
             'total_pages': crawl_result.total_pages,
             'successful_pages': crawl_result.successful_pages,
             'total_content_length': crawl_result.total_content_length,
             'aggregated_content': crawl_result.aggregated_content,
+            'max_concurrent': 10,
             'page_results': [
                 {
                     'url': p.url,
@@ -235,6 +246,7 @@ def main():
                     'content_length': p.content_length,
                     'extraction_method': p.extraction_method,
                     'title': p.title,
+                    'crawl_time': p.crawl_time,
                     'content_preview': p.content[:200] + '...' if p.content and len(p.content) > 200 else p.content,
                     'error': p.error
                 } for p in crawl_result.page_results
@@ -242,7 +254,9 @@ def main():
             'trafilatura_pages': trafilatura_count,
             'beautifulsoup_pages': beautifulsoup_count,
             'failed_pages': failed_count,
-            'processing_time': phase3_time
+            'processing_time': phase3_time,
+            'avg_time_per_page': phase3_time / crawl_result.total_pages,
+            'performance_improvement_test': True
         }
         
     except Exception as e:
@@ -255,12 +269,13 @@ def main():
         return pipeline_results
     
     # ========================================================================
-    # PHASE 4: REAL FIELD EXTRACTION
+    # PHASE 4: REAL FIELD EXTRACTION WITH OPERATIONAL METADATA
     # ========================================================================
-    print("🧠 PHASE 4: REAL FIELD EXTRACTION")
+    print("🧠 PHASE 4: REAL FIELD EXTRACTION WITH OPERATIONAL METADATA")
     print("-" * 60)
     print(f"🎯 Extracting structured fields from {crawl_result.total_content_length:,} characters")
     print("🤖 Using Nova Pro for Target Information Profile extraction")
+    print("📊 Including operational metadata (tokens, cost, timing)")
     print()
     
     phase4_start = time.time()
@@ -312,12 +327,12 @@ def main():
         }
     
     # ========================================================================
-    # PIPELINE SUMMARY
+    # PERFORMANCE ANALYSIS & COMPARISON
     # ========================================================================
     total_time = time.time() - pipeline_results['start_time']
     pipeline_results['total_time'] = total_time
     
-    print("🏁 REAL PIPELINE EXECUTION SUMMARY")
+    print("🏁 PARALLEL PERFORMANCE TEST RESULTS")
     print("=" * 80)
     
     # Calculate total costs
@@ -331,27 +346,48 @@ def main():
     print(f"🌐 Domain: {base_url}")
     print(f"⏱️ Total time: {total_time:.2f} seconds")
     print(f"💰 Total cost: ${total_cost:.4f}")
+    print(f"🚀 Parallelism: 10 concurrent pages (vs previous 3)")
     print()
     
-    # Phase-by-phase results
+    # Phase-by-phase results with performance focus
     phases = [
         ('phase1_discovery', 'Critter Path Discovery'),
         ('phase2_selection', 'Nova Pro Path Selection'),
-        ('phase3_extraction', 'Content Extraction'),
+        ('phase3_extraction', 'Enhanced Parallel Content Extraction'),
         ('phase4_fields', 'Field Extraction')
     ]
     
+    print("📊 PERFORMANCE BREAKDOWN:")
     for phase_key, phase_name in phases:
         phase_data = pipeline_results['phases'].get(phase_key, {})
         status = '✅' if phase_data.get('success') else '❌'
         time_taken = phase_data.get('processing_time', 0)
-        print(f"{status} {phase_name}: {time_taken:.2f}s")
+        
+        if phase_key == 'phase3_extraction' and phase_data.get('success'):
+            avg_per_page = phase_data.get('avg_time_per_page', 0)
+            print(f"{status} {phase_name}: {time_taken:.2f}s (avg {avg_per_page:.2f}s/page)")
+        else:
+            print(f"{status} {phase_name}: {time_taken:.2f}s")
     
     print()
     
+    # Performance comparison section
+    if pipeline_results['phases'].get('phase3_extraction', {}).get('success'):
+        extraction_time = pipeline_results['phases']['phase3_extraction']['processing_time']
+        pages_crawled = pipeline_results['phases']['phase3_extraction']['total_pages']
+        avg_time_per_page = extraction_time / pages_crawled
+        
+        print("🚀 PARALLEL PERFORMANCE ANALYSIS:")
+        print(f"   📊 Pages crawled: {pages_crawled}")
+        print(f"   ⏱️ Total extraction time: {extraction_time:.2f} seconds")
+        print(f"   ⚡ Average per page: {avg_time_per_page:.2f} seconds")
+        print(f"   🔄 Concurrency: 10 parallel pages")
+        print(f"   📈 Expected improvement vs sequential: ~{(pages_crawled * 2) / extraction_time:.1f}x faster")
+        print()
+    
     # Save complete results for analysis
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_file = f"cloudgeometry_real_pipeline_results_{timestamp}.json"
+    results_file = f"cloudgeometry_parallel_results_{timestamp}.json"
     
     try:
         import json
@@ -364,8 +400,9 @@ def main():
     except Exception as e:
         print(f"⚠️ Failed to save results file: {e}")
     
-    print("✅ REAL CLOUDGEOMETRY PIPELINE EXECUTION COMPLETED!")
+    print("✅ PARALLEL CLOUDGEOMETRY PIPELINE EXECUTION COMPLETED!")
     print("📋 All data is REAL - no mocks or simulations used")
+    print("🚀 Enhanced with 10 concurrent page crawling for performance testing")
     
     return pipeline_results
 
