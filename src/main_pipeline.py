@@ -43,9 +43,9 @@ class TheodoreIntelligencePipeline:
         # Initialize components
         self.bedrock_client = BedrockClient(config)  # Keep for embeddings
         self.gemini_client = GeminiClient(config)    # Use for analysis and similarity
-        # Use intelligent scraper (fixed link discovery) instead of concurrent for now
-        from src.intelligent_company_scraper import IntelligentCompanyScraperSync
-        self.scraper = IntelligentCompanyScraperSync(config, self.bedrock_client)
+        # Use antoine scraper adapter for enhanced 4-phase pipeline
+        from src.antoine_scraper_adapter import AntoineScraperAdapter
+        self.scraper = AntoineScraperAdapter(config, self.bedrock_client)
         # Legacy scraper removed - using intelligent scraper only
         # self.legacy_scraper = CompanyWebScraper(config, self.bedrock_client)
         self.pinecone_client = PineconeClient(
@@ -151,7 +151,7 @@ class TheodoreIntelligencePipeline:
         except Exception as e:
             logger.warning(f"Classification failed for {company_name}: {e}")
             company.saas_classification = 'Unclassified'
-            company.is_saas = None
+            company.is_saas = False  # Default to False instead of None for Pinecone compatibility
         
         # Apply enhanced extraction for missing fields (temporarily disabled)
         # if company.raw_content:

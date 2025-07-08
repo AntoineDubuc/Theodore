@@ -252,18 +252,20 @@ Extract these specific fields from the content below:
 
 Core Company Information:
 - company_name: Official company name
+- name: Company name (same as company_name, for compatibility)
 - website: Primary website URL
 - company_description: Brief description of what the company does
 - value_proposition: Main value proposition or unique selling points
 - industry: Primary industry/sector
 - location: Headquarters location (city, state/country)
-- founding_year: Year the company was founded
+- founding_year: Year the company was founded (integer)
 - company_size: Size category (startup, small, medium, large, enterprise)
 - employee_count_range: Estimated employee count or range
 
 Business Model & Classification:
 - business_model_type: B2B, B2C, B2B2C, marketplace, etc.
 - business_model: Description of how the company makes money
+- business_model_framework: David's Business Model Framework classification
 - saas_classification: SaaS, PaaS, IaaS, or not applicable
 - is_saas: True/false if it's a SaaS company
 - classification_confidence: Your confidence in the classification (0.0-1.0)
@@ -279,7 +281,7 @@ Products & Services:
 
 Company Stage & Metrics:
 - company_stage: Early-stage, growth, mature, established
-- detailed_funding_stage: Seed, Series A/B/C, IPO, private, etc.
+- funding_stage_detailed: Seed, Series A/B/C, IPO, private, etc. (renamed from detailed_funding_stage)
 - funding_status: Recent funding information if available
 - stage_confidence: Confidence in stage assessment (0.0-1.0)
 - tech_sophistication: Low, moderate, high based on technical complexity
@@ -289,29 +291,30 @@ Company Stage & Metrics:
 - sales_complexity: Simple, moderate, complex based on sales process
 
 People & Leadership:
-- key_decision_makers: Names and roles of key executives
-- leadership_team: Leadership team information
+- key_decision_makers: Names and roles of key executives (as object/dict)
+- leadership_team: Leadership team information (as list)
 - decision_maker_type: Technical, business, mixed decision makers
 
 Growth & Activity Indicators:
 - has_job_listings: True/false if hiring information found
-- job_listings_count: Number of open positions if mentioned
-- job_listings_details: Types of roles being hired
-- recent_news_events: Recent news, press releases, or events
-- recent_news: Latest company developments
+- job_listings_count: Number of open positions if mentioned (integer)
+- job_listings: Job listings summary or status
+- job_listings_details: Types of roles being hired (as list)
+- recent_news_events: Recent news, press releases, or events (as list of objects)
+- recent_news: Latest company developments (as list)
 
 Technology & Digital Presence:
-- sales_marketing_tools: Tools and platforms used for sales/marketing
+- sales_marketing_tools: Tools and platforms used for sales/marketing (as list)
 - has_chat_widget: True/false if live chat found on website
 - has_forms: True/false if contact/lead forms found
-- social_media: Social media presence and platforms
-- contact_info: Contact information found
+- social_media: Social media presence and platforms (as object/dict)
+- contact_info: Contact information found (as object/dict)
 
 Recognition & Partnerships:
 - company_culture: Company culture and values mentioned
-- awards: Awards, recognitions, or certifications
-- certifications: Professional certifications or compliance
-- partnerships: Key partnerships or integrations mentioned
+- awards: Awards, recognitions, or certifications (as list)
+- certifications: Professional certifications or compliance (as list)
+- partnerships: Key partnerships or integrations mentioned (as list)
 
 Operational Metadata:
 - ai_summary: AI-generated summary of the company's core business and value proposition
@@ -327,14 +330,36 @@ INSTRUCTIONS:
 1. Read through ALL the content carefully
 2. Extract as many fields as possible from the available content
 3. If a field cannot be determined from the content, set it to null
-4. Provide confidence scores for uncertain extractions
-5. Use the exact field names listed above
-6. Return ONLY valid JSON - no explanations or extra text
+4. Use the exact field names listed above
+5. Return a FLAT JSON object with ALL fields at the root level
+6. DO NOT group fields into categories - return them as individual key-value pairs
+7. Return ONLY valid JSON - no explanations or extra text
+
+EXAMPLE OUTPUT FORMAT:
+{{
+  "company_name": "Example Company",
+  "name": "Example Company", 
+  "website": "https://example.com",
+  "industry": "Technology",
+  "business_model": "B2B SaaS",
+  "company_description": "A technology company that...",
+  "value_proposition": "We help companies...",
+  "tech_stack": ["React", "Node.js", "AWS"],
+  "competitive_advantages": ["Fast performance", "Easy integration"],
+  "target_market": "Mid-market companies",
+  "pain_points": ["Manual processes", "Data silos"],
+  "key_services": ["Platform", "APIs", "Support"],
+  "saas_classification": "SaaS",
+  "is_saas": true,
+  "company_stage": "Growth",
+  "founding_year": 2020,
+  "location": "San Francisco, CA"
+}}
 
 CONTENT TO ANALYZE:
 {aggregated_content}
 
-Return the extracted fields as a JSON object with the structure above. Include confidence scores for uncertain fields and set unavailable fields to null."""
+Return ALL extracted fields as a single flat JSON object. Include confidence scores for uncertain fields and set unavailable fields to null."""
 
     return prompt
 
@@ -542,6 +567,27 @@ def extract_company_fields(
                 error="Failed to parse any fields from Nova Pro response"
             )
         
+        # Add Theodore system fields for compatibility
+        import uuid
+        from datetime import datetime
+        
+        # Add essential Theodore fields
+        extracted_fields.update({
+            'id': str(uuid.uuid4()),
+            'created_at': datetime.utcnow().isoformat(),
+            'last_updated': datetime.utcnow().isoformat(),
+            'scrape_status': 'success',
+            'scrape_error': None,
+            'classification_timestamp': datetime.utcnow().isoformat(),
+            'classification_model_version': 'nova-pro-v1',
+            'pages_crawled': page_sources,  # URLs that were successfully scraped
+            'scraped_urls': page_sources,   # Same as pages_crawled for compatibility
+            'crawl_depth': len(page_sources),  # Number of pages processed
+            'crawl_duration': batch_crawl_result.total_crawl_time,
+            'raw_content': batch_crawl_result.aggregated_content[:10000] if batch_crawl_result.aggregated_content else '',  # Truncated for storage
+            'embedding': None  # Will be generated later by Theodore pipeline
+        })
+        
         # Add operational metadata to extracted fields
         if pipeline_metadata:
             # Calculate total tokens across all phases
@@ -571,6 +617,18 @@ def extract_company_fields(
                 'llm_model_used': llm_response.model_used,
                 'total_cost_usd': total_cost,
                 'scrape_duration_seconds': scrape_duration,
+                'field_extraction_duration_seconds': time.time() - start_time
+            })
+        else:
+            # Fallback metadata when no pipeline metadata available
+            extracted_fields.update({
+                'ai_summary': extracted_fields.get('company_description', '') or extracted_fields.get('value_proposition', ''),
+                'ai_summary_tokens': 0,
+                'field_extraction_tokens': llm_response.tokens_used,
+                'total_tokens': llm_response.tokens_used,
+                'llm_model_used': llm_response.model_used,
+                'total_cost_usd': llm_response.cost_usd,
+                'scrape_duration_seconds': batch_crawl_result.total_crawl_time,
                 'field_extraction_duration_seconds': time.time() - start_time
             })
         

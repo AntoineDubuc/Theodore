@@ -1,0 +1,53 @@
+{
+  "company": "lotlinx.com",
+  "timestamp": "2025-07-07T21:16:00.779115",
+  "phases": {
+    "discovery": {
+      "status": "success",
+      "duration": 3.492112159729004,
+      "paths_found": 578,
+      "navigation_paths": 23,
+      "content_paths": 575,
+      "sample_paths": [
+        "/",
+        "/10-questions-to-debunk-vin-specific-vendors",
+        "/2016-awa-award",
+        "/2024-auto-retail-inventory-pulse-1",
+        "/2024-dealership-inventory-predictions-and-strategies",
+        "/2024-inventory-predictions",
+        "/2025-automotive-retail-outlook",
+        "/6-vital-inventory-strategies-dealers-need-to-have-their-marketing-plan-support-2",
+        "/a-closer-look-at-lotlinx-ai",
+        "/a-shock-to-the-ev-system",
+        "/about-us",
+        "/accelerating-search-engine-marketing-with-artificial-intelligence",
+        "/active-vs-passive-car-buyers",
+        "/active-vs-passive-inventory-merchandising-the-key-to-a-healthy-bottom-line",
+        "/agreements",
+        "/aim-group-marketplaces-report-innovation-in-autos-four-case-studies-on-interesting-concepts-for-car-sales",
+        "/artificial-intelligence-at-nada-2025",
+        "/audi-co-op",
+        "/author/alex-karpyza",
+        "/author/carlawade"
+      ]
+    },
+    "selection": {
+      "status": "success",
+      "duration": 57.917444944381714,
+      "paths_selected": 0,
+      "selected_paths": []
+    },
+    "crawling": {
+      "status": "success",
+      "duration": 0.0009620189666748047,
+      "pages_crawled": 0,
+      "total_chars": 0,
+      "pages": {}
+    },
+    "extraction": {
+      "status": "failed",
+      "error": "'FieldExtractionResult' object has no attribute 'company_data'",
+      "error_type": "AttributeError"
+    }
+  }
+}

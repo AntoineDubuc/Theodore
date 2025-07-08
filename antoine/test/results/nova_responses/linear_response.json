@@ -1,0 +1,71 @@
+{
+  "company": {
+    "name": "Linear",
+    "website": "https://linear.app",
+    "description": "Simple SaaS tool, clean structure"
+  },
+  "timestamp": "2025-07-06T23:57:43.755464",
+  "discovery_result": {
+    "success": true,
+    "total_paths": 690,
+    "discovery_time": 1.1573047637939453,
+    "sample_paths": [
+      "/",
+      "/about",
+      "/agents",
+      "/android",
+      "/api",
+      "/api/og/*",
+      "/blog",
+      "/blog/a-design-reset",
+      "/blog/building-at-the-early-stage",
+      "/blog/building-our-way"
+    ]
+  },
+  "nova_request": {
+    "prompt_length": 26750,
+    "total_paths": 690,
+    "model": "amazon/nova-pro-v1",
+    "timestamp": "2025-07-06T23:57:44.913009"
+  },
+  "nova_response": {
+    "success": true,
+    "model_used": "amazon/nova-pro-v1",
+    "tokens_used": 11232,
+    "cost_usd": 0.0089856,
+    "processing_time": 5.936618804931641,
+    "response_length": 1315,
+    "raw_content": "```json\n{\n  \"selected_paths\": [\n    \"/about\",\n    \"/careers\",\n    \"/blog\",\n    \"/changelog\",\n    \"/customers\",\n    \"/features\",\n    \"/integrations\",\n    \"/method\",\n    \"/pricing\",\n    \"/press\",\n    \"/startups\"\n  ],\n  \"path_explanations\": {\n    \"/about\": \"Provides company description, founding year, value proposition, and company size.\",\n    \"/careers\": \"Indicates employee count, job listings, and company culture.\",\n    \"/blog\": \"Contains company updates, product developments, and industry insights.\",\n    \"/changelog\": \"Details product updates, feature releases, and bug fixes.\",\n    \"/customers\": \"Showcases notable clients and success stories, indicating market reach and reputation.\",\n    \"/features\": \"Describes products/services offered, highlighting competitive advantages and tech stack.\",\n    \"/integrations\": \"Lists third-party tools and services integrated with the company's platform.\",\n    \"/method\": \"Explains the company's approach to product development and business operations.\",\n    \"/pricing\": \"Provides information on pricing plans, indicating business model and target market.\",\n    \"/press\": \"Includes recent news, events, awards, and funding status.\",\n    \"/startups\": \"Offers resources and guidance for startups, reflecting the company's engagement with the startup ecosystem.\"\n  }\n}\n```",
+    "error": null
+  },
+  "parsing_attempts": [
+    {
+      "method": "current_method",
+      "success": true,
+      "extracted_json": "{\n  \"selected_paths\": [\n    \"/about\",\n    \"/careers\",\n    \"/blog\",\n    \"/changelog\",\n    \"/customers\",\n    \"/features\",\n    \"/integrations\",\n    \"/method\",\n    \"/pricing\",\n    \"/press\",\n    \"/startups\"\n  ],\n  \"path_explanations\": {\n    \"/about\": \"Provides company description, founding year, value proposition, and company size.\",\n    \"/careers\": \"Indicates employee count, job listings, and company culture.\",\n    \"/blog\": \"Contains company updates, product developments, and industry insights.\",\n    \"/changelog\": \"Details product updates, feature releases, and bug fixes.\",\n    \"/customers\": \"Showcases notable clients and success stories, indicating market reach and reputation.\",\n    \"/features\": \"Describes products/services offered, highlighting competitive advantages and tech stack.\",\n    \"/integrations\": \"Lists third-party tools and services integrated with the company's platform.\",\n    \"/method\": \"Explains the company's approach to product development and business operations.\",\n    \"/pricing\": \"Provides information on pricing plans, indicating business model and target market.\",\n    \"/press\": \"Includes recent news, events, awards, and funding status.\",\n    \"/startups\": \"Offers resources and guidance for startups, reflecting the company's engagement with the startup ecosystem.\"\n  }\n}",
+      "parsed_type": "dict",
+      "result_summary": "Extracted dict with 2 items"
+    },
+    {
+      "method": "regex_largest_valid",
+      "success": true,
+      "extracted_json": "{\n  \"selected_paths\": [\n    \"/about\",\n    \"/careers\",\n    \"/blog\",\n    \"/changelog\",\n    \"/customers\",\n    \"/features\",\n    \"/integrations\",\n    \"/method\",\n    \"/pricing\",\n    \"/press\",\n    \"/startups\"\n  ],\n  \"path_explanations\": {\n    \"/about\": \"Provides company description, founding year, value proposition, and company size.\",\n    \"/careers\": \"Indicates employee count, job listings, and company culture.\",\n    \"/blog\": \"Contains company updates, product developments, and industry insights.\",\n    \"/changelog\": \"Details product updates, feature releases, and bug fixes.\",\n    \"/customers\": \"Showcases notable clients and success stories, indicating market reach and reputation.\",\n    \"/features\": \"Describes products/services offered, highlighting competitive advantages and tech stack.\",\n    \"/integrations\": \"Lists third-party tools and services integrated with the company's platform.\",\n    \"/method\": \"Explains the company's approach to product development and business operations.\",\n    \"/pricing\": \"Provides information on pricing plans, indicating business model and target market.\",\n    \"/press\": \"Includes recent news, events, awards, and funding status.\",\n    \"/startups\": \"Offers resources and guidance for startups, reflecting the company's engagement with the startup ecosystem.\"\n  }\n}",
+      "parsed_type": "dict",
+      "result_summary": "Found valid object with 1303 chars"
+    },
+    {
+      "method": "line_by_line_search",
+      "success": false,
+      "error": "No valid JSON lines found",
+      "result_summary": "Failed: No valid JSON lines found"
+    },
+    {
+      "method": "full_content_parse",
+      "success": false,
+      "error": "Expecting value: line 1 column 1 (char 0)",
+      "result_summary": "Failed: Expecting value: line 1 column 1 (char 0)"
+    }
+  ],
+  "success": true,
+  "error": null
+}

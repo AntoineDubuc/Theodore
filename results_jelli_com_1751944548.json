@@ -1,0 +1,67 @@
+{
+  "company": "jelli.com",
+  "timestamp": "2025-07-07T21:15:34.092044",
+  "phases": {
+    "discovery": {
+      "status": "success",
+      "duration": 3.6804521083831787,
+      "paths_found": 257,
+      "navigation_paths": 28,
+      "content_paths": 254,
+      "sample_paths": [
+        "/",
+        "/Reports",
+        "/TermsofService22",
+        "/Vulnerability-policy",
+        "/about/careers",
+        "/about/newsroom",
+        "/about/newsroom/news",
+        "/about/newsroom/news/10",
+        "/about/newsroom/news/2",
+        "/about/newsroom/news/3",
+        "/about/newsroom/news/4",
+        "/about/newsroom/news/5",
+        "/about/newsroom/news/6",
+        "/about/newsroom/news/7",
+        "/about/newsroom/news/8",
+        "/about/newsroom/news/9",
+        "/about/newsroom/press-releases",
+        "/about/newsroom/press-releases/10",
+        "/about/newsroom/press-releases/2",
+        "/about/newsroom/press-releases/3"
+      ]
+    },
+    "selection": {
+      "status": "success",
+      "duration": 9.43409514427185,
+      "paths_selected": 13,
+      "selected_paths": [
+        "/about/our-story",
+        "/about/careers",
+        "/about/newsroom",
+        "/about/newsroom/news",
+        "/about/newsroom/press-releases",
+        "/solutions/audience-measurement",
+        "/solutions/audience-measurement/podcast-metrics",
+        "/solutions/audience-measurement/rankers",
+        "/solutions/audience-measurement/webcast-metrics",
+        "/solutions/audio-streaming",
+        "/solutions/enterprise-podcasting",
+        "/solutions/monetization/manadge",
+        "/solutions/monetization/sounder"
+      ]
+    },
+    "crawling": {
+      "status": "success",
+      "duration": 0.930229902267456,
+      "pages_crawled": 0,
+      "total_chars": 0,
+      "pages": {}
+    },
+    "extraction": {
+      "status": "failed",
+      "error": "'FieldExtractionResult' object has no attribute 'company_data'",
+      "error_type": "AttributeError"
+    }
+  }
+}

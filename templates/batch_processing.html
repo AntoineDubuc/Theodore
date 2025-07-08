@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Processing - Theodore</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .batch-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .batch-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .batch-form {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            color: #e0e0e0;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .batch-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .btn-batch {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-batch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .progress-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+            display: none;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        
+        .stat-label {
+            color: #999;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .progress-log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
+        .log-entry {
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .log-entry.success {
+            color: #10b981;
+        }
+        
+        .log-entry.error {
+            color: #ef4444;
+        }
+        
+        .log-entry.info {
+            color: #3b82f6;
+        }
+        
+        .validation-result {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .validation-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+        
+        .validation-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="batch-container">
+        <div class="batch-header">
+            <h1>Batch Processing</h1>
+            <p>Process multiple companies from Google Sheets using the Antoine pipeline</p>
+        </div>
+        
+        <div class="batch-form">
+            <h2>Configuration</h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="sheetId">Google Sheet ID</label>
+                    <input type="text" id="sheetId" placeholder="e.g., 1dD1pw9yJzRPFnZRRKGldCJpc29fGmK0vQ-g5sBG-bZk">
+                </div>
+                
+                <div class="form-group">
+                    <label for="startRow">Start Row</label>
+                    <input type="number" id="startRow" value="2" min="2">
+                </div>
+                
+                <div class="form-group">
+                    <label for="batchSize">Batch Size</label>
+                    <input type="number" id="batchSize" value="10" min="1" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxConcurrent">Max Concurrent</label>
+                    <select id="maxConcurrent">
+                        <option value="1">1 (Sequential)</option>
+                        <option value="3" selected>3 (Recommended)</option>
+                        <option value="5">5 (Fast)</option>
+                        <option value="10">10 (Maximum)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="validation-result" id="validationResult"></div>
+            
+            <div class="batch-actions">
+                <button class="btn-batch btn-secondary" onclick="validateSheet()">
+                    Validate Sheet Access
+                </button>
+                <button class="btn-batch btn-primary" onclick="startBatchProcessing()">
+                    Start Batch Processing
+                </button>
+            </div>
+        </div>
+        
+        <div class="progress-section" id="progressSection">
+            <div class="progress-header">
+                <h2>Processing Progress</h2>
+                <button class="btn-batch btn-secondary" onclick="stopBatchProcessing()">
+                    Stop Processing
+                </button>
+            </div>
+            
+            <div class="progress-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="processedCount">0</div>
+                    <div class="stat-label">Processed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="successCount">0</div>
+                    <div class="stat-label">Successful</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="failedCount">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+            
+            <h3>Progress Log</h3>
+            <div class="progress-log" id="progressLog"></div>
+        </div>
+    </div>
+    
+    <script>
+        let currentEventSource = null;
+        let currentJobId = null;
+        
+        async function validateSheet() {
+            const sheetId = document.getElementById('sheetId').value;
+            const validationResult = document.getElementById('validationResult');
+            
+            if (!sheetId) {
+                showValidationError('Please enter a Google Sheet ID');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/batch/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sheet_id: sheetId })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showValidationSuccess(`✅ ${data.message}<br>Found ${data.companies_count} companies`);
+                } else {
+                    showValidationError(`❌ ${data.error}<br>${data.details || ''}`);
+                }
+            } catch (error) {
+                showValidationError(`❌ Validation failed: ${error.message}`);
+            }
+        }
+        
+        async function startBatchProcessing() {
+            const sheetId = document.getElementById('sheetId').value;
+            const startRow = parseInt(document.getElementById('startRow').value);
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const maxConcurrent = parseInt(document.getElementById('maxConcurrent').value);
+            
+            if (!sheetId) {
+                showValidationError('Please enter a Google Sheet ID');
+                return;
+            }
+            
+            // Clear previous progress
+            clearProgress();
+            
+            try {
+                const response = await fetch('/api/batch/process-antoine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sheet_id: sheetId,
+                        start_row: startRow,
+                        batch_size: batchSize,
+                        max_concurrent: maxConcurrent
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentJobId = data.job_id;
+                    document.getElementById('totalCount').textContent = data.companies_count;
+                    document.getElementById('progressSection').style.display = 'block';
+                    
+                    // Start streaming progress updates
+                    startProgressStream(currentJobId);
+                    
+                    addLogEntry(`Started batch processing: ${data.message}`, 'info');
+                } else {
+                    showValidationError(`❌ ${data.error}<br>${data.details || ''}`);
+                }
+            } catch (error) {
+                showValidationError(`❌ Failed to start processing: ${error.message}`);
+            }
+        }
+        
+        function startProgressStream(jobId) {
+            if (currentEventSource) {
+                currentEventSource.close();
+            }
+            
+            currentEventSource = new EventSource(`/api/batch/stream/${jobId}`);
+            
+            currentEventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.error) {
+                    addLogEntry(`Error: ${data.error}`, 'error');
+                    currentEventSource.close();
+                    return;
+                }
+                
+                if (data.event === 'complete') {
+                    updateProgressStats(data.progress);
+                    addLogEntry('Batch processing completed!', 'success');
+                    currentEventSource.close();
+                    return;
+                }
+                
+                if (data.event === 'timeout') {
+                    addLogEntry(data.message, 'error');
+                    currentEventSource.close();
+                    return;
+                }
+                
+                // Update progress stats
+                updateProgressStats(data);
+                
+                // Add log entry for current message
+                if (data.current_message && data.current_message !== lastMessage) {
+                    addLogEntry(data.current_message, getLogType(data.current_message));
+                    lastMessage = data.current_message;
+                }
+            };
+            
+            currentEventSource.onerror = (error) => {
+                addLogEntry('Connection lost. Attempting to reconnect...', 'error');
+                // Browser will automatically reconnect
+            };
+        }
+        
+        let lastMessage = '';
+        
+        function updateProgressStats(progress) {
+            document.getElementById('processedCount').textContent = progress.processed || 0;
+            document.getElementById('successCount').textContent = progress.successful || 0;
+            document.getElementById('failedCount').textContent = progress.failed || 0;
+        }
+        
+        function addLogEntry(message, type = 'info') {
+            const log = document.getElementById('progressLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function getLogType(message) {
+            if (message.includes('✅')) return 'success';
+            if (message.includes('❌') || message.includes('⚠️')) return 'error';
+            return 'info';
+        }
+        
+        function stopBatchProcessing() {
+            if (currentEventSource) {
+                currentEventSource.close();
+                currentEventSource = null;
+                addLogEntry('Stopped monitoring progress (processing continues in background)', 'info');
+            }
+        }
+        
+        function clearProgress() {
+            document.getElementById('processedCount').textContent = '0';
+            document.getElementById('successCount').textContent = '0';
+            document.getElementById('failedCount').textContent = '0';
+            document.getElementById('progressLog').innerHTML = '';
+            lastMessage = '';
+        }
+        
+        function showValidationSuccess(message) {
+            const result = document.getElementById('validationResult');
+            result.className = 'validation-result validation-success';
+            result.innerHTML = message;
+            result.style.display = 'block';
+        }
+        
+        function showValidationError(message) {
+            const result = document.getElementById('validationResult');
+            result.className = 'validation-result validation-error';
+            result.innerHTML = message;
+            result.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

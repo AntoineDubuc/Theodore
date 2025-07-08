@@ -1,0 +1,24 @@
+{
+  "url": "https://www.bell.ca",
+  "company_name": "Bell",
+  "discovery": {
+    "total_paths": 544,
+    "navigation_paths": 19,
+    "content_paths": 470,
+    "restricted_paths": 69
+  },
+  "selection": {
+    "selected_paths": [],
+    "count": 0
+  },
+  "crawling": {
+    "successful_pages": 0,
+    "failed_pages": 0,
+    "content_length": 0
+  },
+  "extraction": {
+    "success": false,
+    "extracted_fields": {},
+    "error": "No aggregated content available for field extraction"
+  }
+}

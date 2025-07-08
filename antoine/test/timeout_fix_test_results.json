@@ -1,0 +1,32 @@
+{
+  "test_timestamp": "2025-07-07 08:53:17",
+  "results": [
+    {
+      "company": "Rogers Communications",
+      "url": "https://www.rogers.com",
+      "paths_discovered": 6728,
+      "success": true,
+      "paths_selected": 19,
+      "selection_time": 6.1670379638671875,
+      "error": null
+    },
+    {
+      "company": "Telus",
+      "url": "https://www.telus.com",
+      "paths_discovered": 9307,
+      "success": true,
+      "paths_selected": 3,
+      "selection_time": 5.94649600982666,
+      "error": null
+    },
+    {
+      "company": "Bell",
+      "url": "https://www.bell.ca",
+      "paths_discovered": 544,
+      "success": true,
+      "paths_selected": 39,
+      "selection_time": 11.235445022583008,
+      "error": null
+    }
+  ]
+}

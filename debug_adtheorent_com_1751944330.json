@@ -1,0 +1,28 @@
+{
+  "company": "adtheorent.com",
+  "timestamp": "2025-07-07T21:12:09.642501",
+  "phases": {
+    "discovery": {
+      "status": "success",
+      "duration": 1.342421054840088,
+      "paths_found": 7,
+      "navigation_paths": 4,
+      "content_paths": 6,
+      "sample_paths": [
+        "/",
+        "/ccpa-job-applicant-privacy-notice",
+        "/services-privacy-policy",
+        "/sitemap.xml",
+        "/terms-of-use",
+        "/website-privacy-policy",
+        "/your-privacy-choices"
+      ]
+    },
+    "selection": {
+      "status": "failed",
+      "error": "filter_valuable_links_sync() got an unexpected keyword argument 'job_id'",
+      "error_type": "TypeError",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/antoinedubuc/Desktop/AI_Goodies/Theodore/test_antoine_phases.py\", line 98, in test_company_phases\n    selected_paths = filter_valuable_links_sync(discovered_paths, job_id=job_id)\nTypeError: filter_valuable_links_sync() got an unexpected keyword argument 'job_id'\n"
+    }
+  }
+}

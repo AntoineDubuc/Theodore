@@ -1,0 +1,26 @@
+{
+  "url": "https://www.bell.ca",
+  "paths_discovered": 544,
+  "paths_selected": 16,
+  "selected_paths": [
+    "/en/corp/aboutbell",
+    "/fr/corp/aboutbell",
+    "/en/about/gga/home_en.html",
+    "/fr/jsp/content/cust_care/docs/stsuserguide.pdf",
+    "/enterprise/portlets/enterprise/documentform/core_content_downloads.jsp?FormId=rep_contact",
+    "/enterprise/portlets/enterprise/unifiedCommunications/en/_assets/xml/app.xml",
+    "/enterprise/portlets/enterprise/unifiedCommunications/fr/_assets/xml/app.xml",
+    "/enterprise/portlets/forms/formreg.do",
+    "/web/enterprise/newsroom/impact",
+    "/media/en/all_regions/guides",
+    "/media/fr/all_regions/guides",
+    "/business",
+    "/Business/Mobility",
+    "/Business/Promotions",
+    "/Entreprise/Mobilite",
+    "/Entreprise/Promotions"
+  ],
+  "confidence_used": 0.6,
+  "success": true,
+  "error": null
+}

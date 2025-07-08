@@ -1,0 +1,41 @@
+{
+  "company": "jelli.com",
+  "timestamp": "2025-07-07T21:12:03.210681",
+  "phases": {
+    "discovery": {
+      "status": "success",
+      "duration": 3.425079107284546,
+      "paths_found": 257,
+      "navigation_paths": 28,
+      "content_paths": 254,
+      "sample_paths": [
+        "/",
+        "/Reports",
+        "/TermsofService22",
+        "/Vulnerability-policy",
+        "/about/careers",
+        "/about/newsroom",
+        "/about/newsroom/news",
+        "/about/newsroom/news/10",
+        "/about/newsroom/news/2",
+        "/about/newsroom/news/3",
+        "/about/newsroom/news/4",
+        "/about/newsroom/news/5",
+        "/about/newsroom/news/6",
+        "/about/newsroom/news/7",
+        "/about/newsroom/news/8",
+        "/about/newsroom/news/9",
+        "/about/newsroom/press-releases",
+        "/about/newsroom/press-releases/10",
+        "/about/newsroom/press-releases/2",
+        "/about/newsroom/press-releases/3"
+      ]
+    },
+    "selection": {
+      "status": "failed",
+      "error": "filter_valuable_links_sync() got an unexpected keyword argument 'job_id'",
+      "error_type": "TypeError",
+      "traceback": "Traceback (most recent call last):\n  File \"/Users/antoinedubuc/Desktop/AI_Goodies/Theodore/test_antoine_phases.py\", line 98, in test_company_phases\n    selected_paths = filter_valuable_links_sync(discovered_paths, job_id=job_id)\nTypeError: filter_valuable_links_sync() got an unexpected keyword argument 'job_id'\n"
+    }
+  }
+}

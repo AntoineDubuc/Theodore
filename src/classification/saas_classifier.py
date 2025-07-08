@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 from typing import Optional
 
-from models import CompanyData, ClassificationResult, SaaSCategory
+from src.models import CompanyData, ClassificationResult, SaaSCategory
 from .classification_prompts import get_classification_prompt, CLASSIFICATION_TAXONOMY
 
 logger = logging.getLogger(__name__)

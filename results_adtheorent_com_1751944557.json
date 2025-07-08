@@ -1,0 +1,40 @@
+{
+  "company": "adtheorent.com",
+  "timestamp": "2025-07-07T21:15:51.143610",
+  "phases": {
+    "discovery": {
+      "status": "success",
+      "duration": 1.8443148136138916,
+      "paths_found": 7,
+      "navigation_paths": 4,
+      "content_paths": 6,
+      "sample_paths": [
+        "/",
+        "/ccpa-job-applicant-privacy-notice",
+        "/services-privacy-policy",
+        "/sitemap.xml",
+        "/terms-of-use",
+        "/website-privacy-policy",
+        "/your-privacy-choices"
+      ]
+    },
+    "selection": {
+      "status": "success",
+      "duration": 4.7850120067596436,
+      "paths_selected": 0,
+      "selected_paths": []
+    },
+    "crawling": {
+      "status": "success",
+      "duration": 0.00041294097900390625,
+      "pages_crawled": 0,
+      "total_chars": 0,
+      "pages": {}
+    },
+    "extraction": {
+      "status": "failed",
+      "error": "'FieldExtractionResult' object has no attribute 'company_data'",
+      "error_type": "AttributeError"
+    }
+  }
+}

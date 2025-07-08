@@ -98,7 +98,30 @@ COMPLETE_DATA_COLUMNS = {
     'AY': {'field': 'created_at', 'header': 'Created At', 'type': 'datetime'},
     'AZ': {'field': 'last_updated', 'header': 'Last Updated', 'type': 'datetime'},
     'BA': {'field': 'scrape_status', 'header': 'Scrape Status', 'type': 'string'},
-    'BB': {'field': 'scrape_error', 'header': 'Scrape Error', 'type': 'string'}
+    'BB': {'field': 'scrape_error', 'header': 'Scrape Error', 'type': 'string'},
+    
+    # SaaS Classification fields (BC-BH)
+    'BC': {'field': 'saas_classification', 'header': 'SaaS Classification', 'type': 'string'},
+    'BD': {'field': 'classification_confidence', 'header': 'Classification Confidence', 'type': 'float'},
+    'BE': {'field': 'classification_justification', 'header': 'Classification Justification', 'type': 'string'},
+    'BF': {'field': 'classification_timestamp', 'header': 'Classification Timestamp', 'type': 'datetime'},
+    'BG': {'field': 'classification_model_version', 'header': 'Classification Model Version', 'type': 'string'},
+    'BH': {'field': 'is_saas', 'header': 'Is SaaS', 'type': 'boolean'},
+    
+    # Additional missing fields (BI-BS)
+    'BI': {'field': 'business_model_framework', 'header': 'Business Model Framework', 'type': 'string'},
+    'BJ': {'field': 'job_listings', 'header': 'Job Listings Summary', 'type': 'string'},
+    'BK': {'field': 'scraped_urls', 'header': 'Scraped URLs', 'type': 'list'},
+    'BL': {'field': 'scraped_content_details', 'header': 'Scraped Content Details', 'type': 'dict'},
+    'BM': {'field': 'llm_prompts_sent', 'header': 'LLM Prompts Sent', 'type': 'list_dict'},
+    'BN': {'field': 'page_selection_prompt', 'header': 'Page Selection Prompt', 'type': 'string'},
+    'BO': {'field': 'content_analysis_prompt', 'header': 'Content Analysis Prompt', 'type': 'string'},
+    'BP': {'field': 'llm_calls_breakdown', 'header': 'LLM Calls Breakdown', 'type': 'list_dict'},
+    
+    # Token usage and cost tracking (BQ-BS)
+    'BQ': {'field': 'total_input_tokens', 'header': 'Total Input Tokens', 'type': 'integer'},
+    'BR': {'field': 'total_output_tokens', 'header': 'Total Output Tokens', 'type': 'integer'},
+    'BS': {'field': 'total_cost_usd', 'header': 'Total Cost USD', 'type': 'float'}
 }
 
 # Field type conversion functions

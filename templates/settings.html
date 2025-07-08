@@ -798,9 +798,9 @@ Embedding: ~$${costs.embedding || '0.0001'}
                     </div>
                     
                     <div class="setting-item expandable" onclick="toggleExpand('analysis-prompt')">
-                        <label class="setting-label">Company Analysis Prompt ▼</label>
+                        <label class="setting-label">Field Extraction Prompt ▼</label>
                         <div class="setting-value prompt-preview">
-                            ${(prompts.analysis_prompt || 'Analyze the company...').substring(0, 150)}...
+                            ${(prompts.analysis_prompt || 'Extract these specific fields...').substring(0, 150)}...
                         </div>
                         <div id="analysis-prompt" class="expanded-content">
                             <textarea class="setting-value prompt-textarea" rows="15" style="width: 100%; resize: vertical; min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; line-height: 1.5;">
@@ -831,22 +831,6 @@ ${prompts.page_selection_prompt || 'Loading...'}
                         </div>
                     </div>
                     
-                    <div class="setting-item expandable" onclick="toggleExpand('extraction-prompt')">
-                        <label class="setting-label">Enhanced Extraction Prompt ▼</label>
-                        <div class="setting-value prompt-preview">
-                            ${(prompts.extraction_prompt || 'Extract specific fields...').substring(0, 150)}...
-                        </div>
-                        <div id="extraction-prompt" class="expanded-content">
-                            <textarea class="setting-value prompt-textarea" rows="15" style="width: 100%; resize: vertical; min-height: 300px; font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; line-height: 1.5;">
-${prompts.extraction_prompt || 'Loading...'}
-                            </textarea>
-                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
-                                <button class="action-button" onclick="savePrompt('extraction')">💾 Save Changes</button>
-                                <button class="action-button" onclick="resetSinglePrompt('extraction')" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">🔄 Reset</button>
-                                <span style="font-size: 0.875rem; color: #94a3b8;">Ctrl+A to select all</span>
-                            </div>
-                        </div>
-                    </div>
                     
                     <button class="action-button" onclick="resetPrompts()">Reset to Defaults</button>
                     <button class="action-button danger-button" onclick="exportPrompts()">Export Prompts</button>

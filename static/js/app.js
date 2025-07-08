@@ -37,24 +37,24 @@ class TheodoreUI {
         } else {
         }
 
-        // Real-time search
+        // Search on Enter key press only
         const companyInput = document.getElementById('companyName');
         if (companyInput) {
-            let searchTimeout;
             let searchController = null; // To cancel previous requests
             
-            companyInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                
-                // Cancel previous request if still pending
-                if (searchController) {
-                    searchController.abort();
-                }
-                
-                searchTimeout = setTimeout(() => {
+            // Trigger search on Enter key
+            companyInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission if inside a form
+                    
+                    // Cancel previous request if still pending
+                    if (searchController) {
+                        searchController.abort();
+                    }
+                    
                     searchController = new AbortController();
                     this.handleRealTimeSearch(e.target.value, searchController);
-                }, 300);
+                }
             });
             
             // TEMPORARILY DISABLED - Hide suggestions when input loses focus (with small delay to allow clicks)
@@ -2399,7 +2399,7 @@ class TheodoreUI {
                     company_name: companyName,
                     website: website,
                     research_status: status,
-                    is_researched: false,  // Always false for database companies
+                    is_researched: (status === 'completed'),  // Set to true when research is completed
                     database_id: companyId
                 });
                 controls.innerHTML = newControls;
@@ -3419,15 +3419,14 @@ class TheodoreUI {
     }
     
     initializeDatabaseSearch() {
-        // Search input with debouncing
+        // Search input - trigger on Enter key only
         const searchInput = document.getElementById('databaseSearch');
         if (searchInput) {
-            let searchTimeout;
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
                     this.performDatabaseSearch();
-                }, 500); // 500ms debounce
+                }
             });
         }
         
@@ -4134,6 +4133,14 @@ class TheodoreUI {
         
         if (statusText) {
             statusText.textContent = message;
+            // Add appropriate styling based on status
+            if (message.includes('✅')) {
+                statusText.style.color = '#10b981'; // Green for success
+            } else if (message.includes('❌')) {
+                statusText.style.color = '#ef4444'; // Red for failure
+            } else {
+                statusText.style.color = ''; // Default color
+            }
         }
         
         if (progressText) {
@@ -4143,6 +4150,9 @@ class TheodoreUI {
         if (progressFill) {
             const percentage = total > 0 ? (processed / total) * 100 : 0;
             progressFill.style.width = `${percentage}%`;
+            
+            // Add smooth transition for progress bar
+            progressFill.style.transition = 'width 0.3s ease';
         }
     }
 
@@ -4164,12 +4174,15 @@ class TheodoreUI {
 
     async pollBatchProgress(jobId, totalCompanies) {
         const pollInterval = 2000; // Poll every 2 seconds
+        let retryCount = 0;
+        const maxRetries = 3;
         
         const poll = async () => {
             try {
                 const response = await fetch(`/api/batch/progress/${jobId}`);
                 if (response.ok) {
                     const data = await response.json();
+                    retryCount = 0; // Reset retry count on success
                     
                     if (data.status === 'completed') {
                         this.showBatchStatus('✅ Batch processing completed!', totalCompanies, totalCompanies);
@@ -4179,13 +4192,38 @@ class TheodoreUI {
                         this.showBatchError(data.error || 'Batch processing failed');
                         return;
                     } else {
-                        // Update progress
+                        // Update progress with detailed information
                         const processed = data.processed || 0;
-                        this.showBatchStatus(`Processing companies... (${data.current_company || 'Loading'})`, processed, totalCompanies);
+                        const currentCompany = data.current_company || 'Initializing';
+                        const message = data.current_message || 'Processing...';
+                        
+                        // Extract success/failure counts from message if available
+                        let statusText = `Processing companies... (${currentCompany})`;
+                        if (message.includes('✅') || message.includes('❌')) {
+                            // Show the detailed status message
+                            statusText = message;
+                        }
+                        
+                        this.showBatchStatus(statusText, processed, totalCompanies);
+                        
+                        // Update additional UI elements if they exist
+                        const successCountEl = document.getElementById('batchSuccessCount');
+                        const failedCountEl = document.getElementById('batchFailedCount');
+                        if (successCountEl && data.successful !== undefined) {
+                            successCountEl.textContent = data.successful;
+                        }
+                        if (failedCountEl && data.failed !== undefined) {
+                            failedCountEl.textContent = data.failed;
+                        }
                         
                         // Continue polling
                         setTimeout(poll, pollInterval);
                     }
+                } else if (response.status === 404 && retryCount < maxRetries) {
+                    // Job not found yet, retry with backoff
+                    retryCount++;
+                    console.log(`Job not found yet, retrying... (${retryCount}/${maxRetries})`);
+                    setTimeout(poll, pollInterval * retryCount);
                 } else {
                     this.showBatchError('Failed to get progress updates');
                 }
@@ -4195,7 +4233,8 @@ class TheodoreUI {
             }
         };
         
-        poll();
+        // Start polling with a small delay to allow job creation
+        setTimeout(poll, 1000);
     }
 
     showBatchResults(results) {

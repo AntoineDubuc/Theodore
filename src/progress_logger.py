@@ -402,11 +402,40 @@ def complete_company_processing(job_id: str, success: bool, error: str = None, s
 # ============================================================================
 
 class BatchProgressLogger:
-    """Handles progress tracking for batch processing operations"""
+    """Handles progress tracking for batch processing operations with file persistence"""
     
     def __init__(self):
-        self.batch_jobs = {}
         self.lock = threading.Lock()
+        self.batch_file = "logs/batch_progress.json"
+        self.batch_jobs = {}
+        self._load_batch_progress()
+    
+    def _load_batch_progress(self) -> None:
+        """Load batch progress data from JSON file"""
+        try:
+            if Path(self.batch_file).exists():
+                with open(self.batch_file, 'r') as f:
+                    self.batch_jobs = json.load(f)
+                    logger.info(f"Loaded existing batch progress data with {len(self.batch_jobs)} jobs")
+            else:
+                # File doesn't exist, save empty data
+                self._save_batch_progress()
+                logger.info("Created new batch progress data file")
+        except Exception as e:
+            logger.warning(f"Failed to load batch progress data: {e}, using empty data")
+            self.batch_jobs = {}
+            self._save_batch_progress()
+    
+    def _save_batch_progress(self) -> None:
+        """Save batch progress data to file (thread-safe)"""
+        try:
+            os.makedirs(os.path.dirname(self.batch_file), exist_ok=True)
+            with open(self.batch_file, 'w') as f:
+                json.dump(self.batch_jobs, f, indent=2, default=str)
+                f.flush()  # Force flush to disk
+                os.fsync(f.fileno())  # Force sync to disk
+        except Exception as e:
+            logger.error(f"Failed to save batch progress data: {e}")
     
     def start_batch_job(self, job_id: str, total_companies: int):
         """Start tracking a batch processing job"""
@@ -423,13 +452,20 @@ class BatchProgressLogger:
                 'current_company': 'Initializing...',
                 'companies': []
             }
+            self._save_batch_progress()
     
     def update_batch_progress(self, job_id: str, processed_count: int, message: str, current_company: str = None):
         """Update progress for a batch job"""
         with self.lock:
+            # Reload data to get updates from other processes
+            self._load_batch_progress()
+            
             if job_id in self.batch_jobs:
                 self.batch_jobs[job_id]['processed'] = processed_count
                 self.batch_jobs[job_id]['current_message'] = message
+                
+                # Don't update counts here - they will be set in complete_batch_job
+                # Just track the progress
                 
                 # Extract current company from message if not provided
                 if current_company:
@@ -446,10 +482,15 @@ class BatchProgressLogger:
                     match = re.search(r'(?:Completed|Failed) ([^:]+)', message)
                     if match:
                         self.batch_jobs[job_id]['current_company'] = match.group(1)
+                
+                self._save_batch_progress()
     
     def complete_batch_job(self, job_id: str, successful_count: int, failed_count: int, results: dict):
         """Complete a batch processing job"""
         with self.lock:
+            # Reload data to get updates from other processes
+            self._load_batch_progress()
+            
             if job_id in self.batch_jobs:
                 job = self.batch_jobs[job_id]
                 job['successful'] = successful_count
@@ -458,10 +499,13 @@ class BatchProgressLogger:
                 job['end_time'] = datetime.now().isoformat()
                 job['current_message'] = f'Completed: {successful_count} successful, {failed_count} failed'
                 job['results'] = results
+                self._save_batch_progress()
     
     def get_batch_progress(self, job_id: str):
         """Get progress for a specific batch job"""
         with self.lock:
+            # Reload data to get updates from other processes
+            self._load_batch_progress()
             return self.batch_jobs.get(job_id)
 
 # Global batch progress logger instance
@@ -472,9 +516,9 @@ def start_batch_job(job_id: str, total_companies: int):
     """Start batch job tracking"""
     batch_progress_logger.start_batch_job(job_id, total_companies)
 
-def update_batch_progress(job_id: str, processed_count: int, message: str):
+def update_batch_progress(job_id: str, processed_count: int, message: str, current_company: str = None):
     """Update batch progress"""
-    batch_progress_logger.update_batch_progress(job_id, processed_count, message)
+    batch_progress_logger.update_batch_progress(job_id, processed_count, message, current_company)
 
 def complete_batch_job(job_id: str, successful_count: int, failed_count: int, results: dict):
     """Complete batch job"""
