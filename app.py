@@ -4291,6 +4291,133 @@ def export_field_metrics():
         }), 500
 
 
+@app.route('/api/failures', methods=['GET'])
+def get_failure_analytics():
+    """Get failure analytics from existing progress logs"""
+    try:
+        # Read existing progress logs
+        all_jobs = progress_logger.progress_data.get("jobs", {})
+        
+        # Filter for failed jobs
+        failed_jobs = {job_id: job for job_id, job in all_jobs.items() 
+                      if job.get("status") == "failed"}
+        
+        # Also get failed companies from Pinecone
+        failed_companies_pinecone = get_failed_companies_from_pinecone()
+        
+        # Analyze failures by stage and error type
+        failure_analysis = analyze_failures(failed_jobs)
+        
+        return jsonify({
+            "success": True,
+            "total_failures": len(failed_jobs),
+            "failure_breakdown": failure_analysis,
+            "failed_companies": format_failed_companies(failed_jobs),
+            "pinecone_failures": failed_companies_pinecone,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error getting failure analytics: {e}")
+        return jsonify({"error": f"Failed to get failure analytics: {str(e)}"}), 500
+
+def get_failed_companies_from_pinecone():
+    """Get companies with failed scrape status from Pinecone"""
+    try:
+        if not pipeline or not pipeline.pinecone_client:
+            return []
+        
+        # Query Pinecone for all companies
+        dummy_embedding = [0.0] * 1536
+        results = pipeline.pinecone_client.index.query(
+            vector=dummy_embedding,
+            top_k=500,
+            include_metadata=True
+        )
+        
+        failed_companies = []
+        for match in results.matches:
+            metadata = match.metadata
+            if metadata.get('scrape_status') == 'failed':
+                failed_companies.append({
+                    'id': match.id,
+                    'name': metadata.get('company_name', 'Unknown'),
+                    'website': metadata.get('website', ''),
+                    'error': metadata.get('scrape_error', 'Unknown error'),
+                    'last_updated': metadata.get('last_updated', ''),
+                    'source': 'pinecone'
+                })
+        
+        return failed_companies
+    except Exception as e:
+        logger.error(f"Error getting failed companies from Pinecone: {e}")
+        return []
+
+def analyze_failures(failed_jobs):
+    """Analyze failure patterns from failed jobs"""
+    failure_by_stage = {}
+    error_patterns = {}
+    
+    for job_id, job in failed_jobs.items():
+        # Get the failure stage
+        phases = job.get('phases', [])
+        failed_stage = 'unknown'
+        
+        # Find the last phase that failed
+        for phase in reversed(phases):
+            if phase.get('status') == 'failed':
+                failed_stage = phase.get('name', 'unknown')
+                break
+        
+        # Count failures by stage
+        failure_by_stage[failed_stage] = failure_by_stage.get(failed_stage, 0) + 1
+        
+        # Analyze error patterns
+        error_msg = job.get('error', 'Unknown error')
+        error_key = classify_error(error_msg)
+        error_patterns[error_key] = error_patterns.get(error_key, 0) + 1
+    
+    return {
+        'by_stage': failure_by_stage,
+        'error_patterns': error_patterns
+    }
+
+def classify_error(error_msg):
+    """Classify error message into categories"""
+    error_msg = error_msg.lower()
+    
+    if 'timeout' in error_msg:
+        return 'timeout'
+    elif 'no content' in error_msg or 'content extraction' in error_msg:
+        return 'no_content'
+    elif 'llm' in error_msg or 'ai' in error_msg:
+        return 'llm_failure'
+    elif 'network' in error_msg or 'connection' in error_msg:
+        return 'network_error'
+    elif 'discovery' in error_msg or 'path' in error_msg:
+        return 'discovery_failure'
+    elif 'selection' in error_msg or 'no pages' in error_msg:
+        return 'selection_failure'
+    else:
+        return 'other'
+
+def format_failed_companies(failed_jobs):
+    """Format failed companies for UI display"""
+    formatted = []
+    
+    for job_id, job in failed_jobs.items():
+        formatted.append({
+            'job_id': job_id,
+            'company_name': job.get('company_name', 'Unknown'),
+            'status': job.get('status', 'failed'),
+            'error': job.get('error', 'Unknown error'),
+            'start_time': job.get('start_time', ''),
+            'end_time': job.get('end_time', ''),
+            'phases': job.get('phases', []),
+            'source': 'progress_log'
+        })
+    
+    return formatted
+
 @app.route('/ping')
 def ping():
     """Simple ping endpoint for health checks"""
