@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center - Sales Scout</title>
+    <meta name="description" content="Get help with Sales Scout - FAQ, guides, and support for AI-powered sales intelligence">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/marketing.css') }}?v={{ timestamp }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="marketing-header">
+        <div class="container">
+            <nav class="marketing-nav">
+                <div class="nav-brand">
+                    <a href="/" style="text-decoration: none;">
+                        <h1 class="brand-logo">Sales Scout</h1>
+                        <span class="brand-tagline">AI Sales Intelligence</span>
+                    </a>
+                </div>
+                <div class="nav-links">
+                    <a href="/#features" class="nav-link">Features</a>
+                    <a href="/#integrations" class="nav-link">Integrations</a>
+                    <a href="/pricing" class="nav-link">Pricing</a>
+                    <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
+                    <a href="/dashboard" class="nav-link">Dashboard</a>
+                    <a href="/#signup" class="btn btn-primary nav-cta">Start Free Trial</a>
+                </div>
+                <div class="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section" style="padding: 120px 0 60px;">
+        <div class="container">
+            <div class="hero-content" style="grid-template-columns: 1fr; text-align: center; gap: 40px;">
+                <div>
+                    <h1 class="hero-title" style="font-size: 2.5rem;">Help Center</h1>
+                    <p class="hero-subtitle" style="max-width: 600px; margin: 0 auto;">
+                        Get the most out of Sales Scout with our comprehensive guides, FAQs, and support resources.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Help Content -->
+    <section class="help-section" style="padding: 60px 0;">
+        <div class="container">
+            <!-- Quick Start -->
+            <div class="help-category">
+                <h2 class="category-title">🚀 Getting Started</h2>
+                <div class="help-grid">
+                    <div class="help-card">
+                        <h3>Quick Start Guide</h3>
+                        <p>Get up and running with Sales Scout in under 5 minutes.</p>
+                        <div class="help-steps">
+                            <div class="step">1. Sign up for your free trial</div>
+                            <div class="step">2. Connect your HubSpot CRM</div>
+                            <div class="step">3. Start researching companies</div>
+                            <div class="step">4. Watch your CRM get enriched automatically</div>
+                        </div>
+                    </div>
+                    <div class="help-card">
+                        <h3>HubSpot Integration</h3>
+                        <p>Set up seamless sync between Sales Scout and your HubSpot CRM.</p>
+                        <ul>
+                            <li>Connect your HubSpot account</li>
+                            <li>Map 77 intelligence fields</li>
+                            <li>Enable bidirectional sync</li>
+                            <li>Configure automation rules</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="help-category">
+                <h2 class="category-title">❓ Frequently Asked Questions</h2>
+                <div class="faq-grid">
+                    <div class="faq-item">
+                        <h4>How accurate is the company data?</h4>
+                        <p>Sales Scout achieves 95% accuracy by extracting real data from company websites using our 4-phase AI pipeline. Unlike other providers, we don't use hallucinated or outdated data.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>How many fields can be synced to HubSpot?</h4>
+                        <p>We automatically map 77 company intelligence fields to your HubSpot CRM, including industry, tech stack, leadership, funding status, and business model classification.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>How fast is the research process?</h4>
+                        <p>Sales Scout processes companies 10x faster than manual research, typically completing analysis of 50+ pages in under 30 seconds.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>What makes Sales Scout different?</h4>
+                        <p>We're 6x cheaper than traditional data providers, use real AI extraction (not web scraping), and provide direct CRM integration with live sync capabilities.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Is there a free trial?</h4>
+                        <p>Yes! Start with our free trial - no credit card required. Test the full platform including HubSpot sync and AI research capabilities.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>How does the AI similarity discovery work?</h4>
+                        <p>Our vector-based similarity engine analyzes multiple dimensions including business model, tech stack, company stage, and market positioning to find relevant prospects.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Guide -->
+            <div class="help-category">
+                <h2 class="category-title">🛠️ Features Guide</h2>
+                <div class="feature-guide-grid">
+                    <div class="guide-card">
+                        <div class="guide-icon">🤖</div>
+                        <h3>4-Phase AI Extraction</h3>
+                        <p>Our intelligent pipeline discovers links, selects relevant pages, extracts content in parallel, and generates business intelligence using advanced AI models.</p>
+                    </div>
+                    <div class="guide-card">
+                        <div class="guide-icon">🎯</div>
+                        <h3>Similarity Discovery</h3>
+                        <p>Find companies similar to your best customers using multi-dimensional scoring and vector-based matching for precise prospecting.</p>
+                    </div>
+                    <div class="guide-card">
+                        <div class="guide-icon">🏷️</div>
+                        <h3>Business Model Classification</h3>
+                        <p>Automatic categorization using our 59-category framework helps you understand company types and tailor your sales approach.</p>
+                    </div>
+                    <div class="guide-card">
+                        <div class="guide-icon">📊</div>
+                        <h3>Batch Processing</h3>
+                        <p>Process hundreds of companies from Google Sheets with comprehensive intelligence extraction and automated CRM updates.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Contact -->
+            <div class="help-category">
+                <h2 class="category-title">💬 Need More Help?</h2>
+                <div class="support-options">
+                    <div class="support-card">
+                        <h3>Contact Support</h3>
+                        <p>Get direct help from our team</p>
+                        <a href="/contact" class="btn btn-primary">Contact Us</a>
+                    </div>
+                    <div class="support-card">
+                        <h3>Documentation</h3>
+                        <p>Detailed technical guides and API docs</p>
+                        <a href="/docs" class="btn btn-secondary">View Docs</a>
+                    </div>
+                    <div class="support-card">
+                        <h3>Schedule Demo</h3>
+                        <p>See Sales Scout in action with our team</p>
+                        <a href="/contact" class="btn btn-accent">Book Demo</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="marketing-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>Sales Scout</h3>
+                    <p>AI-powered sales intelligence that syncs with your CRM</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h4>Product</h4>
+                        <a href="/#features">Features</a>
+                        <a href="/#integrations">Integrations</a>
+                        <a href="/pricing">Pricing</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Support</h4>
+                        <a href="/docs">Documentation</a>
+                        <a href="/help">Help Center</a>
+                        <a href="/contact">Contact</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Company</h4>
+                        <a href="/about">About</a>
+                        <a href="/privacy">Privacy</a>
+                        <a href="/terms">Terms</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Sales Scout. Built with ❤️ for modern sales teams.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/marketing.js') }}?v={{ timestamp }}"></script>
+
+    <style>
+        .help-section {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .help-category {
+            margin-bottom: 80px;
+        }
+
+        .category-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .help-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 32px;
+            margin-bottom: 40px;
+        }
+
+        .help-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+        }
+
+        .help-card h3 {
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+        }
+
+        .help-card p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .help-steps .step {
+            padding: 8px 0;
+            color: var(--text-secondary);
+            border-left: 3px solid var(--primary-color);
+            padding-left: 16px;
+            margin-bottom: 8px;
+        }
+
+        .help-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .help-card li {
+            color: var(--text-secondary);
+            padding: 6px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .help-card li::before {
+            content: '✓';
+            color: var(--success-color);
+            position: absolute;
+            left: 0;
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .faq-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .faq-item h4 {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .faq-item p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .feature-guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .guide-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .guide-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+
+        .guide-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .guide-card p {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .support-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .support-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .support-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .support-card p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .help-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-guide-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .support-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

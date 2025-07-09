@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Scout - AI-Powered Sales Intelligence That Syncs With Your CRM</title>
+    <meta name="description" content="Turn any company name into sales intelligence. AI-powered company research that automatically syncs with HubSpot and your favorite CRM.">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/marketing.css') }}?v={{ timestamp }}">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sales Scout - AI-Powered Sales Intelligence">
+    <meta property="og:description" content="Turn any company name into sales intelligence that syncs with your CRM">
+    <meta property="og:image" content="{{ url_for('static', filename='img/og-image.png') }}">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <!-- Header -->
+    <header class="marketing-header">
+        <div class="container">
+            <nav class="marketing-nav">
+                <div class="nav-brand">
+                    <h1 class="brand-logo">Sales Scout</h1>
+                    <span class="brand-tagline">AI Sales Intelligence</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#features" class="nav-link">Features</a>
+                    <a href="#integrations" class="nav-link">Integrations</a>
+                    <a href="#pricing" class="nav-link">Pricing</a>
+                    <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
+                    <a href="/dashboard" class="nav-link">Dashboard</a>
+                    <a href="#signup" class="btn btn-primary nav-cta">Start Free Trial</a>
+                </div>
+                <div class="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-left">
+                    <div class="hero-badge">
+                        <span class="badge-icon">🚀</span>
+                        <span>6x cheaper than traditional data providers</span>
+                    </div>
+                    <h1 class="hero-title">
+                        Turn Any Company Name Into 
+                        <span class="gradient-text">Sales Intelligence</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        AI-powered company research that automatically syncs with HubSpot and your favorite CRM. 
+                        Get 77 enriched fields from real web data, not hallucinated information.
+                    </p>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">77</div>
+                            <div class="stat-label">Data Fields</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">10x</div>
+                            <div class="stat-label">Faster Research</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">95%</div>
+                            <div class="stat-label">Accuracy</div>
+                        </div>
+                    </div>
+                    <div class="hero-cta">
+                        <button class="btn btn-primary btn-large" onclick="scrollToSignup()">
+                            <span>🎯</span>
+                            Start Free Trial
+                        </button>
+                        <button class="btn btn-secondary btn-large" onclick="showDemo()">
+                            <span>▶️</span>
+                            Watch Demo
+                        </button>
+                    </div>
+                    <div class="hero-trust">
+                        <span class="trust-text">No credit card required • Real data, not hallucinated</span>
+                    </div>
+                </div>
+                <div class="hero-right">
+                    <div class="hero-demo">
+                        <div class="demo-card">
+                            <div class="demo-header">
+                                <span class="demo-title">Live Demo</span>
+                                <div class="demo-status">
+                                    <span class="status-dot"></span>
+                                    <span>Processing</span>
+                                </div>
+                            </div>
+                            <div class="demo-input">
+                                <input type="text" placeholder="Enter company name..." value="Stripe" readonly>
+                                <button class="demo-btn">Analyze</button>
+                            </div>
+                            <div class="demo-output">
+                                <div class="output-item">
+                                    <span class="output-label">Industry:</span>
+                                    <span class="output-value typing-animation" data-text="FinTech - Payment Processing"></span>
+                                </div>
+                                <div class="output-item">
+                                    <span class="output-label">Business Model:</span>
+                                    <span class="output-value typing-animation" data-text="B2B SaaS"></span>
+                                </div>
+                                <div class="output-item">
+                                    <span class="output-label">Company Stage:</span>
+                                    <span class="output-value typing-animation" data-text="Enterprise</span>
+                                </div>
+                                <div class="output-item">
+                                    <span class="output-label">Tech Stack:</span>
+                                    <span class="output-value typing-animation" data-text="React, Ruby, Go, AWS"></span>
+                                </div>
+                                <div class="demo-sync">
+                                    <div class="sync-arrow">
+                                        <span class="arrow-line"></span>
+                                        <span class="arrow-head">→</span>
+                                    </div>
+                                    <div class="sync-target">
+                                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a59'%3E%3Cpath d='M18.5 12c0-1.5-1.5-3-3-3s-3 1.5-3 3 1.5 3 3 3 3-1.5 3-3zm-3-7.5c-1.5 0-3-1.5-3-3s1.5-3 3-3 3 1.5 3 3-1.5 3-3 3zm-6 15c-1.5 0-3-1.5-3-3s1.5-3 3-3 3 1.5 3 3-1.5 3-3 3z'/%3E%3C/svg%3E" alt="HubSpot" class="hubspot-icon">
+                                        <span>HubSpot CRM</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integration Section -->
+    <section class="integration-section" id="integrations">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Seamless CRM Integration</h2>
+                <p class="section-subtitle">
+                    Sales Scout automatically maps 77 company intelligence fields to your CRM. 
+                    No manual data entry, no copy-pasting.
+                </p>
+            </div>
+            <div class="integration-showcase">
+                <div class="integration-flow">
+                    <div class="flow-step">
+                        <div class="step-icon">🏢</div>
+                        <div class="step-content">
+                            <h3>Company Input</h3>
+                            <p>Enter any company name or website</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="step-icon">🤖</div>
+                        <div class="step-content">
+                            <h3>AI Analysis</h3>
+                            <p>4-phase intelligent extraction from 50+ pages</p>
+                        </div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="step-icon">🔗</div>
+                        <div class="step-content">
+                            <h3>Auto-Sync</h3>
+                            <p>Enriched data flows directly to your CRM</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="integration-partners">
+                    <div class="partner-card featured">
+                        <div class="partner-logo">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a59'%3E%3Cpath d='M18.5 12c0-1.5-1.5-3-3-3s-3 1.5-3 3 1.5 3 3 3 3-1.5 3-3zm-3-7.5c-1.5 0-3-1.5-3-3s1.5-3 3-3 3 1.5 3 3-1.5 3-3 3zm-6 15c-1.5 0-3-1.5-3-3s1.5-3 3-3 3 1.5 3 3-1.5 3-3 3z'/%3E%3C/svg%3E" alt="HubSpot">
+                        </div>
+                        <div class="partner-info">
+                            <h3>HubSpot</h3>
+                            <p>Native integration with bidirectional sync</p>
+                            <div class="integration-status">
+                                <span class="status-badge active">Live Now</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="partner-card">
+                        <div class="partner-logo">
+                            <div class="logo-placeholder">SF</div>
+                        </div>
+                        <div class="partner-info">
+                            <h3>Salesforce</h3>
+                            <p>Enterprise CRM integration</p>
+                            <div class="integration-status">
+                                <span class="status-badge coming-soon">Coming Soon</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="partner-card">
+                        <div class="partner-logo">
+                            <div class="logo-placeholder">PI</div>
+                        </div>
+                        <div class="partner-info">
+                            <h3>Pipedrive</h3>
+                            <p>Sales pipeline management</p>
+                            <div class="integration-status">
+                                <span class="status-badge coming-soon">Coming Soon</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem/Solution Section -->
+    <section class="problem-solution-section">
+        <div class="container">
+            <div class="problem-solution-content">
+                <div class="problem-side">
+                    <div class="side-header">
+                        <h2>Before Sales Scout</h2>
+                        <span class="header-emoji">😤</span>
+                    </div>
+                    <div class="problem-list">
+                        <div class="problem-item">
+                            <span class="problem-icon">⏰</span>
+                            <div class="problem-text">
+                                <h4>Hours of Manual Research</h4>
+                                <p>Manually visiting websites, copying data, updating CRM fields one by one</p>
+                            </div>
+                        </div>
+                        <div class="problem-item">
+                            <span class="problem-icon">❌</span>
+                            <div class="problem-text">
+                                <h4>Incomplete Information</h4>
+                                <p>Missing key details like tech stack, company stage, decision makers</p>
+                            </div>
+                        </div>
+                        <div class="problem-item">
+                            <span class="problem-icon">💸</span>
+                            <div class="problem-text">
+                                <h4>Expensive Data Providers</h4>
+                                <p>Paying premium prices for outdated or hallucinated company data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="solution-side">
+                    <div class="side-header">
+                        <h2>With Sales Scout</h2>
+                        <span class="header-emoji">🚀</span>
+                    </div>
+                    <div class="solution-list">
+                        <div class="solution-item">
+                            <span class="solution-icon">⚡</span>
+                            <div class="solution-text">
+                                <h4>Instant Intelligence</h4>
+                                <p>77 enriched fields in seconds with 4-phase AI extraction</p>
+                            </div>
+                        </div>
+                        <div class="solution-item">
+                            <span class="solution-icon">✅</span>
+                            <div class="solution-text">
+                                <h4>Complete Profiles</h4>
+                                <p>Real web data including leadership, tech stack, funding, culture</p>
+                            </div>
+                        </div>
+                        <div class="solution-item">
+                            <span class="solution-icon">💰</span>
+                            <div class="solution-text">
+                                <h4>6x Cost Savings</h4>
+                                <p>Revolutionary AI efficiency at a fraction of traditional costs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Why Sales Teams Choose Sales Scout</h2>
+                <p class="section-subtitle">
+                    Built for modern sales teams who need real intelligence, not hallucinated data
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card primary">
+                    <div class="feature-icon">🔗</div>
+                    <h3>CRM Integration</h3>
+                    <p>Seamless HubSpot sync with 77 enriched fields. Bidirectional data flow keeps your CRM always up-to-date.</p>
+                    <div class="feature-highlight">
+                        <span class="highlight-badge">Most Popular</span>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>4-Phase AI Extraction</h3>
+                    <p>Intelligent link discovery, LLM-powered page selection, parallel content extraction, and business intelligence generation.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Similarity Discovery</h3>
+                    <p>Find similar companies with 95% accuracy using vector-based matching and multi-dimensional scoring.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Process companies 10x faster than manual research. Analyze 50+ pages in under 30 seconds.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>Cost Effective</h3>
+                    <p>6x cheaper than traditional data providers with Nova Pro AI optimization. Real ROI for sales teams.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Business Model Classification</h3>
+                    <p>Advanced 59-category SaaS framework automatically classifies companies for better prospecting.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof Section -->
+    <section class="social-proof-section">
+        <div class="container">
+            <div class="proof-header">
+                <h2>Trusted by Sales Teams</h2>
+                <p>Real results from our AI-powered intelligence platform</p>
+            </div>
+            <div class="proof-stats">
+                <div class="proof-stat">
+                    <div class="stat-number counter" data-target="77">0</div>
+                    <div class="stat-label">Intelligence Fields</div>
+                    <div class="stat-description">Comprehensive company profiles</div>
+                </div>
+                <div class="proof-stat">
+                    <div class="stat-number counter" data-target="6">0</div>
+                    <div class="stat-suffix">x</div>
+                    <div class="stat-label">Cost Reduction</div>
+                    <div class="stat-description">vs traditional data providers</div>
+                </div>
+                <div class="proof-stat">
+                    <div class="stat-number counter" data-target="95">0</div>
+                    <div class="stat-suffix">%</div>
+                    <div class="stat-label">Data Accuracy</div>
+                    <div class="stat-description">Real web data extraction</div>
+                </div>
+                <div class="proof-stat">
+                    <div class="stat-number counter" data-target="50">0</div>
+                    <div class="stat-suffix">+</div>
+                    <div class="stat-label">Pages Analyzed</div>
+                    <div class="stat-description">Per company research</div>
+                </div>
+            </div>
+            <div class="proof-achievements">
+                <div class="achievement-item">
+                    <span class="achievement-icon">🏆</span>
+                    <span class="achievement-text">Production-ready AI pipeline</span>
+                </div>
+                <div class="achievement-item">
+                    <span class="achievement-icon">🚀</span>
+                    <span class="achievement-text">Vector database technology</span>
+                </div>
+                <div class="achievement-item">
+                    <span class="achievement-icon">⚡</span>
+                    <span class="achievement-text">Nova Pro AI optimization</span>
+                </div>
+                <div class="achievement-item">
+                    <span class="achievement-icon">🔒</span>
+                    <span class="achievement-text">Enterprise-grade security</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="signup">
+        <div class="container">
+            <div class="cta-content">
+                <div class="cta-text">
+                    <h2>Start Enriching Your CRM Today</h2>
+                    <p>Join sales teams who've transformed their prospecting with AI-powered intelligence</p>
+                    <div class="cta-benefits">
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✅</span>
+                            <span>Free trial - no credit card required</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✅</span>
+                            <span>Setup in under 5 minutes</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">✅</span>
+                            <span>77 enriched fields per company</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="cta-form">
+                    <div class="signup-card">
+                        <div class="signup-header">
+                            <h3>Start Your Free Trial</h3>
+                            <p>Get started with Sales Scout in minutes</p>
+                        </div>
+                        <form class="signup-form" action="{{ url_for('auth.register') }}" method="POST">
+                            <div class="form-group">
+                                <input type="email" name="email" placeholder="Enter your work email" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" name="company" placeholder="Company name" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" name="full_name" placeholder="Your full name" required class="form-input">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <span>🎯</span>
+                                Start Free Trial
+                            </button>
+                        </form>
+                        <div class="signup-trust">
+                            <span>🔒 We respect your privacy. No spam, ever.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="marketing-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>Sales Scout</h3>
+                    <p>AI-powered sales intelligence that syncs with your CRM</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h4>Product</h4>
+                        <a href="#features">Features</a>
+                        <a href="#integrations">Integrations</a>
+                        <a href="#pricing">Pricing</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Support</h4>
+                        <a href="/docs">Documentation</a>
+                        <a href="/help">Help Center</a>
+                        <a href="/contact">Contact</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Company</h4>
+                        <a href="/about">About</a>
+                        <a href="/privacy">Privacy</a>
+                        <a href="/terms">Terms</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Sales Scout. Built with ❤️ for modern sales teams.</p>
+                <p>Powered by AWS Bedrock, Pinecone, and Crawl4AI</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/marketing.js') }}?v={{ timestamp }}"></script>
+</body>
+</html>

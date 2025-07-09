@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Sales Scout</title>
+    <meta name="description" content="Sales Scout privacy policy - how we collect, use, and protect your data">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ timestamp }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/marketing.css') }}?v={{ timestamp }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="marketing-header">
+        <div class="container">
+            <nav class="marketing-nav">
+                <div class="nav-brand">
+                    <a href="/" style="text-decoration: none;">
+                        <h1 class="brand-logo">Sales Scout</h1>
+                        <span class="brand-tagline">AI Sales Intelligence</span>
+                    </a>
+                </div>
+                <div class="nav-links">
+                    <a href="/#features" class="nav-link">Features</a>
+                    <a href="/#integrations" class="nav-link">Integrations</a>
+                    <a href="/pricing" class="nav-link">Pricing</a>
+                    <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
+                    <a href="/dashboard" class="nav-link">Dashboard</a>
+                    <a href="/#signup" class="btn btn-primary nav-cta">Start Free Trial</a>
+                </div>
+                <div class="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section" style="padding: 120px 0 60px;">
+        <div class="container">
+            <div class="hero-content" style="grid-template-columns: 1fr; text-align: center; gap: 40px;">
+                <div>
+                    <h1 class="hero-title" style="font-size: 2.5rem;">Privacy Policy</h1>
+                    <p class="hero-subtitle" style="max-width: 600px; margin: 0 auto;">
+                        Your privacy is important to us. Learn how we collect, use, and protect your information.
+                    </p>
+                    <div class="policy-meta" style="margin-top: 24px;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                            Last updated: December 2024
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Privacy Policy Content -->
+    <section class="privacy-section" style="padding: 60px 0;">
+        <div class="container">
+            <div class="privacy-layout">
+                <!-- Table of Contents -->
+                <div class="privacy-sidebar">
+                    <div class="toc-card">
+                        <h3>Table of Contents</h3>
+                        <ul class="toc-nav">
+                            <li><a href="#overview" class="toc-link">Overview</a></li>
+                            <li><a href="#information-collected" class="toc-link">Information We Collect</a></li>
+                            <li><a href="#how-we-use" class="toc-link">How We Use Information</a></li>
+                            <li><a href="#sharing" class="toc-link">Information Sharing</a></li>
+                            <li><a href="#data-security" class="toc-link">Data Security</a></li>
+                            <li><a href="#data-retention" class="toc-link">Data Retention</a></li>
+                            <li><a href="#your-rights" class="toc-link">Your Rights</a></li>
+                            <li><a href="#cookies" class="toc-link">Cookies & Tracking</a></li>
+                            <li><a href="#third-party" class="toc-link">Third-Party Services</a></li>
+                            <li><a href="#children" class="toc-link">Children's Privacy</a></li>
+                            <li><a href="#changes" class="toc-link">Policy Changes</a></li>
+                            <li><a href="#contact" class="toc-link">Contact Information</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="privacy-content">
+                    <!-- Overview -->
+                    <section id="overview" class="privacy-section-content">
+                        <h2>Overview</h2>
+                        <p>
+                            Sales Scout ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy 
+                            explains how we collect, use, disclose, and safeguard your information when you use our AI-powered 
+                            sales intelligence platform and website.
+                        </p>
+                        <div class="highlight-box">
+                            <h4>🔒 Our Privacy Commitment</h4>
+                            <ul>
+                                <li>We never sell your personal data</li>
+                                <li>We use enterprise-grade security measures</li>
+                                <li>You maintain control over your data</li>
+                                <li>We're transparent about our data practices</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Information We Collect -->
+                    <section id="information-collected" class="privacy-section-content">
+                        <h2>Information We Collect</h2>
+                        
+                        <h3>Information You Provide</h3>
+                        <div class="info-category">
+                            <h4>Account Information</h4>
+                            <ul>
+                                <li>Name and email address</li>
+                                <li>Company name and job title</li>
+                                <li>Account credentials</li>
+                                <li>Payment information (processed by third-party providers)</li>
+                            </ul>
+                        </div>
+
+                        <div class="info-category">
+                            <h4>Usage Data</h4>
+                            <ul>
+                                <li>Company research queries and results</li>
+                                <li>API usage patterns</li>
+                                <li>Feature usage and preferences</li>
+                                <li>Support communications</li>
+                            </ul>
+                        </div>
+
+                        <h3>Information We Collect Automatically</h3>
+                        <div class="info-category">
+                            <h4>Technical Information</h4>
+                            <ul>
+                                <li>IP address and device information</li>
+                                <li>Browser type and version</li>
+                                <li>Operating system</li>
+                                <li>Website usage patterns and analytics</li>
+                            </ul>
+                        </div>
+
+                        <h3>Third-Party Data</h3>
+                        <div class="info-category">
+                            <h4>CRM Integration Data</h4>
+                            <ul>
+                                <li>HubSpot contact and company records (when you connect)</li>
+                                <li>CRM field mappings and sync preferences</li>
+                                <li>Integration authentication tokens</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- How We Use Information -->
+                    <section id="how-we-use" class="privacy-section-content">
+                        <h2>How We Use Your Information</h2>
+                        
+                        <div class="usage-purpose">
+                            <h3>🎯 Service Delivery</h3>
+                            <ul>
+                                <li>Provide AI-powered company research and intelligence</li>
+                                <li>Sync enriched data with your CRM systems</li>
+                                <li>Process API requests and manage your account</li>
+                                <li>Deliver real-time progress updates and notifications</li>
+                            </ul>
+                        </div>
+
+                        <div class="usage-purpose">
+                            <h3>🔧 Service Improvement</h3>
+                            <ul>
+                                <li>Analyze usage patterns to improve our AI algorithms</li>
+                                <li>Optimize extraction accuracy and processing speed</li>
+                                <li>Develop new features and integrations</li>
+                                <li>Monitor system performance and reliability</li>
+                            </ul>
+                        </div>
+
+                        <div class="usage-purpose">
+                            <h3>🛡️ Security & Compliance</h3>
+                            <ul>
+                                <li>Protect against fraud and unauthorized access</li>
+                                <li>Comply with legal obligations</li>
+                                <li>Investigate and prevent misuse of our services</li>
+                                <li>Maintain data integrity and system security</li>
+                            </ul>
+                        </div>
+
+                        <div class="usage-purpose">
+                            <h3>📧 Communication</h3>
+                            <ul>
+                                <li>Send important account and service updates</li>
+                                <li>Provide customer support and technical assistance</li>
+                                <li>Share relevant product improvements (with your consent)</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Information Sharing -->
+                    <section id="sharing" class="privacy-section-content">
+                        <h2>Information Sharing</h2>
+                        <p>We do not sell, trade, or rent your personal information. We may share information in these limited circumstances:</p>
+                        
+                        <div class="sharing-category">
+                            <h3>🔗 Service Providers</h3>
+                            <p>We work with trusted third-party providers who help us deliver our services:</p>
+                            <ul>
+                                <li><strong>Cloud Infrastructure:</strong> AWS, Pinecone (data storage and processing)</li>
+                                <li><strong>AI Services:</strong> Google AI, AWS Bedrock (intelligence processing)</li>
+                                <li><strong>Payment Processing:</strong> Stripe (payment handling)</li>
+                                <li><strong>CRM Integration:</strong> HubSpot (data sync when you connect)</li>
+                            </ul>
+                        </div>
+
+                        <div class="sharing-category">
+                            <h3>⚖️ Legal Requirements</h3>
+                            <p>We may disclose information when required to:</p>
+                            <ul>
+                                <li>Comply with legal obligations or court orders</li>
+                                <li>Protect our rights and property</li>
+                                <li>Investigate potential violations of our terms</li>
+                                <li>Ensure user safety and prevent fraud</li>
+                            </ul>
+                        </div>
+
+                        <div class="sharing-category">
+                            <h3>🏢 Business Transfers</h3>
+                            <p>In the event of a merger, acquisition, or sale of assets, your information may be transferred as part of that transaction.</p>
+                        </div>
+                    </section>
+
+                    <!-- Data Security -->
+                    <section id="data-security" class="privacy-section-content">
+                        <h2>Data Security</h2>
+                        <p>We implement comprehensive security measures to protect your information:</p>
+                        
+                        <div class="security-grid">
+                            <div class="security-measure">
+                                <h4>🔐 Encryption</h4>
+                                <p>All data is encrypted in transit (TLS 1.3) and at rest (AES-256)</p>
+                            </div>
+                            <div class="security-measure">
+                                <h4>🛡️ Access Controls</h4>
+                                <p>Role-based access with multi-factor authentication for all team members</p>
+                            </div>
+                            <div class="security-measure">
+                                <h4>🔍 Monitoring</h4>
+                                <p>24/7 security monitoring and automated threat detection</p>
+                            </div>
+                            <div class="security-measure">
+                                <h4>🏗️ Infrastructure</h4>
+                                <p>Enterprise-grade cloud infrastructure with regular security audits</p>
+                            </div>
+                        </div>
+
+                        <div class="security-note">
+                            <strong>Note:</strong> While we implement industry-standard security measures, no system is 100% secure. 
+                            We encourage you to use strong passwords and enable two-factor authentication where available.
+                        </div>
+                    </section>
+
+                    <!-- Data Retention -->
+                    <section id="data-retention" class="privacy-section-content">
+                        <h2>Data Retention</h2>
+                        <p>We retain your information for as long as necessary to provide our services and comply with legal obligations:</p>
+                        
+                        <div class="retention-policy">
+                            <div class="retention-item">
+                                <strong>Account Data:</strong> Retained while your account is active, plus 30 days after account closure
+                            </div>
+                            <div class="retention-item">
+                                <strong>Research Data:</strong> Stored indefinitely to improve our AI models (anonymized after account closure)
+                            </div>
+                            <div class="retention-item">
+                                <strong>Usage Analytics:</strong> Aggregated data retained for up to 2 years for service improvement
+                            </div>
+                            <div class="retention-item">
+                                <strong>Support Communications:</strong> Retained for 2 years to improve customer service
+                            </div>
+                        </div>
+
+                        <p>You can request deletion of your data at any time by contacting us at privacy@salesscout.ai</p>
+                    </section>
+
+                    <!-- Your Rights -->
+                    <section id="your-rights" class="privacy-section-content">
+                        <h2>Your Rights</h2>
+                        <p>Depending on your location, you may have the following rights regarding your personal information:</p>
+                        
+                        <div class="rights-grid">
+                            <div class="right-item">
+                                <h4>📋 Access</h4>
+                                <p>Request a copy of the personal information we hold about you</p>
+                            </div>
+                            <div class="right-item">
+                                <h4>✏️ Correction</h4>
+                                <p>Request correction of inaccurate or incomplete information</p>
+                            </div>
+                            <div class="right-item">
+                                <h4>🗑️ Deletion</h4>
+                                <p>Request deletion of your personal information (subject to legal requirements)</p>
+                            </div>
+                            <div class="right-item">
+                                <h4>📤 Portability</h4>
+                                <p>Request transfer of your data to another service provider</p>
+                            </div>
+                            <div class="right-item">
+                                <h4>⛔ Restriction</h4>
+                                <p>Request restriction of processing of your personal information</p>
+                            </div>
+                            <div class="right-item">
+                                <h4>❌ Objection</h4>
+                                <p>Object to processing of your personal information for certain purposes</p>
+                            </div>
+                        </div>
+
+                        <p>To exercise any of these rights, please contact us at privacy@salesscout.ai</p>
+                    </section>
+
+                    <!-- Cookies & Tracking -->
+                    <section id="cookies" class="privacy-section-content">
+                        <h2>Cookies & Tracking Technologies</h2>
+                        <p>We use cookies and similar technologies to improve your experience:</p>
+                        
+                        <div class="cookie-types">
+                            <div class="cookie-type">
+                                <h4>🍪 Essential Cookies</h4>
+                                <p>Required for basic website functionality, authentication, and security</p>
+                            </div>
+                            <div class="cookie-type">
+                                <h4>📊 Analytics Cookies</h4>
+                                <p>Help us understand how visitors use our website to improve performance</p>
+                            </div>
+                            <div class="cookie-type">
+                                <h4>🎯 Functional Cookies</h4>
+                                <p>Remember your preferences and provide enhanced features</p>
+                            </div>
+                        </div>
+
+                        <p>You can control cookies through your browser settings, though disabling certain cookies may affect website functionality.</p>
+                    </section>
+
+                    <!-- Third-Party Services -->
+                    <section id="third-party" class="privacy-section-content">
+                        <h2>Third-Party Services</h2>
+                        <p>Our platform integrates with various third-party services. Each has their own privacy policies:</p>
+                        
+                        <div class="third-party-list">
+                            <div class="third-party-item">
+                                <strong>HubSpot:</strong> <a href="https://legal.hubspot.com/privacy-policy" target="_blank">Privacy Policy</a>
+                            </div>
+                            <div class="third-party-item">
+                                <strong>AWS:</strong> <a href="https://aws.amazon.com/privacy/" target="_blank">Privacy Notice</a>
+                            </div>
+                            <div class="third-party-item">
+                                <strong>Google AI:</strong> <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a>
+                            </div>
+                            <div class="third-party-item">
+                                <strong>Pinecone:</strong> <a href="https://www.pinecone.io/privacy/" target="_blank">Privacy Policy</a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Children's Privacy -->
+                    <section id="children" class="privacy-section-content">
+                        <h2>Children's Privacy</h2>
+                        <p>
+                            Sales Scout is designed for business use and is not intended for children under 13. 
+                            We do not knowingly collect personal information from children under 13. If we become 
+                            aware that we have collected such information, we will take steps to delete it promptly.
+                        </p>
+                    </section>
+
+                    <!-- Policy Changes -->
+                    <section id="changes" class="privacy-section-content">
+                        <h2>Changes to This Policy</h2>
+                        <p>
+                            We may update this Privacy Policy from time to time. We will notify you of any material 
+                            changes by posting the new policy on this page and updating the "Last updated" date. 
+                            For significant changes, we may also send you an email notification.
+                        </p>
+                        <p>
+                            Your continued use of our services after any changes constitutes acceptance of the updated policy.
+                        </p>
+                    </section>
+
+                    <!-- Contact Information -->
+                    <section id="contact" class="privacy-section-content">
+                        <h2>Contact Information</h2>
+                        <p>If you have any questions about this Privacy Policy or our data practices, please contact us:</p>
+                        
+                        <div class="contact-info">
+                            <div class="contact-method">
+                                <strong>Email:</strong> privacy@salesscout.ai
+                            </div>
+                            <div class="contact-method">
+                                <strong>General Contact:</strong> <a href="/contact">Contact Form</a>
+                            </div>
+                            <div class="contact-method">
+                                <strong>Data Protection Officer:</strong> dpo@salesscout.ai
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="marketing-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>Sales Scout</h3>
+                    <p>AI-powered sales intelligence that syncs with your CRM</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h4>Product</h4>
+                        <a href="/#features">Features</a>
+                        <a href="/#integrations">Integrations</a>
+                        <a href="/pricing">Pricing</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Support</h4>
+                        <a href="/docs">Documentation</a>
+                        <a href="/help">Help Center</a>
+                        <a href="/contact">Contact</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Company</h4>
+                        <a href="/about">About</a>
+                        <a href="/privacy">Privacy</a>
+                        <a href="/terms">Terms</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Sales Scout. Built with ❤️ for modern sales teams.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/marketing.js') }}?v={{ timestamp }}"></script>
+
+    <style>
+        .privacy-section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .privacy-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 60px;
+            align-items: start;
+        }
+
+        /* Sidebar */
+        .privacy-sidebar {
+            position: sticky;
+            top: 120px;
+        }
+
+        .toc-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+        }
+
+        .toc-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .toc-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc-nav li {
+            margin-bottom: 8px;
+        }
+
+        .toc-link {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .toc-link:hover,
+        .toc-link.active {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-color);
+        }
+
+        /* Main Content */
+        .privacy-content {
+            max-width: 800px;
+        }
+
+        .privacy-section-content {
+            margin-bottom: 60px;
+            scroll-margin-top: 120px;
+        }
+
+        .privacy-section-content h2 {
+            color: var(--text-primary);
+            font-size: 2rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--glass-border);
+        }
+
+        .privacy-section-content h3 {
+            color: var(--text-primary);
+            font-size: 1.4rem;
+            margin: 32px 0 16px;
+        }
+
+        .privacy-section-content h4 {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            margin: 20px 0 12px;
+        }
+
+        .privacy-section-content p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .privacy-section-content ul {
+            color: var(--text-secondary);
+            margin: 16px 0;
+            padding-left: 20px;
+        }
+
+        .privacy-section-content li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: rgba(67, 233, 123, 0.1);
+            border: 1px solid rgba(67, 233, 123, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .highlight-box h4 {
+            color: var(--success-color);
+            margin-bottom: 12px;
+        }
+
+        .highlight-box ul {
+            margin: 0;
+        }
+
+        .highlight-box li {
+            color: var(--text-secondary);
+        }
+
+        /* Info Categories */
+        .info-category {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-category h4 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        /* Usage Purposes */
+        .usage-purpose {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 24px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .usage-purpose h3 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        /* Sharing Categories */
+        .sharing-category {
+            margin: 32px 0;
+        }
+
+        .sharing-category h3 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        /* Security Grid */
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .security-measure {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .security-measure h4 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .security-measure p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .security-note {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            color: #3b82f6;
+            margin: 24px 0;
+            font-size: 0.9rem;
+        }
+
+        /* Retention Policy */
+        .retention-policy {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .retention-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+        }
+
+        .retention-item:last-child {
+            border-bottom: none;
+        }
+
+        .retention-item strong {
+            color: var(--text-primary);
+        }
+
+        /* Rights Grid */
+        .rights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .right-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .right-item h4 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .right-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Cookie Types */
+        .cookie-types {
+            margin: 24px 0;
+        }
+
+        .cookie-type {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .cookie-type h4 {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .cookie-type p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* Third Party List */
+        .third-party-list {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .third-party-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+        }
+
+        .third-party-item:last-child {
+            border-bottom: none;
+        }
+
+        .third-party-item strong {
+            color: var(--text-primary);
+        }
+
+        .third-party-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .third-party-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Contact Info */
+        .contact-info {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .contact-method {
+            padding: 12px 0;
+            color: var(--text-secondary);
+        }
+
+        .contact-method strong {
+            color: var(--text-primary);
+        }
+
+        .contact-method a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .contact-method a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 1024px) {
+            .privacy-layout {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            
+            .privacy-sidebar {
+                position: static;
+                order: 2;
+            }
+            
+            .security-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            
+            .rights-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .security-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .rights-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>
+        // Smooth scrolling for TOC links
+        document.querySelectorAll('.toc-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Update active state
+                    document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Update active TOC link on scroll
+        const observerOptions = {
+            rootMargin: '-120px 0px -50% 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    document.querySelectorAll('.toc-link').forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.privacy-section-content').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

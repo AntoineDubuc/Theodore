@@ -201,14 +201,63 @@ except Exception as e:
     print("🔧 App starting anyway - pipeline will be initialized on first request")
 
 @app.route('/')
+def marketing_index():
+    """Marketing landing page"""
+    import time
+    return render_template('marketing_index.html', timestamp=int(time.time()))
+
+@app.route('/dashboard')
 @optional_auth
-def index():
-    """Main dashboard page"""
+def dashboard():
+    """Main dashboard page (original index)"""
     import time
     from flask_login import current_user
     return render_template('index.html', 
                          timestamp=int(time.time()),
                          current_user=current_user)
+
+# Marketing Pages
+@app.route('/help')
+def help_center():
+    """Help Center page"""
+    import time
+    return render_template('help.html', timestamp=int(time.time()))
+
+@app.route('/contact')
+def contact():
+    """Contact page"""
+    import time
+    return render_template('contact.html', timestamp=int(time.time()))
+
+@app.route('/docs')
+def documentation():
+    """Documentation page"""
+    import time
+    return render_template('docs.html', timestamp=int(time.time()))
+
+@app.route('/about')
+def about():
+    """About page"""
+    import time
+    return render_template('about.html', timestamp=int(time.time()))
+
+@app.route('/privacy')
+def privacy():
+    """Privacy Policy page"""
+    import time
+    return render_template('privacy.html', timestamp=int(time.time()))
+
+@app.route('/terms')
+def terms():
+    """Terms of Service page"""
+    import time
+    return render_template('terms.html', timestamp=int(time.time()))
+
+@app.route('/pricing')
+def pricing():
+    """Pricing page"""
+    import time
+    return render_template('pricing.html', timestamp=int(time.time()))
 
 @app.route('/api/health')
 def health_check():
