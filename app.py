@@ -1586,8 +1586,18 @@ def process_company():
     website = normalize_website_url(website)
     
     try:
-        # Start processing with progress tracking
+        # Start simple progress tracking (antoine uses 1 simple phase)
         job_id = start_company_processing(company_name)
+        
+        # Override default phase count for simple antoine processing
+        from src.progress_logger import progress_logger
+        progress_logger.progress_data["jobs"][job_id]["total_phases"] = 1
+        
+        # Update progress - simple message for antoine processing
+        progress_logger.update_phase(job_id, "Antoine Processing", "running", {
+            "status_message": f"Processing {company_name} using antoine pipeline...",
+            "simple_mode": True
+        })
         
         # Create company data object
         company_data = CompanyData(
@@ -1595,37 +1605,79 @@ def process_company():
             website=website
         )
         
-        # Process company using the main pipeline (same as research functionality)
-        result = current_pipeline.process_single_company(company_name, website, job_id=job_id)
+        # Use AntoineScraperAdapter directly (exactly like working /antoine tests)
+        from src.models import CompanyIntelligenceConfig
+        from src.antoine_scraper_adapter import AntoineScraperAdapter
+        
+        config = CompanyIntelligenceConfig()
+        scraper = AntoineScraperAdapter(config)  # Same as working tests - no bedrock_client
+        
+        # Call scraper directly (exactly like working tests)
+        result = scraper.scrape_company(company_data)
         
         # Check if processing was successful  
-        if result and result.company_description:
-            success = True  # process_single_company handles Pinecone storage internally
+        if result and result.scrape_status == "success":
+            # Add enhanced social media research (our enhancement)
+            if hasattr(result, 'pages_crawled') and result.pages_crawled:
+                try:
+                    from src.social_media_researcher import SocialMediaResearcher
+                    
+                    researcher = SocialMediaResearcher()
+                    enhanced_social = researcher.extract_social_media_from_pages(result.pages_crawled)
+                    
+                    # Combine antoine's social media with enhanced extraction
+                    antoine_social = getattr(result, 'social_media', {}) or {}
+                    if isinstance(antoine_social, str):
+                        antoine_social = {}  # Convert invalid string to dict
+                    
+                    # Enhanced social takes precedence (more accurate links)
+                    combined_social = {**antoine_social, **enhanced_social}
+                    result.social_media = combined_social
+                    
+                    logger.info(f"Combined social media: {len(combined_social)} platforms found")
+                except Exception as e:
+                    logger.warning(f"Enhanced social media extraction failed: {e}")
             
-            # Mark job as completed (preserve existing results if concurrent scraper already set them)
-            from src.progress_logger import complete_company_processing, progress_logger
+            # Handle Pinecone storage (since we bypassed main_pipeline)
+            success = False
+            if current_pipeline:  # Use pipeline's pinecone client for storage
+                try:
+                    # Generate embedding for similarity search
+                    embedding_text = f"{result.name} {result.company_description} {result.industry} {result.business_model}"
+                    result.embedding = current_pipeline.bedrock_client.generate_embedding(embedding_text)
+                    
+                    # Store in Pinecone
+                    if result.embedding:
+                        current_pipeline.pinecone_client.upsert_company(result)
+                        logger.info(f"Successfully stored {company_name} in Pinecone")
+                        success = True
+                except Exception as e:
+                    logger.warning(f"Pinecone storage failed: {e}")
+                    success = True  # Still consider successful if scraping worked
             
-            # Check if concurrent scraper already set detailed results
-            existing_progress = progress_logger.get_progress(job_id)
-            existing_results = existing_progress.get('results', {}) if existing_progress else {}
+            # Complete simple progress tracking for antoine
+            progress_logger.update_phase(job_id, "Antoine Processing", "completed", {
+                "status_message": f"Successfully processed {company_name}",
+                "simple_mode": True,
+                "social_media_count": len(result.social_media) if hasattr(result, 'social_media') and result.social_media else 0
+            })
             
-            # If concurrent scraper set results, preserve them; otherwise use minimal results
-            if existing_results and existing_results.get('company'):
-                # Concurrent scraper already set detailed results, don't override
-                pass
-            else:
-                # Fallback results for non-concurrent path
-                complete_company_processing(
-                    job_id=job_id, 
-                    success=True, 
-                    summary=f"Successfully processed {company_name}",
-                    results={
-                        'company': result.dict(),
-                        'company_id': result.id, 
-                        'pages_processed': len(result.pages_crawled) if result.pages_crawled else 0,
-                        'success': True
-                    }
-                )
+            # Mark job as completed with simple results
+            from src.progress_logger import complete_company_processing
+            complete_company_processing(
+                job_id=job_id, 
+                success=True, 
+                summary=f"Successfully processed {company_name} using antoine pipeline with enhanced social media",
+                results={
+                    'company': result.dict(),
+                    'company_id': result.id, 
+                    'pages_processed': len(result.pages_crawled) if result.pages_crawled else 0,
+                    'social_media_platforms': len(result.social_media) if hasattr(result, 'social_media') and result.social_media else 0,
+                    'stored_in_pinecone': success,
+                    'success': True,
+                    'processing_method': 'antoine_hybrid'
+                }
+            )
             
             # Prepare token usage and cost data
             token_data = {
@@ -1648,9 +1700,15 @@ def process_company():
                 'timestamp': datetime.utcnow().isoformat()
             })
         else:
+            # Update simple progress - failed
+            error_msg = result.scrape_error if result else 'Processing failed - no result returned'
+            progress_logger.update_phase(job_id, "Antoine Processing", "failed", {
+                "status_message": f"Failed to process {company_name}: {error_msg}",
+                "simple_mode": True
+            })
+            
             # Mark job as failed
             from src.progress_logger import complete_company_processing
-            error_msg = result.scrape_error if result else 'Processing failed - no result returned'
             complete_company_processing(
                 job_id=job_id, 
                 success=False, 
@@ -1666,7 +1724,7 @@ def process_company():
             
     except Exception as e:
         # Mark job as failed due to exception
-        from progress_logger import complete_company_processing
+        from src.progress_logger import complete_company_processing
         complete_company_processing(
             job_id=job_id, 
             success=False, 

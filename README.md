@@ -7,7 +7,7 @@ Theodore provides an advanced company analysis platform with dynamic link discov
 ## 🎯 Current Features
 
 ### 🔍 **Core Intelligence Engine**
-- **Intelligent Company Scraper**: 4-phase processing with link discovery, LLM page selection, parallel extraction, and AI aggregation
+- **Intelligent Company Scraper**: 5-phase processing with link discovery, LLM page selection, parallel extraction, AI aggregation, and social media research
 - **Business Model Framework**: David's structured business model classification system with WHO/WHAT/HOW/WHY analysis
 - **Structured Research System**: 8 predefined research prompts with cost transparency and JSON/CSV export
 - **Nova Pro AI Model**: 6x cost reduction ($0.66 → $0.11 per research) with enterprise-grade performance
@@ -58,16 +58,16 @@ Theodore provides an advanced company analysis platform with dynamic link discov
 
 ### Core Components Architecture
 
-Theodore uses a sophisticated 4-layered architecture:
+Theodore uses a sophisticated 4-layered architecture with 5-phase processing:
 
 1. **Web Interface Layer** - Flask + HTML/CSS/JS
 2. **API Layer** - RESTful endpoints with real-time progress
-3. **Core Business Logic** - 4-phase scraping + similarity discovery
+3. **Core Business Logic** - 5-phase scraping + similarity discovery
 4. **External Services** - AI models + vector database + web scraping
 
-### Intelligent Scraping System (4-Phase Process)
+### Intelligent Scraping System (5-Phase Process)
 
-Theodore's core innovation is its sophisticated 4-phase intelligent scraping system that combines comprehensive web crawling with AI-driven analysis. See the [Visual System Architecture](#-visual-system-architecture) section below for detailed interactive diagrams.
+Theodore's core innovation is its sophisticated 5-phase intelligent scraping system that combines comprehensive web crawling with AI-driven analysis and social media research. See the [Visual System Architecture](#-visual-system-architecture) section below for detailed interactive diagrams.
 
 #### **Phase 1: Comprehensive Link Discovery**
 - **Multi-source discovery**: robots.txt parsing + sitemap.xml analysis + recursive crawling
@@ -91,6 +91,12 @@ Theodore's core innovation is its sophisticated 4-phase intelligent scraping sys
 - **Comprehensive processing**: Combines content from all scraped pages
 - **Business intelligence generation**: Creates structured summaries focused on sales insights
 - **Quality output**: 2-3 paragraph summaries optimized for business context
+
+#### **Phase 5: Social Media Research**
+- **Social media extraction**: Automated discovery of social media links from all crawled pages
+- **Platform identification**: Supports 15+ platforms including Facebook, LinkedIn, Twitter, Instagram, YouTube
+- **Contact intelligence**: Provides additional contact points and social presence data
+- **Enhanced lead generation**: Social media profiles for outreach and relationship building
 
 ## 📊 Visual System Architecture
 
@@ -245,7 +251,16 @@ flowchart TD
         Aggregate --> Intelligence
     end
     
-    Phase4 --> Storage
+    Phase4 --> Phase5
+    
+    subgraph Phase5["📱 PHASE 5: SOCIAL MEDIA RESEARCH"]
+        SocialExtraction["🔍 Social Media Extraction<br/>Header/footer link discovery<br/>Platform identification"]
+        SocialIntelligence["📲 Social Media Intelligence<br/>15+ platform support<br/>Contact point discovery"]
+        
+        SocialExtraction --> SocialIntelligence
+    end
+    
+    Phase5 --> Storage
     
     subgraph Storage["🗃️ STORAGE & ANALYSIS"]
         Analysis["🤖 Bedrock Analysis<br/>Industry classification<br/>Business model<br/>Company stage"]
@@ -261,6 +276,7 @@ flowchart TD
     Phase2 -.-> Progress
     Phase3 -.-> Progress
     Phase4 -.-> Progress
+    Phase5 -.-> Progress
     
     %% Styling
     classDef phaseStyle fill:#ff6b6b,stroke:#ff4757,stroke-width:3px,color:#ffffff
@@ -272,6 +288,7 @@ flowchart TD
     class Start phaseStyle
     class RobotsTxt,Sitemap,Recursive,Combine1,LLMAnalysis,Selection,Crawl4AI,Parallel,Clean processStyle
     class Aggregate,Intelligence,Analysis aiStyle
+    class SocialExtraction,SocialIntelligence processStyle
     class Embedding,Database storageStyle
     class Progress progressStyle
 ```
@@ -400,17 +417,19 @@ flowchart TD
     
     subgraph ProcessLoop["🔄 SEQUENTIAL COMPANY PROCESSING"]
         UpdateStatus1["📝 Update Status: 'processing'<br/>Real-time sheet update<br/>Progress tracking<br/>Timestamp logging"]
-        ProcessSingle["🕷️ Single Company Processing<br/>⚠️ ONE COMPANY AT A TIME<br/>Full 4-phase pipeline<br/>25-60 second processing"]
+        ProcessSingle["🕷️ Single Company Processing<br/>⚠️ ONE COMPANY AT A TIME<br/>Full 5-phase pipeline<br/>25-60 second processing"]
         
         subgraph InternalParallel["⚡ INTERNAL PARALLEL PROCESSING"]
             Phase1["🔍 Phase 1: Link Discovery<br/>Sequential discovery"]
             Phase2["🎯 Phase 2: Page Selection<br/>LLM analysis"]
             Phase3["📄 Phase 3: Content Extraction<br/>🔀 10 CONCURRENT PAGES<br/>Parallel web scraping"]
             Phase4["🧠 Phase 4: AI Aggregation<br/>1M token context"]
+            Phase5["📱 Phase 5: Social Media Research<br/>Social link extraction"]
             
             Phase1 --> Phase2
             Phase2 --> Phase3
             Phase3 --> Phase4
+            Phase4 --> Phase5
         end
         
         CheckResult["❓ Check Processing Result<br/>Validate scrape_status<br/>Verify extracted data<br/>Quality assessment"]
@@ -508,7 +527,7 @@ flowchart TD
 ## 📊 Current Status
 
 ### ✅ Production Ready Features
-- **Intelligent Company Processing**: Complete 4-phase scraper with real-time progress tracking
+- **Intelligent Company Processing**: Complete 5-phase scraper with real-time progress tracking
 - **Enhanced Sales Intelligence**: AI-generated summaries replacing hardcoded schemas
 - **Modern Web Interface**: Beautiful UI with live progress visualization
 - **Database Browser**: View and manage companies with sales intelligence status
@@ -694,7 +713,7 @@ result = pipeline.process_single_company("Company Name", "https://company.com")
 - **AI-Generated Summaries**: 2-3 focused paragraphs optimized for sales teams
 - **Dynamic Content**: No hardcoded schemas - LLM decides what's important
 - **Business Context**: Includes market positioning, value propositions, and competitive advantages
-- **Real-time Progress**: Live 4-phase tracking with detailed logging and status updates
+- **Real-time Progress**: Live 5-phase tracking with detailed logging and status updates
 
 ### 📊 Vector Storage & Search
 
@@ -713,7 +732,7 @@ result = pipeline.process_single_company("Company Name", "https://company.com")
 
 ## 🛠️ Technical Stack
 
-- **Intelligent Scraping**: Custom 4-phase pipeline with Crawl4AI integration
+- **Intelligent Scraping**: Custom 5-phase pipeline with Crawl4AI integration
 - **AI Models**: Gemini 2.5 Pro (1M context), AWS Bedrock Nova Pro, OpenAI GPT-4o-mini
 - **Vector Database**: Pinecone serverless with sales intelligence metadata
 - **Progress Tracking**: Real-time JSON-based logging with thread-safe updates
@@ -734,7 +753,7 @@ Theodore/
 └── src/
     ├── main_pipeline.py                   # 🔧 Core orchestration
     ├── models.py                          # 📋 Pydantic data models
-    ├── intelligent_company_scraper.py     # 🕷️ 4-phase scraper
+    ├── intelligent_company_scraper.py     # 🕷️ 5-phase scraper
     ├── simple_enhanced_discovery.py       # 🔍 Similarity engine
     ├── bedrock_client.py                  # 🤖 AWS AI client
     ├── pinecone_client.py                 # 🗃️ Vector database

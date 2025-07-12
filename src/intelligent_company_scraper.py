@@ -10,6 +10,7 @@ import time
 import re
 import json
 import os
+import traceback
 from typing import Dict, List, Set, Optional, Tuple
 from urllib.parse import urljoin, urlparse, urlencode
 from urllib.robotparser import RobotFileParser
@@ -193,37 +194,62 @@ class IntelligentCompanyScraper:
                                failed_extractions=len(selected_urls) - len(page_contents),
                                total_content_chars=total_content_chars)
             
-            # Phase 4: LLM Content Aggregation
-            print(f"\n🧠 PHASE 4: Starting LLM analysis of {total_content_chars:,} characters...", flush=True)
+            # Phase 4: Social Media Research
+            print(f"\n📱 PHASE 4: Starting social media research from {len(page_contents)} pages...", flush=True)
             if job_id:
-                progress_logger.add_to_progress_log(job_id, f"🧠 PHASE 4: Starting sales intelligence generation from {total_content_chars:,} chars")
+                progress_logger.add_to_progress_log(job_id, f"📱 PHASE 4: Starting social media research from {len(page_contents)} pages")
+            
+            log_processing_phase(job_id, "Social Media Research", "running",
+                               pages_to_process=len(page_contents),
+                               platforms_supported=15)
+            
+            social_media_links = await self._extract_social_media_from_pages(page_contents, job_id)
+            
+            print(f"📱 PHASE 4 COMPLETE: Found {len(social_media_links)} social media links", flush=True)
+            if job_id:
+                progress_logger.add_to_progress_log(job_id, f"✅ Social media research complete: {len(social_media_links)} links found")
+                if social_media_links:
+                    for platform, url in social_media_links.items():
+                        progress_logger.add_to_progress_log(job_id, f"   📱 {platform}: {url}")
+            
+            log_processing_phase(job_id, "Social Media Research", "completed",
+                               platforms_found=len(social_media_links),
+                               social_links=social_media_links)
+            
+            # Phase 5: LLM Content Aggregation (now includes social media data)
+            print(f"\n🧠 PHASE 5: Starting LLM analysis of {total_content_chars:,} characters with social media intelligence...", flush=True)
+            if job_id:
+                progress_logger.add_to_progress_log(job_id, f"🧠 PHASE 5: Starting sales intelligence generation from {total_content_chars:,} chars + social media data")
             
             log_processing_phase(job_id, "Sales Intelligence Generation", "running",
                                content_pages=len(page_contents),
-                               total_content_chars=total_content_chars)
+                               total_content_chars=total_content_chars,
+                               social_media_platforms=len(social_media_links))
             
             sales_intelligence = await self._llm_aggregate_sales_intelligence(
                 page_contents, company_data.name, job_id
             )
             
-            print(f"🧠 PHASE 4 COMPLETE: Generated {len(sales_intelligence):,} character sales intelligence", flush=True)
+            print(f"🧠 PHASE 5 COMPLETE: Generated {len(sales_intelligence):,} character sales intelligence", flush=True)
             if job_id:
                 progress_logger.add_to_progress_log(job_id, f"✅ Sales intelligence complete: {len(sales_intelligence):,} characters generated")
             
             log_processing_phase(job_id, "Sales Intelligence Generation", "completed",
                                intelligence_length=len(sales_intelligence),
-                               word_count=len(sales_intelligence.split()) if sales_intelligence else 0)
+                               word_count=len(sales_intelligence.split()) if sales_intelligence else 0,
+                               included_social_media=len(social_media_links) > 0)
             
             # Apply results to company data
             company_data.company_description = sales_intelligence
             company_data.raw_content = sales_intelligence  # Store as raw_content for AI analysis
+            company_data.social_media = social_media_links  # Apply social media results
             company_data.pages_crawled = selected_urls
             company_data.crawl_depth = len(selected_urls)
             company_data.crawl_duration = time.time() - start_time
             company_data.scrape_status = "success"
             
             # Complete job tracking with detailed summary
-            summary = f"Generated {len(sales_intelligence)} character sales intelligence from {len(page_contents)} pages"
+            summary = f"Generated {len(sales_intelligence)} character sales intelligence from {len(page_contents)} pages, found {len(social_media_links)} social media links"
             complete_company_processing(job_id, True, summary=summary)
             
             # Add summary to UI progress log
@@ -234,6 +260,7 @@ class IntelligentCompanyScraper:
                     progress_logger.add_to_progress_log(job_id, f"   {i}. {page['url']} ({page['content_length']:,} chars)")
                 progress_logger.add_to_progress_log(job_id, f"🧠 MADE {len(self.llm_call_log)} LLM calls total")
                 progress_logger.add_to_progress_log(job_id, f"📝 GENERATED {len(sales_intelligence):,} characters final result")
+                progress_logger.add_to_progress_log(job_id, f"📱 FOUND {len(social_media_links)} social media links")
 
             # Print final summary
             print(f"\n🎉 SCRAPING COMPLETE for {company_data.name}")
@@ -244,18 +271,54 @@ class IntelligentCompanyScraper:
             for call in self.llm_call_log:
                 status = "✅" if call['success'] else "❌"
                 print(f"  {status} Call #{call['call_number']}: {call['model']} - {call['prompt_length']:,} chars in, {call['response_length']:,} chars out")
-            print(f"📝 FINAL RESULT: {len(sales_intelligence):,} characters generated\n")
+            print(f"📝 FINAL RESULT: {len(sales_intelligence):,} characters generated")
+            print(f"📱 SOCIAL MEDIA: {len(social_media_links)} links found")
+            if social_media_links:
+                for platform, url in social_media_links.items():
+                    print(f"  📱 {platform}: {url}")
+            print("")
             
             logger.info(f"Intelligent scraping completed for {company_data.name}")
             
-        except Exception as e:
-            error_msg = f"Intelligent scraping failed: {str(e)}"
-            logger.error(f"{error_msg} for {company_data.name}")
+        except asyncio.TimeoutError as e:
+            error_msg = f"Operation timed out during scraping: {str(e)}"
+            logger.error(f"Timeout error for {company_data.name}: {error_msg}")
+            logger.error(f"Full timeout traceback: {traceback.format_exc()}")
             
             company_data.scrape_status = "failed"
-            company_data.scrape_error = str(e)
+            company_data.scrape_error = error_msg
             
-            # Complete job tracking with error
+            # Complete job tracking with timeout error
+            complete_company_processing(job_id, False, error=error_msg)
+            
+        except Exception as e:
+            # Enhanced exception handling with full details and Playwright-specific handling
+            import traceback
+            exception_type = type(e).__name__
+            exception_msg = str(e)
+            
+            # Check for Playwright-specific errors
+            if "playwright" in exception_msg.lower() or "net::ERR_ABORTED" in exception_msg:
+                error_msg = f"Browser navigation failed: {exception_type}: {exception_msg}"
+                logger.error(f"Playwright error for {company_data.name}: {error_msg}")
+            elif "frame was detached" in exception_msg.lower():
+                error_msg = f"Browser frame detached during navigation: {exception_type}: {exception_msg}"
+                logger.error(f"Frame detachment error for {company_data.name}: {error_msg}")
+            elif not exception_msg or exception_msg.strip() == "":
+                error_msg = f"Unknown error occurred: {exception_type} (no message provided)"
+                logger.error(f"Empty exception for {company_data.name}: {exception_type}")
+            else:
+                error_msg = f"Intelligent scraping failed: {exception_type}: {exception_msg}"
+                logger.error(f"General scraping error for {company_data.name}: {error_msg}")
+            
+            # Always log full traceback for debugging
+            logger.error(f"Full exception traceback for {company_data.name}:")
+            logger.error(traceback.format_exc())
+            
+            company_data.scrape_status = "failed"
+            company_data.scrape_error = error_msg
+            
+            # Complete job tracking with detailed error
             complete_company_processing(job_id, False, error=error_msg)
         
         return company_data
@@ -337,7 +400,7 @@ class IntelligentCompanyScraper:
                                            current_url=base_url, status_message="Recursive crawling")
                         progress_logger.add_to_progress_log(job_id, f"🔍 Starting recursive crawling from: {base_url}")
                     
-                    # ✅ Use Crawl4AI for recursive crawling instead of basic aiohttp
+                    # ✅ Use Crawl4AI for recursive crawling with timeout protection
                     browser_args = get_browser_args(ignore_ssl=not should_verify_ssl())
                     async with AsyncWebCrawler(
                         headless=True,
@@ -345,10 +408,33 @@ class IntelligentCompanyScraper:
                         verbose=False,
                         browser_args=browser_args
                     ) as crawler:
-                        crawled_links = await self._recursive_link_discovery(
-                            crawler, base_url, domain, max_depth=self.max_depth, job_id=job_id
-                        )
-                        all_links.update(crawled_links)
+                        try:
+                            # Add timeout protection for recursive crawling
+                            remaining_time = 30 - (time.time() - start_time)
+                            if remaining_time <= 5:  # Need at least 5 seconds
+                                print(f"⏰ Insufficient time for recursive crawling ({remaining_time:.1f}s remaining)", flush=True)
+                                crawled_links = set()
+                            else:
+                                crawled_links = await asyncio.wait_for(
+                                    self._recursive_link_discovery(
+                                        crawler, base_url, domain, max_depth=self.max_depth, job_id=job_id
+                                    ),
+                                    timeout=min(remaining_time, 25)  # Use remaining time, max 25 seconds
+                                )
+                            all_links.update(crawled_links)
+                        except asyncio.TimeoutError:
+                            print(f"⏰ Recursive crawling timed out - using discovered links so far", flush=True)
+                            if job_id:
+                                progress_logger.add_to_progress_log(job_id, "⏰ Recursive crawling timed out - continuing with discovered links")
+                            crawled_links = set()
+                        except Exception as crawl_error:
+                            error_type = type(crawl_error).__name__
+                            error_msg = str(crawl_error)
+                            print(f"❌ Recursive crawling failed: {error_type}: {error_msg}", flush=True)
+                            logger.warning(f"Recursive crawling failed: {error_type}: {error_msg}")
+                            if job_id:
+                                progress_logger.add_to_progress_log(job_id, f"❌ Recursive crawling failed: {error_type}")
+                            crawled_links = set()
                     
                     print(f"✅ Found {len(crawled_links)} links from recursive crawling", flush=True)
                     logger.info(f"Found {len(crawled_links)} links from recursive crawling")
@@ -525,7 +611,24 @@ class IntelligentCompanyScraper:
                 ]
             )
             
-            result = await crawler.arun(url=base_url, config=config)
+            # Add timeout protection for individual page crawling
+            try:
+                result = await asyncio.wait_for(
+                    crawler.arun(url=base_url, config=config),
+                    timeout=15  # 15 second timeout per page
+                )
+            except asyncio.TimeoutError:
+                print(f"⏰ Page crawling timed out for {base_url}")
+                if job_id:
+                    progress_logger.add_to_progress_log(job_id, f"⏰ Timed out crawling {base_url}")
+                return discovered_links
+            except Exception as page_error:
+                error_type = type(page_error).__name__ 
+                error_msg = str(page_error)
+                print(f"❌ Page crawling failed for {base_url}: {error_type}")
+                if job_id:
+                    progress_logger.add_to_progress_log(job_id, f"❌ Failed to crawl {base_url}: {error_type}")
+                return discovered_links
             
             if result and result.html:
                 soup = BeautifulSoup(result.html, 'html.parser')
@@ -984,8 +1087,37 @@ Select pages with STRUCTURED DATA we can extract, not blog posts or general cont
             
             print(f"   🚀 Processing all {total_pages} URLs concurrently with single browser...", flush=True)
             
-            # ✅ CRITICAL FIX: Use arun_many() with single browser instance
-            results = await crawler.arun_many(urls, config=config)
+            # ✅ CRITICAL FIX: Use arun_many() with single browser instance and enhanced error handling
+            try:
+                results = await asyncio.wait_for(
+                    crawler.arun_many(urls, config=config),
+                    timeout=300  # 5 minute timeout for all pages
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"Browser operations timed out after 5 minutes for {len(urls)} pages")
+                if job_id:
+                    progress_logger.add_to_progress_log(job_id, "⚠️ Browser operations timed out - using partial results")
+                return []  # Return empty results instead of failing completely
+            except Exception as browser_error:
+                # Handle Playwright and browser-specific errors
+                error_type = type(browser_error).__name__
+                error_msg = str(browser_error)
+                
+                if "playwright" in error_msg.lower() or "net::ERR_ABORTED" in error_msg:
+                    logger.error(f"Playwright browser error: {error_type}: {error_msg}")
+                    if job_id:
+                        progress_logger.add_to_progress_log(job_id, f"❌ Browser navigation failed: {error_type}")
+                elif "frame was detached" in error_msg.lower():
+                    logger.error(f"Browser frame detached: {error_type}: {error_msg}")
+                    if job_id:
+                        progress_logger.add_to_progress_log(job_id, f"❌ Browser frame detached during crawling")
+                else:
+                    logger.error(f"Unknown browser error: {error_type}: {error_msg}")
+                    if job_id:
+                        progress_logger.add_to_progress_log(job_id, f"❌ Browser error: {error_type}")
+                
+                logger.error(f"Full browser error traceback: {traceback.format_exc()}")
+                return []  # Return empty results instead of crashing
             
             # Process results and maintain Theodore's expected format
             for i, result in enumerate(results):
@@ -1253,6 +1385,39 @@ Write in a professional, concise style suitable for sales team consumption."""
                 raise
         
         raise ValueError("No LLM client available for content analysis (Gemini or Bedrock required)")
+    
+    async def _extract_social_media_from_pages(self, page_contents: List[Dict[str, str]], job_id: str = None) -> Dict[str, str]:
+        """
+        Phase 5: Extract social media links from all crawled page content
+        
+        Args:
+            page_contents: List of page content dictionaries with 'content' key
+            job_id: Optional job ID for progress tracking
+            
+        Returns:
+            Dict mapping platform names to URLs (consolidated from all pages)
+        """
+        from src.social_media_researcher import SocialMediaResearcher
+        
+        try:
+            researcher = SocialMediaResearcher()
+            
+            # Extract social media links from all page content
+            social_media_links = await researcher.extract_social_media_from_pages(page_contents, job_id)
+            
+            # Log results for debugging
+            if social_media_links:
+                print(f"📱 SOCIAL MEDIA LINKS FOUND:")
+                for platform, url in social_media_links.items():
+                    print(f"   📱 {platform}: {url}")
+            else:
+                print(f"📱 No social media links found in crawled content")
+            
+            return social_media_links
+            
+        except Exception as e:
+            logger.warning(f"Social media extraction failed: {e}")
+            return {}
     
     def _normalize_url(self, url: str) -> str:
         """Normalize website URL"""

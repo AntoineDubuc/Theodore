@@ -364,6 +364,7 @@ class TheodoreUI {
             { id: 'phase-link-discovery', name: 'Link Discovery' },
             { id: 'phase-page-selection', name: 'LLM Page Selection' },
             { id: 'phase-content-extraction', name: 'Content Extraction' },
+            { id: 'phase-social-media-research', name: 'Social Media Research' },
             { id: 'phase-intelligence-generation', name: 'Sales Intelligence Generation' }
         ];
         
@@ -437,7 +438,7 @@ class TheodoreUI {
         }
         
         // Mark all phases as completed for visual effect
-        ['Link Discovery', 'LLM Page Selection', 'Content Extraction', 'Sales Intelligence Generation'].forEach(phase => {
+        ['Link Discovery', 'LLM Page Selection', 'Content Extraction', 'Social Media Research', 'Sales Intelligence Generation'].forEach(phase => {
             this.updatePhaseProgress(phase, 'completed');
         });
         
@@ -467,7 +468,8 @@ class TheodoreUI {
             'Link Discovery': 'phase-link-discovery',
             'LLM Page Selection': 'phase-page-selection', 
             'Content Extraction': 'phase-content-extraction',
-            'Sales Intelligence Generation': 'phase-intelligence-generation'
+            'Sales Intelligence Generation': 'phase-intelligence-generation',
+            'Social Media Research': 'phase-social-media-research'
         };
         
         const phaseId = phaseMap[phaseName];
@@ -2059,7 +2061,7 @@ class TheodoreUI {
     }
 
     resetProgressPhases() {
-        const phases = ['link-discovery', 'page-selection', 'content-extraction', 'ai-analysis'];
+        const phases = ['link-discovery', 'page-selection', 'content-extraction', 'social-media-research', 'intelligence-generation'];
         phases.forEach(phase => {
             const phaseElement = document.getElementById(`phase-${phase}`);
             if (phaseElement) {

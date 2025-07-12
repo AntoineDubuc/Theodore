@@ -8,7 +8,7 @@ Theodore is a **production-ready AI company intelligence system** with a 4-layer
 
 1. **Web Interface Layer** - Flask + HTML/CSS/JS
 2. **API Layer** - RESTful endpoints with real-time progress
-3. **Core Business Logic** - 4-phase scraping + similarity discovery
+3. **Core Business Logic** - 5-phase scraping + similarity discovery
 4. **External Services** - AI models + vector database + web scraping
 
 ## 📁 Core File Structure
@@ -26,7 +26,7 @@ Theodore/
 └── src/
     ├── main_pipeline.py                   # 🔧 Core orchestration
     ├── models.py                          # 📋 Pydantic data models
-    ├── intelligent_company_scraper.py     # 🕷️ 4-phase scraper
+    ├── intelligent_company_scraper.py     # 🕷️ 5-phase scraper
     ├── simple_enhanced_discovery.py       # 🔍 Similarity engine
     ├── bedrock_client.py                  # 🤖 AWS AI client
     ├── pinecone_client.py                 # 🗃️ Vector database

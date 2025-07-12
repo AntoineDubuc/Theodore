@@ -209,7 +209,8 @@ class OpenRouterClient:
 def get_openrouter_client() -> Optional[OpenRouterClient]:
     """Initialize OpenRouter client with API key"""
     
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    # Try both possible environment variable names (matches antoine_selection.py pattern)
+    api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPEN_ROUTER_API_KEY")
     
     if not api_key:
         print("❌ OPENROUTER_API_KEY not found in environment variables")

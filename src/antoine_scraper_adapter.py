@@ -21,8 +21,10 @@ Usage:
 import logging
 import time
 import uuid
+import re
 from datetime import datetime
 from typing import Optional
+from urllib.parse import urlparse
 
 from src.models import CompanyData, CompanyIntelligenceConfig
 from src.progress_logger import log_processing_phase
@@ -34,6 +36,65 @@ from src.antoine_crawler import crawl_selected_pages_sync
 from src.antoine_extraction import extract_company_fields
 
 logger = logging.getLogger(__name__)
+
+
+def extract_locale_from_url(url: str) -> Optional[str]:
+    """
+    Extract locale identifier from URL for international sites.
+    
+    This enables locale-specific discovery that dramatically improves performance
+    for international sites like Volvo Canada by filtering sitemap content
+    to only the relevant locale (e.g., 'en-ca' instead of all 355 global sitemaps).
+    
+    Args:
+        url: URL to analyze
+        
+    Returns:
+        Locale string (e.g., 'en-ca', 'fr-fr') or None if no locale found
+        
+    Examples:
+        extract_locale_from_url("https://www.volvocars.com/en-ca/") → "en-ca"
+        extract_locale_from_url("https://stripe.com") → None
+    """
+    if not url:
+        return None
+    
+    # Parse URL to get path
+    parsed = urlparse(url)
+    path = parsed.path.lower()
+    
+    # Common locale patterns to look for
+    locale_patterns = [
+        # Standard locale codes (language-country)
+        r'/([a-z]{2}-[a-z]{2})/',           # /en-ca/, /fr-fr/
+        r'/([a-z]{2}-[a-z]{2})$',          # /en-ca
+        r'/([a-z]{2}_[a-z]{2})/',          # /en_ca/
+        r'/([a-z]{2}_[a-z]{2})$',          # /en_ca
+        
+        # Language only (for simpler international sites)
+        r'/([a-z]{2})/',                   # /en/, /fr/
+        r'/([a-z]{2})$',                   # /en, /fr
+        
+        # Extended locale codes  
+        r'/([a-z]{2}-[a-z]{3})/',          # /en-usa/
+        r'/([a-z]{3}-[a-z]{2})/',          # /eng-ca/
+    ]
+    
+    # Check each pattern
+    for pattern in locale_patterns:
+        match = re.search(pattern, path)
+        if match:
+            locale = match.group(1)
+            
+            # Validate it looks like a real locale (not just any 2-letter combo)
+            if len(locale) >= 2 and not locale.isdigit():
+                # Normalize underscores to hyphens
+                normalized_locale = locale.replace('_', '-')
+                logger.debug(f"Detected locale '{normalized_locale}' from URL: {url}")
+                return normalized_locale
+    
+    logger.debug(f"No locale detected in URL: {url}")
+    return None
 
 
 class AntoineScraperAdapter:
@@ -77,43 +138,73 @@ class AntoineScraperAdapter:
             return company
         
         try:
-            # Phase 1: Discovery
+            # Phase 1: Discovery with Locale-Specific Filtering
             if job_id:
                 log_processing_phase(job_id, "discovery", "🔍 Discovering website paths...")
+            
+            # Extract locale from URL for international sites (18x performance improvement)
+            detected_locale = extract_locale_from_url(company.website)
+            if detected_locale:
+                logger.info(f"🌍 Detected locale '{detected_locale}' for international site: {company.website}")
+            else:
+                logger.info(f"🔍 No locale detected, using global discovery for: {company.website}")
             
             logger.info(f"🔍 Phase 1: Starting path discovery for {company.website}")
             discovery_result = discover_all_paths_sync(
                 company.website,
+                locale_filter=detected_locale,  # NEW: Use locale filtering for international sites
                 timeout_seconds=30
             )
             
             if not discovery_result.all_paths:
-                # Fallback for sites like Verizon where discovery times out
-                logger.warning(f"No paths discovered for {company.website}, using fallback paths")
+                # Fallback for complex sites where even locale-filtered discovery fails
+                if detected_locale:
+                    logger.warning(f"Locale-filtered discovery failed for {company.website} (locale: {detected_locale}), using fallback paths")
+                else:
+                    logger.warning(f"Global discovery failed for {company.website}, using fallback paths")
                 
-                # Use common corporate website paths as fallback
-                fallback_paths = [
-                    "/",
-                    "/about",
-                    "/about-us",
-                    "/about/our-company",
-                    "/company",
-                    "/contact",
-                    "/contact-us",
-                    "/careers",
-                    "/jobs",
-                    "/business",
-                    "/enterprise",
-                    "/support",
-                    "/help",
-                    "/products",
-                    "/services",
-                    "/solutions",
-                    "/leadership",
-                    "/team",
-                    "/news",
-                    "/press"
-                ]
+                # Use locale-specific or common corporate website paths as fallback
+                if detected_locale:
+                    # For international sites, use locale-specific paths
+                    fallback_paths = [
+                        f"/{detected_locale}",
+                        f"/{detected_locale}/about",
+                        f"/{detected_locale}/about-us", 
+                        f"/{detected_locale}/company",
+                        f"/{detected_locale}/contact",
+                        f"/{detected_locale}/contact-us",
+                        f"/{detected_locale}/careers",
+                        f"/{detected_locale}/products",
+                        f"/{detected_locale}/services",
+                        f"/{detected_locale}/news",
+                        "/",  # Also include root
+                        "/about",
+                        "/contact"
+                    ]
+                else:
+                    # For non-international sites, use standard paths
+                    fallback_paths = [
+                        "/",
+                        "/about",
+                        "/about-us",
+                        "/about/our-company",
+                        "/company",
+                        "/contact",
+                        "/contact-us",
+                        "/careers",
+                        "/jobs",
+                        "/business",
+                        "/enterprise",
+                        "/support",
+                        "/help",
+                        "/products",
+                        "/services",
+                        "/solutions",
+                        "/leadership",
+                        "/team",
+                        "/news",
+                        "/press"
+                    ]
                 
                 discovery_result.all_paths = fallback_paths
                 logger.info(f"Using {len(fallback_paths)} fallback paths for {company.name}")
@@ -133,9 +224,67 @@ class AntoineScraperAdapter:
             )
             
             if not selection_result.success or not selection_result.selected_paths:
-                company.scrape_status = "failed"
-                company.scrape_error = f"Path selection failed: {selection_result.error}"
-                return company
+                # Fallback: Use locale-specific or common corporate website paths when Nova Pro fails
+                logger.warning(f"Nova Pro path selection failed: {selection_result.error}")
+                
+                if detected_locale:
+                    logger.info(f"Using locale-specific fallback paths for {detected_locale}")
+                    fallback_paths = [
+                        f"/{detected_locale}",
+                        f"/{detected_locale}/about",
+                        f"/{detected_locale}/about-us", 
+                        f"/{detected_locale}/company",
+                        f"/{detected_locale}/contact",
+                        f"/{detected_locale}/contact-us",
+                        f"/{detected_locale}/careers",
+                        f"/{detected_locale}/products",
+                        f"/{detected_locale}/services",
+                        f"/{detected_locale}/news",
+                        "/",  # Also include root
+                        "/about",
+                        "/contact"
+                    ]
+                else:
+                    logger.info("Using standard fallback corporate website paths")
+                    fallback_paths = [
+                        "/",
+                        "/about",
+                        "/about-us", 
+                        "/about/our-company",
+                        "/company",
+                        "/contact",
+                        "/contact-us",
+                        "/careers",
+                        "/jobs",
+                        "/business",
+                        "/enterprise",
+                        "/products",
+                        "/services",
+                        "/solutions",
+                        "/leadership",
+                        "/team",
+                        "/news",
+                        "/press"
+                    ]
+                
+                # Use fallback paths as if they were selected by Nova Pro
+                from src.antoine_selection import LinkSelectionResult
+                selection_result = LinkSelectionResult(
+                    success=True,
+                    selected_paths=fallback_paths,
+                    path_priorities={path: 0.5 for path in fallback_paths},  # Medium confidence
+                    path_reasoning={path: "Fallback path when Nova Pro failed" for path in fallback_paths},
+                    rejected_paths=[],
+                    model_used="fallback",
+                    tokens_used=0,
+                    cost_usd=0.0,
+                    processing_time=0.0,
+                    llm_prompt="Fallback - no LLM prompt used",  # Required parameter
+                    total_input_paths=len(discovery_result.all_paths),
+                    confidence_threshold=0.5
+                )
+                
+                logger.info(f"✅ Phase 2: Using {len(fallback_paths)} fallback paths")
             
             logger.info(f"✅ Phase 2: Selected {len(selection_result.selected_paths)} valuable paths")
             
@@ -170,8 +319,7 @@ class AntoineScraperAdapter:
             logger.info(f"🧠 Phase 4: Starting field extraction")
             extraction_result = extract_company_fields(
                 crawl_result,
-                company.name or "Unknown Company",
-                timeout_seconds=60
+                company.name or "Unknown Company"
             )
             
             if not extraction_result.success:

@@ -125,17 +125,57 @@ async def crawl_single_page(
     start_time = time.time()
     
     try:
-        # Download the page content
-        downloaded = trafilatura.fetch_url(url)
+        # Configure realistic browser headers to bypass anti-bot protection
+        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+        
+        # Create Trafilatura config with enhanced settings
+        trafilatura_config = trafilatura.settings.use_config()
+        trafilatura_config.set('DEFAULT', 'USER_AGENTS', user_agent)
+        trafilatura_config.set('DEFAULT', 'TIMEOUT', '30')
+        
+        # Download the page content with realistic browser user agent
+        downloaded = trafilatura.fetch_url(url, config=trafilatura_config)
         
         if not downloaded:
             crawl_time = time.time() - start_time
+            
+            # Check if this might be a 403 error (anti-bot protection)
+            # and try Crawl4AI fallback for protected sites
+            print(f"⚠️  [{url}] Trafilatura failed to download, trying Crawl4AI fallback...")
+            
+            try:
+                # Import Crawl4AI for protected sites
+                from crawl4ai import AsyncWebCrawler
+                
+                async with AsyncWebCrawler(verbose=False) as crawler:
+                    crawl4ai_result = await crawler.arun(url=url)
+                    
+                    if crawl4ai_result.success and crawl4ai_result.cleaned_html:
+                        # Extract content from Crawl4AI result
+                        crawl4ai_content = crawl4ai_result.cleaned_html
+                        if len(crawl4ai_content) > 200:  # Reasonable content found
+                            crawl_time = time.time() - start_time
+                            print(f"✅ [{url}] Crawl4AI fallback successful ({len(crawl4ai_content)} chars)")
+                            
+                            return PageCrawlResult(
+                                url=url,
+                                success=True,
+                                content=crawl4ai_content[:max_content_length],
+                                content_length=len(crawl4ai_content),
+                                crawl_time=crawl_time,
+                                extraction_method="crawl4ai_fallback"
+                            )
+                            
+            except Exception as crawl4ai_error:
+                print(f"❌ [{url}] Crawl4AI fallback also failed: {crawl4ai_error}")
+            
+            # Both methods failed
             return PageCrawlResult(
                 url=url,
                 success=False,
                 crawl_time=crawl_time,
-                error="Failed to download page content",
-                extraction_method="failed_download"
+                error="Failed to download page content (both Trafilatura and Crawl4AI failed)",
+                extraction_method="all_methods_failed"
             )
         
         # Extract clean content using Trafilatura (removes boilerplate by default)
@@ -330,6 +370,8 @@ async def crawl_selected_pages(
     
     async def crawl_with_semaphore(url: str) -> PageCrawlResult:
         async with semaphore:
+            # Add small delay to avoid triggering anti-bot protection
+            await asyncio.sleep(0.5)  # 500ms delay between requests
             return await crawl_single_page(
                 url, base_url, timeout_seconds, max_content_per_page
             )

@@ -43,7 +43,7 @@ class TheodoreIntelligencePipeline:
         # Initialize components
         self.bedrock_client = BedrockClient(config)  # Keep for embeddings
         self.gemini_client = GeminiClient(config)    # Use for analysis and similarity
-        # Use antoine scraper adapter for enhanced 4-phase pipeline
+        # Use working antoine scraper adapter (proven synchronous implementation)
         from src.antoine_scraper_adapter import AntoineScraperAdapter
         self.scraper = AntoineScraperAdapter(config, self.bedrock_client)
         # Legacy scraper removed - using intelligent scraper only
@@ -115,8 +115,8 @@ class TheodoreIntelligencePipeline:
         # Get existing company or create new one to prevent duplicates
         company = self._get_or_create_company(company_name, website)
         
-        # Scrape website with progress tracking
-        company = self.scraper.scrape_company(company, job_id=job_id)
+        # Scrape website using antoine pipeline (no job_id like working tests)
+        company = self.scraper.scrape_company(company)
         
         if company.scrape_status != "success":
             logger.warning(f"Scraping failed for {company_name}: {company.scrape_error}")

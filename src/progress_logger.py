@@ -388,7 +388,7 @@ def start_company_processing(company_name: str) -> str:
     
     # Generate unique job ID using UUID to prevent collisions
     job_id = f"company_{int(time.time() * 1000)}_{str(uuid.uuid4())[:8]}"
-    progress_logger.start_job(job_id, company_name, total_phases=4)
+    progress_logger.start_job(job_id, company_name, total_phases=5)
     return job_id
 
 

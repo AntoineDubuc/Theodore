@@ -158,7 +158,7 @@ Theodore has been reorganized for maintainability and clarity:
 src/
 ├── main_pipeline.py                   # Core orchestration
 ├── models.py                          # Pydantic data models
-├── intelligent_company_scraper.py     # 4-phase scraper (primary)
+├── intelligent_company_scraper.py     # 5-phase scraper (primary)
 ├── simple_enhanced_discovery.py       # Similarity discovery (primary)
 ├── bedrock_client.py                  # AWS AI integration
 ├── gemini_client.py                   # Google AI integration
@@ -242,7 +242,7 @@ Company Name → Database Check → Research Status Assessment → Real-time Res
 **Core Pipeline (Production):**
 - `src/main_pipeline.py` - Main orchestration and entry point
 - `src/models.py` - Pydantic data models for all entities
-- `src/intelligent_company_scraper.py` - 4-phase intelligent scraping system
+- `src/intelligent_company_scraper.py` - 5-phase intelligent scraping system
 - `src/simple_enhanced_discovery.py` - Similarity discovery engine (primary)
 - `src/progress_logger.py` - Thread-safe real-time progress tracking
 
@@ -253,7 +253,7 @@ Company Name → Database Check → Research Status Assessment → Real-time Res
 
 ### Intelligent Scraping System (intelligent_company_scraper.py)
 
-The core of Theodore's data extraction uses a sophisticated 4-phase approach that combines comprehensive web crawling with AI-driven analysis:
+The core of Theodore's data extraction uses a sophisticated 5-phase approach that combines comprehensive web crawling with AI-driven analysis and social media research:
 
 #### **Phase 1: Comprehensive Link Discovery**
 ```python
@@ -322,6 +322,21 @@ The system uses a specialized prompt to intelligently select the most valuable p
 - Target market and customer segments
 - Products/services and competitive advantages
 - Company maturity and sales context
+
+#### **Phase 5: Social Media Research**
+```python
+# Social media intelligence extraction:
+- Analyzes all previously crawled pages for social media links
+- Extracts social media profiles from headers, footers, and content
+- Supports 15+ platforms (Facebook, LinkedIn, Twitter, Instagram, YouTube, etc.)
+- Handles consent popup interference for accurate extraction
+```
+
+**Social media output:**
+- Platform-specific social media URLs
+- Contact points for outreach and relationship building
+- Social presence indicators for lead qualification
+- Enhanced company intelligence with social connections
 
 ### Current Extraction Performance
 
@@ -630,14 +645,14 @@ The success metric is: **"Can Theodore extract meaningful company intelligence u
 - ✅ **Comprehensive content analysis**: Gemini 2.5 Pro with 1M token context processes all page content
 
 #### **Advanced Data Processing:**
-- ✅ **4-phase intelligent pipeline**: Link discovery → LLM selection → parallel extraction → AI aggregation  
+- ✅ **5-phase intelligent pipeline**: Link discovery → LLM selection → parallel extraction → AI aggregation → social media research  
 - ✅ **Targeted page identification**: Specifically seeks /contact, /about, /team, /careers for missing data
 - ✅ **Clean content extraction**: Removes navigation, footer, scripts while preserving main content
 - ✅ **Business intelligence generation**: Converts raw web content into structured company insights
 
 #### **Production-Ready Architecture:**
 - ✅ **Cost-optimized AI models**: 6x reduction with Nova Pro ($0.66 → $0.11 per research)
-- ✅ **Real-time progress tracking**: Live updates during 4-phase extraction process
+- ✅ **Real-time progress tracking**: Live updates during 5-phase extraction process
 - ✅ **Error handling & fallbacks**: Graceful degradation when LLM or scraping fails
 - ✅ **Scalable processing**: Handles complex websites with JavaScript and dynamic content
 
