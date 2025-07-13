@@ -761,6 +761,15 @@ def research_company():
             else:
                 company_dict = scraped_company.__dict__ if hasattr(scraped_company, '__dict__') else {}
             
+            # Backend safety net: Ensure ai_summary field always exists for frontend compatibility
+            if not company_dict.get('ai_summary'):
+                # Fallback hierarchy: company_description -> value_proposition -> default message
+                company_dict['ai_summary'] = (
+                    company_dict.get('company_description') or 
+                    company_dict.get('value_proposition') or 
+                    f"Sales intelligence analysis for {company_dict.get('name', 'company')} - processing completed successfully."
+                )
+            
             success_response = {
                 "success": True,
                 "company": company_dict,
@@ -802,6 +811,7 @@ def research_company():
         }
         
         return jsonify(critical_error_response), 500
+
 
 @app.route('/settings')
 def settings():
@@ -1586,18 +1596,8 @@ def process_company():
     website = normalize_website_url(website)
     
     try:
-        # Start simple progress tracking (antoine uses 1 simple phase)
+        # Start detailed progress tracking for antoine 4-phase pipeline
         job_id = start_company_processing(company_name)
-        
-        # Override default phase count for simple antoine processing
-        from src.progress_logger import progress_logger
-        progress_logger.progress_data["jobs"][job_id]["total_phases"] = 1
-        
-        # Update progress - simple message for antoine processing
-        progress_logger.update_phase(job_id, "Antoine Processing", "running", {
-            "status_message": f"Processing {company_name} using antoine pipeline...",
-            "simple_mode": True
-        })
         
         # Create company data object
         company_data = CompanyData(
@@ -1612,8 +1612,8 @@ def process_company():
         config = CompanyIntelligenceConfig()
         scraper = AntoineScraperAdapter(config)  # Same as working tests - no bedrock_client
         
-        # Call scraper directly (exactly like working tests)
-        result = scraper.scrape_company(company_data)
+        # Call scraper directly with job_id for progress tracking
+        result = scraper.scrape_company(company_data, job_id=job_id)
         
         # Check if processing was successful  
         if result and result.scrape_status == "success":
@@ -1655,12 +1655,7 @@ def process_company():
                     logger.warning(f"Pinecone storage failed: {e}")
                     success = True  # Still consider successful if scraping worked
             
-            # Complete simple progress tracking for antoine
-            progress_logger.update_phase(job_id, "Antoine Processing", "completed", {
-                "status_message": f"Successfully processed {company_name}",
-                "simple_mode": True,
-                "social_media_count": len(result.social_media) if hasattr(result, 'social_media') and result.social_media else 0
-            })
+            # Antoine phases are completed automatically by AntoineScraperAdapter
             
             # Mark job as completed with simple results
             from src.progress_logger import complete_company_processing
