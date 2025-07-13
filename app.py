@@ -717,7 +717,26 @@ def research_company():
             
             print(f"🐍 FLASK: Step 1 - Starting progress tracking...")
             # Start progress tracking
-            job_id = start_company_processing(company_name)
+            job_id, is_new_job = start_company_processing(company_name)
+            
+            # Check if this is a duplicate request (company already being processed)
+            if not is_new_job:
+                print(f"🐍 FLASK: ⚠️ Company {company_name} is already being processed in job {job_id}")
+                
+                # Get current progress for the existing job
+                from src.progress_logger import progress_logger
+                current_progress = progress_logger.get_progress(job_id)
+                
+                return jsonify({
+                    "success": False,
+                    "already_processing": True,
+                    "job_id": job_id,
+                    "error": f'{company_name} is already being processed. Please wait for the current job to complete.',
+                    "current_status": current_progress.get('status', 'unknown'),
+                    "progress": current_progress,
+                    "company": {}
+                }), 409  # HTTP 409 Conflict
+            
             print(f"🐍 FLASK: ✅ Progress tracking started with job_id: {job_id}")
             
             print(f"🐍 FLASK: Step 2 - Using process_single_company method...")
@@ -1597,7 +1616,27 @@ def process_company():
     
     try:
         # Start detailed progress tracking for antoine 4-phase pipeline
-        job_id = start_company_processing(company_name)
+        job_id, is_new_job = start_company_processing(company_name)
+        
+        # Check if this is a duplicate request (company already being processed)
+        if not is_new_job:
+            logger.info(f"Company {company_name} is already being processed in job {job_id}, returning existing job status")
+            
+            # Get current progress for the existing job
+            from src.progress_logger import progress_logger
+            current_progress = progress_logger.get_progress(job_id)
+            
+            return jsonify({
+                'success': False,
+                'already_processing': True,
+                'job_id': job_id,
+                'message': f'{company_name} is already being processed. Please wait for the current job to complete.',
+                'current_status': current_progress.get('status', 'unknown'),
+                'progress': current_progress
+            }), 409  # HTTP 409 Conflict
+        
+        # This is a new job, proceed with processing
+        logger.info(f"Starting new processing job {job_id} for {company_name}")
         
         # Create company data object
         company_data = CompanyData(

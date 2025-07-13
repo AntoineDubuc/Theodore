@@ -463,7 +463,7 @@ Make sure to suggest REAL companies with actual websites, not fictional ones."""
             
             # Start progress tracking for research
             from src.progress_logger import start_company_processing
-            job_id = start_company_processing(company_name)
+            job_id, _ = start_company_processing(company_name)  # Ignore is_new_job flag for discovery
             
             
             # This should now work with the subprocess-based scraper

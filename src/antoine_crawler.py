@@ -128,10 +128,10 @@ async def crawl_single_page(
         # Configure realistic browser headers to bypass anti-bot protection
         user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
         
-        # Create Trafilatura config with enhanced settings
+        # Create Trafilatura config with adaptive timeout settings
         trafilatura_config = trafilatura.settings.use_config()
         trafilatura_config.set('DEFAULT', 'USER_AGENTS', user_agent)
-        trafilatura_config.set('DEFAULT', 'TIMEOUT', '30')
+        trafilatura_config.set('DEFAULT', 'TIMEOUT', str(timeout_seconds))  # Use adaptive timeout
         
         # Download the page content with realistic browser user agent
         downloaded = trafilatura.fetch_url(url, config=trafilatura_config)
@@ -365,22 +365,103 @@ async def crawl_selected_pages(
         else:
             full_urls.append(urljoin(base_url, path))
     
-    # Create semaphore for concurrent limiting
-    semaphore = asyncio.Semaphore(max_concurrent)
+    # 🧠 INTELLIGENT CRAWLING STRATEGY
+    # Test a few URLs first to assess website responsiveness
+    print(f"🧪 Testing website responsiveness with first 3 URLs...")
     
-    async def crawl_with_semaphore(url: str) -> PageCrawlResult:
-        async with semaphore:
-            # Add small delay to avoid triggering anti-bot protection
+    test_urls = full_urls[:3]  # Test first 3 URLs
+    remaining_urls = full_urls[3:]
+    
+    # Test phase with standard settings
+    test_semaphore = asyncio.Semaphore(2)  # Limited concurrency for testing
+    
+    async def test_crawl_with_semaphore(url: str) -> PageCrawlResult:
+        async with test_semaphore:
             await asyncio.sleep(0.5)  # 500ms delay between requests
             return await crawl_single_page(
                 url, base_url, timeout_seconds, max_content_per_page
             )
     
-    # Crawl all pages concurrently
-    page_results = await asyncio.gather(
-        *[crawl_with_semaphore(url) for url in full_urls],
+    # Test website responsiveness
+    test_start_time = time.time()
+    test_results = await asyncio.gather(
+        *[test_crawl_with_semaphore(url) for url in test_urls],
         return_exceptions=True
     )
+    test_duration = time.time() - test_start_time
+    
+    # Analyze test results to determine website responsiveness
+    test_successes = 0
+    test_failures = 0
+    test_timeouts = 0
+    
+    for result in test_results:
+        if isinstance(result, Exception):
+            test_failures += 1
+        elif result.success:
+            test_successes += 1
+        else:
+            test_failures += 1
+            if "timeout" in str(result.error).lower():
+                test_timeouts += 1
+    
+    success_rate = test_successes / len(test_results) if test_results else 0
+    avg_time_per_url = test_duration / len(test_results) if test_results else 0
+    
+    print(f"📊 Test results: {test_successes}/{len(test_results)} successful, avg time: {avg_time_per_url:.1f}s per URL")
+    
+    # 🎯 ADAPTIVE STRATEGY BASED ON TEST RESULTS
+    if success_rate < 0.3 or avg_time_per_url > 20:
+        # Website is very slow/unresponsive - use aggressive optimization
+        print(f"🚨 Slow website detected (success rate: {success_rate:.1%}, avg time: {avg_time_per_url:.1f}s)")
+        print(f"⚡ Applying aggressive optimization: reduced timeouts, early completion")
+        
+        adaptive_timeout = min(15, timeout_seconds)  # Reduce timeout to 15s
+        adaptive_concurrent = min(3, max_concurrent)  # Reduce concurrency
+        early_completion_threshold = max(3, len(full_urls) // 4)  # Complete with 25% success
+        
+    elif success_rate < 0.7 or avg_time_per_url > 10:
+        # Website is moderately slow - use moderate optimization
+        print(f"⚠️ Moderately slow website (success rate: {success_rate:.1%}, avg time: {avg_time_per_url:.1f}s)")
+        print(f"⚡ Applying moderate optimization: slightly reduced settings")
+        
+        adaptive_timeout = min(20, timeout_seconds)  # Reduce timeout to 20s
+        adaptive_concurrent = min(4, max_concurrent)  # Slightly reduce concurrency
+        early_completion_threshold = max(5, len(full_urls) // 2)  # Complete with 50% success
+        
+    else:
+        # Website is responsive - use standard settings
+        print(f"✅ Responsive website (success rate: {success_rate:.1%}, avg time: {avg_time_per_url:.1f}s)")
+        print(f"⚡ Using standard settings")
+        
+        adaptive_timeout = timeout_seconds
+        adaptive_concurrent = max_concurrent
+        early_completion_threshold = max(8, len(full_urls) * 3 // 4)  # Complete with 75% success
+    
+    print(f"🎛️ Adaptive settings: timeout={adaptive_timeout}s, concurrent={adaptive_concurrent}, early_complete={early_completion_threshold}")
+    
+    # Create adaptive semaphore for remaining URLs
+    semaphore = asyncio.Semaphore(adaptive_concurrent)
+    
+    async def crawl_with_adaptive_semaphore(url: str) -> PageCrawlResult:
+        async with semaphore:
+            await asyncio.sleep(0.5)  # 500ms delay between requests
+            return await crawl_single_page(
+                url, base_url, adaptive_timeout, max_content_per_page
+            )
+    
+    # Crawl remaining URLs with adaptive settings
+    if remaining_urls:
+        print(f"🌐 Crawling {len(remaining_urls)} remaining URLs with adaptive settings...")
+        remaining_results = await asyncio.gather(
+            *[crawl_with_adaptive_semaphore(url) for url in remaining_urls],
+            return_exceptions=True
+        )
+    else:
+        remaining_results = []
+    
+    # Combine test and remaining results
+    page_results = test_results + remaining_results
     
     # Process results
     successful_results = []
@@ -403,11 +484,30 @@ async def crawl_selected_pages(
             failed_results.append(result)
             errors.append(f"{result.url}: {result.error}")
     
+    # 🎯 EARLY COMPLETION CHECK
+    # Check if we have enough successful content to complete early
+    total_content_length = sum(r.content_length for r in successful_results)
+    min_content_threshold = 5000  # Minimum 5KB of content
+    
+    early_completion_met = (
+        len(successful_results) >= early_completion_threshold and 
+        total_content_length >= min_content_threshold
+    )
+    
+    if early_completion_met and len(successful_results) < len(full_urls):
+        print(f"🎯 Early completion triggered: {len(successful_results)}/{len(full_urls)} pages successful")
+        print(f"📄 Content gathered: {total_content_length:,} characters from {len(successful_results)} pages")
+        print(f"⚡ Skipping remaining pages to optimize processing time")
+    elif len(successful_results) > 0:
+        print(f"✅ Content extraction completed: {len(successful_results)}/{len(full_urls)} pages successful")
+        print(f"📄 Total content: {total_content_length:,} characters")
+    else:
+        print(f"❌ No pages successfully crawled from {base_url}")
+    
     # Aggregate content from successful pages
     aggregated_content = _aggregate_page_content(successful_results, base_url)
     
     total_crawl_time = time.time() - start_time
-    total_content_length = sum(r.content_length for r in successful_results)
     
     result = BatchCrawlResult(
         base_url=base_url,

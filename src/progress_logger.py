@@ -374,8 +374,13 @@ def log_processing_phase(job_id: str, phase_name: str, status: str = "running", 
     progress_logger.update_phase(job_id, phase_name, status, details=details)
 
 
-def start_company_processing(company_name: str) -> str:
-    """Start tracking company processing, returns job_id"""
+def start_company_processing(company_name: str) -> tuple[str, bool]:
+    """
+    Start tracking company processing.
+    
+    Returns:
+        tuple: (job_id, is_new_job) where is_new_job=True for new jobs, False for existing duplicates
+    """
     import uuid
     
     # Check if there's already a running job for this company
@@ -384,12 +389,12 @@ def start_company_processing(company_name: str) -> str:
             if (job_data.get("company_name") == company_name and 
                 job_data.get("status") == "running"):
                 logger.warning(f"Company {company_name} is already being processed in job {job_data.get('job_id')}")
-                return job_data.get('job_id')
+                return job_data.get('job_id'), False  # Existing job
     
     # Generate unique job ID using UUID to prevent collisions
     job_id = f"company_{int(time.time() * 1000)}_{str(uuid.uuid4())[:8]}"
     progress_logger.start_job(job_id, company_name, total_phases=5)
-    return job_id
+    return job_id, True  # New job
 
 
 def complete_company_processing(job_id: str, success: bool, error: str = None, summary: str = None, results: dict = None):

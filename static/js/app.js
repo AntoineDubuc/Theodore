@@ -326,9 +326,17 @@ class TheodoreUI {
 
             const data = await response.json();
 
+            // Handle duplicate processing (HTTP 409 Conflict)
+            if (response.status === 409 && data.already_processing) {
+                this.showDuplicateProcessingMessage(companyName, data);
+                return; // Exit early for duplicate processing
+            }
+
             if (data.success) {
                 this.showProcessingResults(data);
-                this.showSuccess(`Successfully processed ${companyName}! Generated ${data.sales_intelligence.length} character sales intelligence.`);
+                // Fix: Use safe nested access for success message
+                const intelligenceLength = data.company?.ai_summary?.length || data.company?.company_description?.length || 0;
+                this.showSuccess(`Successfully processed ${companyName}! Generated ${intelligenceLength} character sales intelligence.`);
                 
                 // Clear the form after successful processing
                 setTimeout(() => {
@@ -410,7 +418,10 @@ class TheodoreUI {
         
         if (pagesEl) pagesEl.textContent = result.pages_processed || 0;
         if (timeEl) timeEl.textContent = `${(result.processing_time || 0).toFixed(1)}s`;
-        if (lengthEl) lengthEl.textContent = `${result.sales_intelligence.length} chars`;
+        
+        // Fix: Access sales intelligence from correct nested field with null safety
+        const salesIntelligence = result.company?.ai_summary || result.company?.company_description || '';
+        if (lengthEl) lengthEl.textContent = `${salesIntelligence.length} chars`;
         
         // Update token usage and cost stats
         if (result.token_usage) {
@@ -431,10 +442,12 @@ class TheodoreUI {
             }
         }
         
-        // Display sales intelligence
+        // Display sales intelligence with null safety
         const intelligenceEl = document.getElementById('salesIntelligence');
         if (intelligenceEl) {
-            intelligenceEl.textContent = result.sales_intelligence;
+            // Use the same salesIntelligence variable from above, or extract again if needed
+            const salesIntelligenceContent = result.company?.ai_summary || result.company?.company_description || 'No sales intelligence available';
+            intelligenceEl.textContent = salesIntelligenceContent;
         }
         
         // Mark all phases as completed for visual effect
@@ -460,6 +473,42 @@ class TheodoreUI {
         
         // Add error to log
         this.addToProgressLog('Error', 'failed', error);
+    }
+
+    showDuplicateProcessingMessage(companyName, data) {
+        // Show user-friendly message about duplicate processing
+        this.showWarning(`${companyName} is already being processed. Monitoring existing job progress...`);
+        
+        // Display current progress information
+        const progressContainer = document.getElementById('progressContainer');
+        if (progressContainer) {
+            progressContainer.style.display = 'block';
+            
+            // Update progress title
+            const titleEl = document.getElementById('progressTitle');
+            if (titleEl) {
+                titleEl.textContent = `Monitoring ${companyName}...`;
+            }
+            
+            // Show existing job status
+            const progressText = document.getElementById('progressText');
+            if (progressText) {
+                progressText.textContent = `Job ${data.job_id} is ${data.current_status || 'running'}`;
+            }
+            
+            // Start monitoring the existing job
+            this.pollCurrentJobProgress(progressContainer, companyName);
+        }
+        
+        // Re-enable the form immediately since we're not starting a new process
+        const processButton = document.getElementById('processButton');
+        if (processButton) {
+            processButton.disabled = false;
+            processButton.innerHTML = '<span>🧠</span> Generate Sales Intelligence';
+        }
+        
+        // Add info to log
+        this.addToProgressLog('Info', 'running', `Monitoring existing job ${data.job_id} for ${companyName}`);
     }
 
     updatePhaseProgress(phaseName, status, details = '') {
@@ -1508,6 +1557,12 @@ class TheodoreUI {
             
             
             const data = await response.json();
+
+            // Handle duplicate processing (HTTP 409 Conflict) for research
+            if (response.status === 409 && data.already_processing) {
+                this.showDuplicateProcessingMessage(companyName, data);
+                return; // Exit early for duplicate processing
+            }
 
             if (response.ok && data.success) {
                 
